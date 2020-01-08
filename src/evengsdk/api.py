@@ -3,7 +3,6 @@ import copy
 import json
 import os
 
-# from ansible.module_utils.six.moves.urllib.parse import urlencode, quote_plus
 from evengsdk.exceptions import EvengApiError
 
 NETWORK_TYPES = ["bridge","ovs"]
@@ -12,10 +11,10 @@ VIRTUAL_CLOUD_COUNT = 9
 class EvengApi:
 
     def __init__(self, clnt, timeout=30):
-        ''' Initialize the class.
+        """ Initialize the class.
             Args:
                 clnt (obj): A EvengClient object
-        '''
+        """
         self.clnt = clnt
         self.log = clnt.log
         self.timeout = timeout
@@ -71,32 +70,39 @@ class EvengApi:
         return self.response_data(r)
 
     def get_status(self):
-        '''Get server status'''
+        """Get server status"""
         return self.get_handle_response('/status')
 
     def list_node_templates(self):
-        '''List details for each node template'''
+        """List details for each node template"""
         return self.get_handle_response('/list/templates/')
 
     def node_template_detail(self, node_type):
-        ''' List details for single node template
-            All available images for the selected template will be included in the output
-        '''
+        """
+        List details for single node template
+        All available images for the selected template will be included in the output
+
+        Args:
+            node_type (str): type of node
+
+        """
         data = self.get_handle_response(f'/list/templates/{node_type}')
         if data:
             return data.get("options")
         return
 
     def list_users(self):
-        '''get list of users'''
+        """get list of users"""
         return self.get_handle_response('/users/')
 
     def list_user_roles(self):
-        '''list user roles'''
+        """list user roles"""
         return self.get_handle_response('/list/roles')
 
     def get_user(self, username):
-        '''get user details'''
+        """
+        get user details
+        """
         user = None
         if username:
             try:
@@ -112,10 +118,18 @@ class EvengApi:
         endpoint = '/auth'
         pass
 
-    def add_user(self, username='', password='', role='user', name='', email='', expiration='-1', **kwargs):
-        '''Add new user
+    def add_user(self,
+                username='',
+                password='',
+                role='user',
+                name='',
+                email='',
+                expiration='-1',
+                **kwargs):
+        """
+        Add new user
 
-           Parameters:
+        Args:
             email(str): the email address of the user;
             expiration(str): date until the user is valid (UNIX timestamp) or -1 if never expires;
             name(str): a description for the user, usually salutation;
@@ -123,9 +137,10 @@ class EvengApi:
             role(string): choices are ['user', 'admin']
             username (str): a unique alphanumeric string used to login;
 
-           Returns:
+        Returns:
             Dictionary with user data
-        '''
+
+        """
         username = username or kwargs.get('username')
         password = password or kwargs.get('password')
         if not (username and password):
@@ -149,14 +164,14 @@ class EvengApi:
         return
 
     def edit_user(self, username, data=None):
-        '''
-           Parameters:
+        """
+        Edit user details
+
+        Args:
             email(str): the email address of the user;
-            expiration(str): date until the user is valid (UNIX timestamp) or -1 if never expires;
-            name(str): a description for the user, usually salutation;
-            password (string): the user password used to login;
-            role(string): choices are ['user', 'admin']
-        '''
+            data(dict): payload for user details to update
+
+        """
         url = self.clnt.url_prefix + f"/users/{username}"
         r = None
 
@@ -170,7 +185,9 @@ class EvengApi:
         return self.get_response_data(r)
 
     def delete_user(self, username):
-        '''Delete EVE-NG user'''
+        """
+        Delete EVE-NG user
+        """
         existing = self.get_user(username)
         if existing:
             return self.del_handle_response(f'/users/{username}')
@@ -178,31 +195,27 @@ class EvengApi:
             raise EvengApiError('User does not exists')
 
     def list_networks(self):
-        '''List network types'''
+        """List network types"""
         return self.get_handle_response('/list/networks')
 
     def list_folders(self):
-        '''List folders for user
-        '''
+        """List folders for user"""
         return self.get_handle_response(f"/folders/")
 
     def add_folder(self, name):
-        '''Add a new folder for user account
-        '''
+        """Add a new folder for user account"""
         slug = self.slugify(name)
         data = {"path": f"/{slug}", "name": slug}
         return self.post_handle_response("/folders", data=json.dumps(data))
 
     def move_folder(self, old_path, new_path):
-        ''' Move/rename an existent folder
-        '''
+        """Move/rename an existent folder"""
         data = {'path': new_path}
         endpoint = f"/folders/{old_path}"
         return self.put_handle_response(endpoint, data=json.dumps(data))
 
     def delete_folder(self, path):
-        '''Delete an existing folder
-        '''
+        """Delete an existing folder"""
         return self.del_handle_response(f"/folders/{path}")
 
     @staticmethod
@@ -214,7 +227,7 @@ class EvengApi:
         return normpath
 
     def get_lab(self, path):
-        '''get details for a single lab
+        """get details for a single lab
 
            example response:
             {
@@ -231,7 +244,7 @@ class EvengApi:
                  "message": "Lab has been loaded (60020).",
                  "status": "success"
             }
-        '''
+        """
         normpath = self.normalize_path(path)
         if not normpath.endswith(".unl"):
             normpath = normpath + ".unl"
@@ -240,7 +253,7 @@ class EvengApi:
         return self.get_handle_response(url)
 
     def list_lab_networks(self, path):
-        ''' Get one or all networks configured in a lab
+        """ Get one or all networks configured in a lab
             {
                 "code": 200,
                 "data": {
@@ -269,13 +282,13 @@ class EvengApi:
                 "message": "Successfully listed networks (60004).",
                 "status": "success"
             }
-        '''
+        """
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + "/networks"
         return self.get_handle_response(url)
 
     def get_lab_network(self, path, net_id):
-        '''retrieve details for a single network in a lab
+        """retrieve details for a single network in a lab
             sample output:
                 {
                     "code": 200,
@@ -288,7 +301,7 @@ class EvengApi:
                     "message": "Successfully listed network (60005).",
                     "status": "success"
                 }
-        '''
+        """
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + f"/networks/{net_id}"
         return self.get_handle_response(url)
@@ -304,7 +317,7 @@ class EvengApi:
         return
 
     def list_lab_links(self, path):
-        '''Get all remote endpoint for both ethernet and serial interfaces
+        """Get all remote endpoint for both ethernet and serial interfaces
             {
                 "code": 200,
                 "data": {
@@ -333,13 +346,13 @@ class EvengApi:
                 "message": "Fetced all lab networks and serial endpoints (60024).",
                 "status": "success"
             }
-        '''
+        """
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + f"/links"
         return self.get_handle_response(url)
 
     def list_lab_nodes(self, path):
-        '''List all nodes in the lab
+        """List all nodes in the lab
         {
             "code": 200,
             "data": {
@@ -383,13 +396,13 @@ class EvengApi:
             "message": "Successfully listed nodes (60026).",
             "status": "success"
         }
-        '''
+        """
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + f"/nodes"
         return self.get_handle_response(url)
 
     def get_lab_node(self, path, node_id):
-        '''retrieve single node from lab
+        """retrieve single node from lab
 
           sample output:
             {
@@ -415,7 +428,7 @@ class EvengApi:
                 "message": "Successfully listed node (60025).",
                 "status": "success"
             }
-        '''
+        """
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + f"/nodes/{node_id}"
         return self.get_handle_response(url)
@@ -454,8 +467,8 @@ class EvengApi:
         return r
 
     def connect_p2p_interface(self, lab, node_id, interface, net_id):
-        ''' Connect node interface to a network
-        '''
+        """ Connect node interface to a network
+        """
         normpath = self.normalize_path(lab)
         url = "/labs/" + normpath + f"/nodes/{node_id}/interfaces"
 
@@ -541,7 +554,7 @@ class EvengApi:
         return
 
     def start_all_nodes(self, path):
-        ''' Start one or all nodes configured in a lab
+        """ Start one or all nodes configured in a lab
 
             sample output:
                 {
@@ -549,13 +562,13 @@ class EvengApi:
                     "message": "Failed to start node (12).",
                     "status": "fail"
                 }
-        '''
+        """
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + f"/nodes/start"
         return self.get_handle_response(url)
 
     def stop_all_nodes(self, path):
-        ''' Stop one or all nodes configured in a lab
+        """ Stop one or all nodes configured in a lab
 
           sample output:
             {
@@ -563,25 +576,25 @@ class EvengApi:
                 "message": "Nodes stopped (80050).",
                 "status": "success"
             }
-        '''
+        """
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + f"/nodes/stop"
         return self.get_handle_response(url)
 
     def start_node(self, path, node_id):
-        ''' start single node in a lab
+        """ start single node in a lab
         {
             "code": 200,
             "message": "Node started (80049).",
             "status": "success"
         }
-        '''
+        """
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + f"/nodes/{node_id}/start"
         return self.get_handle_response(url)
 
     def stop_node(self, path, node_id):
-        '''Stop single node in a lab
+        """Stop single node in a lab
 
           sample output:
             {
@@ -590,13 +603,13 @@ class EvengApi:
                 "status": "success"
             }
 
-        '''
+        """
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + f"/nodes/{node_id}/stop"
         return self.get_handle_response(url)
 
     def wipe_all_nodes(self, path):
-        '''
+        """
         Wipe one or all nodes configured in a lab. Wiping deletes
         all user config, included startup-config, VLANs, and so on. The
         next start will rebuild node from selected image.
@@ -607,13 +620,13 @@ class EvengApi:
                 "message": "Nodes cleared (80052).",
                 "status": "success"
             }
-        '''
+        """
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + f"/nodes/wipe"
         return self.get_handle_response(url)
 
     def wipe_node(self, path, node_id):
-        '''
+        """
         Wipe single node configured in a lab. Wiping deletes
         all user config, included startup-config, VLANs, and so on. The
         next start will rebuild node from selected image.
@@ -625,13 +638,13 @@ class EvengApi:
                 "message": "Node cleared (80053).",
                 "status": "success"
             }
-        '''
+        """
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + f"/nodes/{node_id}/wipe"
         return self.get_handle_response(url)
 
     def export_all_nodes(self, path):
-        '''
+        """
         Export one or all nodes configured in a lab. Exporting means saving
         the startup-config into the lab file.
 
@@ -641,13 +654,13 @@ class EvengApi:
                 "message": "Nodes exported (80057).",
                 "status": "success"
             }
-        '''
+        """
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + f"/nodes/export"
         return self.get_handle_response(url)
 
     def export_node(self, path, node_id):
-        '''
+        """
         Export node configuration. Exporting means saving the startup-config
         into the lab file.
 
@@ -657,13 +670,13 @@ class EvengApi:
                 "message": "Node exported (80058).",
                 "status": "success"
             }
-        '''
+        """
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + f"/nodes/{node_id}/export"
         return self.get_handle_response(url)
 
     def get_node_interfaces(self, path, node_id):
-        '''
+        """
         Get configured interfaces from a node.
 
         sample output:
@@ -693,13 +706,13 @@ class EvengApi:
                 "message": "Successfully listed node interfaces (60030).",
                 "status": "success"
             }
-        '''
+        """
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + f"/nodes/{node_id}/interfaces"
         return self.get_handle_response(url)
 
     def get_lab_topology(self, path):
-        '''
+        """
         Get the lab topology
 
         sample output:
@@ -746,13 +759,13 @@ class EvengApi:
                 "message": "Topology loaded",
                 "status": "success"
             }
-        '''
+        """
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + f"/topology"
         return self.get_handle_response(url)
 
     def get_lab_pictures(self, path):
-        '''
+        """
         Get one or all pictures configured in a lab
 
         sample output:
@@ -770,13 +783,13 @@ class EvengApi:
                 "message": "Successfully listed pictures (60028).",
                 "status": "success"
             }
-        '''
+        """
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + f"/pictures"
         return self.get_handle_response(url)
 
     def get_lab_picture_details(self, path, picture_id):
-        '''
+        """
         A single picture can be retrieved
 
             sample output:
@@ -793,7 +806,7 @@ class EvengApi:
                     "message": "Picture loaded",
                     "status": "success"
                 }
-        '''
+        """
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + f"/pictures/{picture_id}"
         return self.get_handle_response(url)
@@ -806,7 +819,7 @@ class EvengApi:
         pass
 
     def create_lab(self, username, path="/", name="", version="1", description="", body="", **kwargs):
-        ''' Create a new lab
+        """ Create a new lab
 
         payload = {
             "path":"/User1/Folder 3",
@@ -823,7 +836,7 @@ class EvengApi:
                 "message": "Lab has been created (60019).",
                 "status": "success"
             }
-        '''
+        """
         user = self.get_user(username)
 
         if user:
@@ -845,7 +858,7 @@ class EvengApi:
             raise(f"user {username} not found")
 
     def edit_lab(self, path, name="", version="", author="", description="", **kwargs):
-        ''' Edit an existing lab. The request can set only one single
+        """ Edit an existing lab. The request can set only one single
             parameter. Optional parameter can be reverted to the default
             setting an empty string “”.
 
@@ -862,7 +875,7 @@ class EvengApi:
                     "message": "Lab has been saved (60023).",
                     "status": "success"
                 }
-        '''
+        """
         normpath = self.normalize_path(path)
         name = kwargs.get("name") or name
         data = {
@@ -886,7 +899,7 @@ class EvengApi:
         pass
 
     def delete_lab(self, path):
-        ''' Delete an existent lab
+        """ Delete an existent lab
 
             sample output:
                 {
@@ -894,7 +907,7 @@ class EvengApi:
                     "message": "Lab has been deleted (60022).",
                     "status": "success"
                 }
-        '''
+        """
         normpath = self.normalize_path(path)
         if not normpath.endswith(".unl"):
             normpath = normpath + ".unl"
@@ -920,7 +933,7 @@ class EvengApi:
         return self._get_network_types()
 
     def edit_lab_network(self, path, net_id, data=None):
-        '''Edit lab network
+        """Edit lab network
         data = {
             "left": kwargs.get("left") or left,
             "name": kwargs.get("name") or name,
@@ -928,14 +941,14 @@ class EvengApi:
             "type": kwargs.get("type") or network_type,
             "visibility": kwargs.get("visibility") or visibility
         }
-        '''
+        """
         normpath = self.normalize_path(path)
         url = '/labs/' + normpath + f'/networks/{net_id}'
         return self.put_handle_response(url, data=json.dumps(data))
 
 
     def add_lab_network(self, path, network_type="", visibility="0", name="", left="", top="", **kwargs):
-        '''Add a new network to a lab
+        """Add a new network to a lab
         {
             "code": 201,
             "message": "Network has been added to the lab (60006).",
@@ -949,7 +962,7 @@ class EvengApi:
             top:  margin from top, in percentage (i.e. 25%), default is a
                   random value between 30% and 70%;
             type (mandatory): see “List network types”
-        '''
+        """
         network_type = kwargs.get('network_type') or network_type
         if network_type not in self.network_types:
             raise ValueError(f'invalid network type: {network_type} \
@@ -984,7 +997,7 @@ class EvengApi:
     def add_lab_node(self, path, delay=0, name="", node_type="", template="",
                      top="", left="", console="telnet", config="Unconfigured",
                      image="", **kwargs):
-        ''' Add a new node to a lab
+        """ Add a new node to a lab
         sample output:
             {
                 "code": 201,
@@ -1019,7 +1032,7 @@ class EvengApi:
         # cpu: number of configured CPU, default is 1;
         # ethernet: number of ethernet interfaces, default is 4;
         # uuid: UUID configured, default is a random UUID (i.e. 641a4800-1b19-427c-ae87-4a8ee90b7790).
-        '''
+        """
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + f"/nodes"
 
