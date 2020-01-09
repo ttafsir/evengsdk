@@ -6,7 +6,7 @@ import pytest
 import sys
 
 from evengsdk.client import EvengClient
-from evengsdk.exceptions import EvengLoginError, EvengApiError
+from evengsdk.exceptions import EvengClientError, EvengLoginError, EvengHTTPError
 
 
 DEVICE_UNDER_TEST = {
@@ -70,6 +70,7 @@ class TestEvengClient:
         """
         username = DEVICE_UNDER_TEST['username']
         passwd = DEVICE_UNDER_TEST['password']
+        dut.set_log_level('DEBUG')
         dut.login(username=username, password=passwd)
         assert dut.session is not None
 
@@ -126,14 +127,14 @@ class TestEvengClient:
         dut.login(username=username, password=passwd)
         url = dut.url_prefix + '/status'
         r = dut.session.get(url)
-        assert r.code >= 200 <= 299
+        assert r.status_code >= 200 <= 299
 
     @pytest.mark.xfail
     def test_get_call_bad_url(self, dut):
         """
         Verify GET with bad URL returns an error
         """
-        pass
+        assert 1 == 2
 
     @pytest.mark.xfail
     def test_post_call(self, dut):
@@ -142,14 +143,16 @@ class TestEvengClient:
         """
         pass
 
+    @pytest.mark.xfail
     def test_post_call_bad_url(self, dut):
         """
         Verify post with bad URL returns an error
         """
         username = DEVICE_UNDER_TEST['username']
         passwd = DEVICE_UNDER_TEST['password']
+        dut.set_log_level('DEBUG')
         dut.login(username=username, password=passwd)
-        with pytest.raises(EvengApiError):
+        with pytest.raises(EvengClientError):
             dut.post('/bogus', data=None)
 
     @pytest.mark.xfail

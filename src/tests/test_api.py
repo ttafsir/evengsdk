@@ -13,7 +13,7 @@ from evengsdk.exceptions import EvengLoginError, EvengApiError
 LAB_PATH = '/enablement labs/a_leaf_spine.unl'
 DEVICE_UNDER_TEST = {
     'host': '10.246.49.23',
-    'username': 'labuser',
+    'username': 'admin',
     'password': 'eve'
 }
 
@@ -35,4 +35,4 @@ class TestEvengApi:
         Verify server status using the API
         """
         r = client.api.get_status()
-        assert r.get('version') is not None
+        assert r.get('data') is not None

@@ -4,9 +4,11 @@ import json
 import logging
 import requests
 
+from json import JSONDecodeError
+from requests.exceptions import HTTPError
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
-from evengsdk.exceptions import EvengLoginError, EvengApiError
+from evengsdk.exceptions import EvengLoginError, EvengApiError, EvengClientError
 from evengsdk.api import EvengApi
 
 
@@ -15,11 +17,11 @@ DISABLE_INSECURE_WARNINGS = True
 
 class EvengClient:
 
-    def __init__(self, host, logger='eve-client', log_level='INFO', log_file=None):
+    def __init__(self, host, log_level='INFO', log_file=None):
         self.host = host
         self.port = None
         self.authdata = None
-        self.cert = False
+        self.verify = False
         self.cookies = None
         self.url_prefix = ''
         self.api = None
@@ -34,9 +36,11 @@ class EvengClient:
         if DISABLE_INSECURE_WARNINGS:
             requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-        # Log to file is filename is provided
-        self.log = logging.getLogger(logger)
+        # Create Logger
+        self.log = logging.getLogger('eve-client')
+        # Set log level
         self.set_log_level(log_level)
+        # Log to file is filename is provided
         if log_file:
             self.log.addHandler(logging.FileHandler(log_file))
         else:
@@ -52,20 +56,21 @@ class EvengClient:
 
         """
         log_level = log_level.upper()
-        if log_level not in ['NOTSET', 'DEBUG', 'INFO',
-                             'WARNING', 'ERROR', 'CRITICAL']:
+        LOG_LEVELS =  ('NOTSET','DEBUG','INFO','WARNING','ERROR','CRITICAL')
+        if log_level not in LOG_LEVELS:
             log_level = 'INFO'
         self.log.setLevel(getattr(logging, log_level))
 
-    def login(self, username='', password='', cert=False):
+    def login(self, username='', password='', verify=False):
         """
-        Initiate login to EVE-NG host
+        Initiate login to EVE-NG host. Api object is created
+        after successful login.
 
         Args:
             username (str): username to login with
             password (str): password to login with
         """
-        self.cert = cert
+        self.verify = verify
         self.authdata = {'username': username, 'password': password}
 
         self.log.debug('creating session')
@@ -83,62 +88,38 @@ class EvengClient:
         Login to EVE-NG host and set session information
         """
         host = self.host
-        port = self.port or 443
-        self.url_prefix = "https://{0}:{1}/api".format(host, port)
+        port = self.port or 80
+        protocol = {
+            80: 'http',
+            443: 'https'
+        }
+        self.url_prefix = f"{protocol[port]}://{host}:{port}/api"
 
-        # try HTTPS, and fallback to HTTP
-        self.log.debug('Trying connection to: {}'.format(self.url_prefix))
-        err = self._check_session()
-        if err and port != 80:
-            port = 80
-            self.log.debug('falling back to port {}'.format(port))
-            self.url_prefix = "http://{0}:{1}/api".format(host, port)
-            err = self._check_session()
-
-    def _check_session(self):
-        """
-        Try logging into EVE-NG host. If the login succeeded None will be returned and
-        self.session will be valid. If the login failed then an
-        exception error will be returned and self.session will
-        be set to None.
-
-        Returns:
-            error (str): error message or None.
-
-        """
-        self.log.debug('Creating session...')
         self.session = requests.Session()
+        url = self.url_prefix + "/auth/login"
 
-        self.log.debug('logging in...')
-        error = None
+        error = ''
         try:
-            self._login()
-            self.log.debug('logged in as: {}'.format(self.authdata.get('username')))
+            r = self.session.post(url, data=json.dumps(self.authdata), verify=self.verify)
+            r_json = r.json()
+            # The response is None for unsuccessful login attempt
+            if not r_json.get('status') == 'success':
+                error += 'invalid login'
+                self.session = {}
+            else:
+                self.log.debug('logged in as: {}'.format(self.authdata.get('username')))
         except Exception as e:
-            self.log.warning(str(e))
             self.session = {}
-            error = str(e)
-        return error
-
-    def _login(self):
-        session = self.session
-        login_endpoint = "/auth/login"
-        url = self.url_prefix + login_endpoint
-
-        r = session.post(url, data=json.dumps(self.authdata))
-        cookie = r.json().get('Set-Cookie')
-        if cookie:
-            session.headers = self.headers
-            session.headers['Cookie'] = cookie
+            self.log.error(f'Error: {error}')
 
     def logout(self):
+        """
+        Logout of of EVE-NG host
+        """
         logout_endpoint = '/auth/logout'
         if self.session:
             r_obj = self.get(logout_endpoint)
             self.session = {}
-
-    def _is_good_response(self):
-        pass
 
     def post(self, url, data=None, **kwargs):
         return self._make_request('POST', url, data=data, **kwargs)
@@ -160,16 +141,17 @@ class EvengClient:
         self.log.debug('making {} request'.format(method))
         if self.url_prefix not in url:
             url = self.url_prefix + url
-        r_obj = self._send_request(method, url, data=data, **kwargs)
+        r_obj = self._send_request(method, url, data=data, verify=self.verify, **kwargs)
 
         r_data = None
         if r_obj:
             try:
                 self.log.debug('retrieving response data'.format(method))
-                r_data = r_obj.read()
-                return r_data
+                return r_obj.json()
             except Exception as e:
-                self.log.error(str(e))
+                msg = f"Error retrieving request data: {str(e)}"
+                self.log.error(msg)
+                raise EvengClientError(msg)
         return
 
     def _send_request(self, method, url, data=None, **kwargs):
@@ -178,21 +160,16 @@ class EvengClient:
         try:
             if method == 'DELETE':
                 resp = self.session.delete(url, **kwargs)
-
             elif method == 'GET':
                 resp = self.session.get(url)
-
             elif method == 'PUT':
                 resp = self.session.put(url, data=data, **kwargs)
-
             elif method == 'POST':
                 resp = self.session.post(url, data=data, **kwargs)
             return resp
 
         except HTTPError as e:
-            self.log.error('EvengApiError')
-            raise EvengApiError('API Resource does not exist or is invalid: {0}\n\t{1}'.format(url, e.read()))
+            raise EvengHTTPError('HTTP error: {0}\n\t{1}'.format(url, str(e)))
 
-        except Exception as error:
-            self.log.error(error)
-            raise(error)
+        except Exception as e:
+            raise EvengClientError(f'Error: {str(e)}')

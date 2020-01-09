@@ -11,6 +11,13 @@ class  EvengClientError(Exception):
         return self.msg
 
 
+class EvengHTTPError(EvengClientError):
+    ''' Error encountered related to the client making an HTTP call'''
+
+    def __init__(self, msg):
+        super().__init__(msg)
+
+
 class EvengApiError(EvengClientError):
     ''' Error encountered related to the Eveng API request'''
 
