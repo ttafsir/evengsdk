@@ -4,7 +4,6 @@ import json
 import logging
 import requests
 
-from json import JSONDecodeError
 from requests.exceptions import HTTPError
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
@@ -147,7 +146,8 @@ class EvengClient:
         if r_obj:
             try:
                 self.log.debug('retrieving response data'.format(method))
-                return r_obj.json()
+                json_resp = r_obj.json()
+                return json_resp.get('data') or json_resp
             except Exception as e:
                 msg = f"Error retrieving request data: {str(e)}"
                 self.log.error(msg)
