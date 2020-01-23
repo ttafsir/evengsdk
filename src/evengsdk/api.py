@@ -3,8 +3,8 @@ import copy
 import json
 import os
 
-
 from evengsdk.exceptions import EvengApiError
+from urllib.parse import quote_plus
 
 NETWORK_TYPES = ["bridge","ovs"]
 VIRTUAL_CLOUD_COUNT = 9
@@ -25,58 +25,31 @@ class EvengApi:
     def __repr__(self):
         return '{}({})'.format(self.__class__.__name__, self.session)
 
-    def get_response_data(self, resp):
-        if isinstance(resp, dict):
-            return resp
-        try:
-            clean_resp = resp.decode('utf-8')
-            json_resp = json.loads(clean_resp)
-            if json_resp.get('data') is not None:
-                return json_resp.get('data')
-            else:
-                return json_resp
-        except Exception as e:
-            self.clnt.log.warning('error parsing response data: ',str(e))
-            return resp
+    def get_server_status(self):
+        """
+        Get server status
 
-    @staticmethod
-    def slugify(string):
-        return string.lower().replace(' ', '_')
-
-    def response_data(self, resp):
-        if isinstance(resp, dict):
-            return resp
-        try:
-            clean_resp = resp.decode('utf-8')
-            json_resp = json.loads(clean_resp)
-            return json_resp
-        except Exception as e:
-            self.clnt.log.warning('error parsing response data')
-            return resp
-
-    def get_handle_response(self, url):
-        r = self.clnt.get(url)
-        return self.get_response_data(r)
-
-    def post_handle_response(self, url, data=None):
-        r = self.clnt.post(url, data=data)
-        return self.response_data(r)
-
-    def del_handle_response(self, url):
-        r = self.clnt.delete(url)
-        return self.response_data(r)
-
-    def put_handle_response(self, url, data=None):
-        r = self.clnt.put(url, data=data)
-        return self.response_data(r)
-
-    def get_status(self):
-        """Get server status"""
-        return self.get_handle_response('/status')
+        Returns:
+            dict: server status details
+        """
+        return self.clnt.get('/status')
 
     def list_node_templates(self):
-        """List details for each node template"""
-        return self.get_handle_response('/list/templates/')
+        """
+        List details for all node template
+
+        Returns:
+            dict: dictionary of node templates
+
+        example:
+            {
+                'a10': 'A10 vThunder.missing',
+                'acs': 'Cisco ACS.missing',
+                'alteon': 'Radware AlteonVA.missing',
+                'ampcloud': 'Cisco AMP Cloud.missing',
+            }
+        """
+        return self.clnt.get('/list/templates/')
 
     def node_template_detail(self, node_type):
         """
@@ -87,41 +60,40 @@ class EvengApi:
             node_type (str): type of node
 
         """
-        data = self.get_handle_response(f'/list/templates/{node_type}')
-        if data:
-            return data.get("options")
-        return
+        return self.clnt.get(f'/list/templates/{node_type}')
 
     def list_users(self):
-        """get list of users"""
-        return self.get_handle_response('/users/')
+        """
+        get list of users
+
+        Returns:
+            dict: returns dictionary containing user details
+        """
+        return self.clnt.get('/users/')
 
     def list_user_roles(self):
-        """list user roles"""
-        return self.get_handle_response('/list/roles')
+        """
+        list user roles
+        """
+        return self.clnt.get('/list/roles')
 
     def get_user(self, username):
         """
-        get user details
-        """
-        user = None
-        if username:
-            try:
-                user = self.get_handle_response(f"/users/{username}")
-            except Exception as e:
-                if 'User not found' in str(e):
-                    user = None
-                else:
-                    raise(e)
-        return user
+        get user details. Returns empty dictionary if the user does
+        not exist.
 
-    def get_user_auth(self, username):
-        endpoint = '/auth'
-        pass
+        Args:
+            username (str): username to retrieve
+
+        Returns:
+            dict: user details
+        """
+        user = self.clnt.get(f"/users/{username}")
+        return user or {}
 
     def add_user(self,
-                username='',
-                password='',
+                username,
+                password,
                 role='user',
                 name='',
                 email='',
@@ -136,7 +108,7 @@ class EvengApi:
             name(str): a description for the user, usually salutation;
             password (string): the user password used to login;
             role(string): choices are ['user', 'admin']
-            username (str): a unique alphanumeric string used to login;
+            username (str): a unique alphanumeric string used to login
 
         Returns:
             Dictionary with user data
@@ -159,7 +131,7 @@ class EvengApi:
                 }
                 self.clnt.log.debug('creating new user {}'.format(username))
                 data = json.dumps(user)
-                return self.post_handle_response('/users', data=data)
+                return self.clnt.post('/users', data=data)
             else:
                 raise EvengApiError('User already exists')
         return
@@ -196,28 +168,41 @@ class EvengApi:
             raise EvengApiError('User does not exists')
 
     def list_networks(self):
-        """List network types"""
-        return self.get_handle_response('/list/networks')
+        """
+        List network types
 
-    def list_folders(self):
-        """List folders for user"""
-        return self.get_handle_response(f"/folders/")
+        Returns:
+            dict: dictionary of networks
+        """
+        return self.clnt.get('/list/networks')
 
-    def add_folder(self, name):
-        """Add a new folder for user account"""
-        slug = self.slugify(name)
-        data = {"path": f"/{slug}", "name": slug}
-        return self.post_handle_response("/folders", data=json.dumps(data))
+    # def list_folders(self):
+    #     """
+    #     List folders for user
+    #     """
+    #     return self.clnt.get(f"/folders/")
 
-    def move_folder(self, old_path, new_path):
-        """Move/rename an existent folder"""
-        data = {'path': new_path}
-        endpoint = f"/folders/{old_path}"
-        return self.put_handle_response(endpoint, data=json.dumps(data))
+    # def add_folder(self, name):
+    #     """
+    #     Add a new folder for user account
+    #     """
+    #     slug = self.slugify(name)
+    #     data = {"path": f"/{slug}", "name": slug}
+    #     return self.clnt.get("/folders", data=json.dumps(data))
 
-    def delete_folder(self, path):
-        """Delete an existing folder"""
-        return self.del_handle_response(f"/folders/{path}")
+    # def move_folder(self, old_path, new_path):
+    #     """
+    #     Move/rename an existent folder
+    #     """
+    #     data = {'path': new_path}
+    #     endpoint = f"/folders/{old_path}"
+    #     return self.put_handle_response(endpoint, data=json.dumps(data))
+
+    # def delete_folder(self, path):
+    #     """
+    #     Delete an existing folder
+    #     """
+    #     return self.del_handle_response(f"/folders/{path}")
 
     @staticmethod
     def normalize_path(path):
@@ -228,213 +213,136 @@ class EvengApi:
         return normpath
 
     def get_lab(self, path):
-        """get details for a single lab
+        """
+        get details for a single lab. Returns empty dict
+        if lab does not exist.
 
-           example response:
-            {
-                 "code": 200,
-                 "data": {
-                     "author": "User1 Lastname",
-                     "body": "",
-                     "description": "A new test lab.",
-                     "filename": "Lab 1.unl",
-                     "id": "d34628dd-cc1d-4e52-8f91-4a0673985d87",
-                     "name": "Lab 1",
-                     "version": "1"
-                 },
-                 "message": "Lab has been loaded (60020).",
-                 "status": "success"
-            }
+        Args:
+            path (str): the path of the lab
+
+        Returns:
+            dict: dictionary with lab details
         """
         normpath = self.normalize_path(path)
         if not normpath.endswith(".unl"):
             normpath = normpath + ".unl"
         url = "/labs/" + normpath
-        print(url)
-        return self.get_handle_response(url)
+        lab_details = self.clnt.get(url)
+        return lab_details or {}
 
     def list_lab_networks(self, path):
-        """ Get one or all networks configured in a lab
-            {
-                "code": 200,
-                "data": {
-                    "1": {
-                        "id": 1,
-                        "left": 409,
-                        "name": "Net OVS",
-                        "top": 345,
-                        "type": "ovs"
-                    },
-                    "2": {
-                        "id": 2,
-                        "left": 583,
-                        "name": "Net2",
-                        "top": 261,
-                        "type": "bridge"
-                    },
-                    "3": {
-                        "id": 3,
-                        "left": 256,
-                        "name": "Net3",
-                        "top": 276,
-                        "type": "bridge"
-                    }
-                },
-                "message": "Successfully listed networks (60004).",
-                "status": "success"
-            }
+        """
+        Get one or all networks configured in a lab
+
+        Args:
+            path (str): the path to the lab
+
+        Returns:
+            dict: dictionary with configured networks
         """
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + "/networks"
-        return self.get_handle_response(url)
+        lab_networks = self.clnt.get(url)
+        return lab_networks or {}
 
     def get_lab_network(self, path, net_id):
-        """retrieve details for a single network in a lab
-            sample output:
-                {
-                    "code": 200,
-                    "data": {
-                        "left": 409,
-                        "name": "Net OVS",
-                        "top": 345,
-                        "type": "ovs"
-                    },
-                    "message": "Successfully listed network (60005).",
-                    "status": "success"
-                }
+        """
+        retrieve details for a single network in a lab
+
+        Args:
+            path (str): the path to the lab
+            net_id (str): unique id for the lab
+
+        Returns:
+            dict: dictionary with network details
         """
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + f"/networks/{net_id}"
-        return self.get_handle_response(url)
+        network = self.clnt.get(url)
+        return network or {}
 
     def get_lab_network_by_name(self, path, name):
+        """
+        retrieve details for a single network using the
+        lab name
+
+        Args:
+            path (str): the path to the lab
+            net_id (str): unique id for the lab
+
+        Returns:
+            dict: dictionary with network details
+        """
         networks  = self.list_lab_networks(path)
+
+        found = {}
         if networks:
             try:
                 found = next(v for k,v in networks.items() if v['name'] == name)
                 return found
             except StopIteration:
-                return None
-        return
+                self.clnt.log.warning(f'Lab {name} not found')
+        return found
 
     def list_lab_links(self, path):
-        """Get all remote endpoint for both ethernet and serial interfaces
-            {
-                "code": 200,
-                "data": {
-                    "ethernet": {
-                        "1": "Net OVS",
-                        "2": "Net2",
-                        "3": "Net3",
-                        "4": "Net4",
-                        "5": "Net5"
-                    },
-                    "serial": {
-                        "3": {
-                            "1": "R3 s1/0",
-                            "17": "R3 s1/1",
-                            "33": "R3 s1/2",
-                            "49": "R3 s1/3"
-                        },
-                        "4": {
-                            "1": "R4 s1/0",
-                            "17": "R4 s1/1",
-                            "33": "R4 s1/2",
-                            "49": "R4 s1/3"
-                        }
-                    }
-                },
-                "message": "Fetced all lab networks and serial endpoints (60024).",
-                "status": "success"
-            }
+        """
+        Get all remote endpoint for both ethernet and serial interfaces
+
+        Args:
+            path (str): the path to the lab
+
+        Returns:
+            dict: dictionary with lab links
         """
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + f"/links"
-        return self.get_handle_response(url)
+        links =  self.clnt.get(url)
+        return links or {}
 
     def list_lab_nodes(self, path):
-        """List all nodes in the lab
-        {
-            "code": 200,
-            "data": {
-                "1": {
-                    "console": "telnet",
-                    "cpu": 1,
-                    "delay": 0,
-                    "ethernet": 4,
-                    "icon": "Router.png",
-                    "id": 1,
-                    "image": "vios-adventerprisek9-m-15.4-1.3.0.181",
-                    "left": 358,
-                    "name": "R1",
-                    "ram": 512,
-                    "status": 0,
-                    "template": "vios",
-                    "top": 330,
-                    "type": "qemu",
-                    "url": "telnet://127.0.0.1:32769",
-                    "uuid": "ab60e9de-2599-4b67-919a-b769fb6e270d"
-                },
-                "2": {
-                    "console": "telnet",
-                    "cpu": 1,
-                    "delay": 0,
-                    "ethernet": 4,
-                    "icon": "Router.png",
-                    "id": 2,
-                    "image": "vios-adventerprisek9-m-15.4-1.3.0.181",
-                    "left": 501,
-                    "name": "R2",
-                    "ram": 512,
-                    "status": 0,
-                    "template": "vios",
-                    "top": 330,
-                    "type": "qemu",
-                    "url": "telnet://127.0.0.1:32770",
-                    "uuid": "206323a6-000b-40bc-a765-9c7e7e5751ee"
-                }
-            },
-            "message": "Successfully listed nodes (60026).",
-            "status": "success"
-        }
+        """
+        List all nodes in the lab
+
+        Args:
+            path (str): the path to the lab
+
+        Returns:
+            dict: dictionary with all lab node details
         """
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + f"/nodes"
-        return self.get_handle_response(url)
+        nodes = self.clnt.get(url)
+        return nodes or {}
 
     def get_lab_node(self, path, node_id):
-        """retrieve single node from lab
+        """
+        Retrieve single node from lab by ID
 
-          sample output:
-            {
-                "code": 200,
-                "data": {
-                    "config": "Unconfigured",
-                    "console": "telnet",
-                    "cpu": 1,
-                    "delay": 0,
-                    "ethernet": 4,
-                    "icon": "Router.png",
-                    "image": "vios-adventerprisek9-m-15.4-1.3.0.181",
-                    "left": 358,
-                    "name": "R1",
-                    "ram": 512,
-                    "status": 0,
-                    "template": "vios",
-                    "top": 330,
-                    "type": "qemu",
-                    "url": "telnet://127.0.0.1:32769",
-                    "uuid": "ab60e9de-2599-4b67-919a-b769fb6e270d"
-                },
-                "message": "Successfully listed node (60025).",
-                "status": "success"
-            }
+        Args:
+            path (str): the path to the lab
+            node_id (str): unique ID assigned to node
+
+        Returns:
+            dict: dictionary with single lab node details
+
         """
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + f"/nodes/{node_id}"
-        return self.get_handle_response(url)
+        node =  self.clnt.get(url)
+        return node
 
     def get_lab_node_by_name(self, path, name):
+        """
+        Retrieve single node from lab by name
+
+        Args:
+            path (str): the path to the lab
+            name (str): node name
+
+        Returns:
+            dict: dictionary with single lab node details
+
+        """
         nodes  = self.list_lab_nodes(path)
         if nodes:
             try:
@@ -454,7 +362,14 @@ class EvengApi:
         except StopIteration:
             return None
 
-    def connect_node(self, lab, src="", src_intf="", dst="", dst_intf="", dst_type="network", media_type=""):
+    def connect_node(self,
+                     lab,
+                     src="",
+                     src_intf="",
+                     dst="",
+                     dst_intf="",
+                     dst_type="network",
+                     media_type=""):
         r = None
         dest_types = ["network", "node"]
         if dst_type not in dest_types:
@@ -468,7 +383,8 @@ class EvengApi:
         return r
 
     def connect_p2p_interface(self, lab, node_id, interface, net_id):
-        """ Connect node interface to a network
+        """
+        Connect node interface to a network
         """
         normpath = self.normalize_path(lab)
         url = "/labs/" + normpath + f"/nodes/{node_id}/interfaces"
@@ -555,23 +471,30 @@ class EvengApi:
         return
 
     def start_all_nodes(self, path):
-        """ Start one or all nodes configured in a lab
+        """
+        Start one or all nodes configured in a lab
 
-            sample output:
-                {
-                    "code": 400,
-                    "message": "Failed to start node (12).",
-                    "status": "fail"
-                }
+        Args:
+            path (str): the path to the lab
+
+        Returns:
+            dict: dictionary with operation results
         """
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + f"/nodes/start"
         return self.get_handle_response(url)
 
     def stop_all_nodes(self, path):
-        """ Stop one or all nodes configured in a lab
+        """
+        Stop one or all nodes configured in a lab
 
-          sample output:
+        Args:
+            path (str): the path to the lab
+
+        Returns:
+            dict: dictionary with operation results
+
+        sample output:
             {
                 "code": 200,
                 "message": "Nodes stopped (80050).",
@@ -1063,3 +986,34 @@ class EvengApi:
             "ethernet": int(ethernet),
         }
         return self.post_handle_response(url, data=json.dumps(data))
+
+    @staticmethod
+    def slugify(string):
+        return string.lower().replace(' ', '_')
+
+    # def response_data(self, resp):
+    #     if isinstance(resp, dict):
+    #         return resp
+    #     try:
+    #         clean_resp = resp.decode('utf-8')
+    #         json_resp = json.loads(clean_resp)
+    #         return json_resp
+    #     except Exception as e:
+    #         self.clnt.log.warning('error parsing response data')
+    #         return resp
+
+    # def get_handle_response(self, url):
+    #     r = self.clnt.get(url)
+    #     return self.get_response_data(r)
+
+    # def post_handle_response(self, url, data=None):
+    #     r = self.clnt.post(url, data=data)
+    #     return self.response_data(r)
+
+    # def del_handle_response(self, url):
+    #     r = self.clnt.delete(url)
+    #     return self.response_data(r)
+
+    # def put_handle_response(self, url, data=None):
+    #     r = self.clnt.put(url, data=data)
+    #     return self.response_data(r)

@@ -30,9 +30,141 @@ def client():
 class TestEvengApi:
     ''' Test cases '''
 
-    def test_api_get_status(self, client):
+    def test_api_get_get_server_status(self, client):
         """
         Verify server status using the API
         """
-        r = client.api.get_status()
-        assert r.get('data') is not None
+        status = client.api.get_server_status()
+        assert status.get('cpu') is not None
+
+    def test_list_node_templates(self, client):
+        """
+        Verify we can list node templates from API
+        """
+        templates = client.api.list_node_templates()
+        assert isinstance(templates, dict)
+
+    def test_node_template_detail(self, client):
+        """
+        Verify that we get retrieve the details of a node template
+        """
+        node_types = ['a10']
+        for n_type in node_types:
+            detail = client.api.node_template_detail(n_type)
+            assert isinstance(detail, dict)
+
+    def test_list_users(self, client):
+        """
+        Verify that we can retrieve list of users and that
+        the default 'admin' user  exists.
+        """
+        users = client.api.list_users()
+        assert 'admin' in users
+
+    def test_list_user_roles(self, client):
+        """
+        Verify that we can retrieve list of user roles
+        """
+        roles = client.api.list_user_roles()
+        assert 'admin' in roles
+
+    def test_get_user(self, client):
+        """
+        Verify that we can retrieve a single user detail
+        """
+        user_details = client.api.get_user('admin')
+        assert 'email' in user_details
+
+    def test_get_non_existing_user(self, client):
+        """
+        Verify that the api returns an empty dictionary
+        if the user does not exist
+        """
+        user_details = client.api.get_user('fakeuser')
+        assert user_details == {}
+
+    def test_add_user(self, client):
+        """
+        Verify that we can created a user with just
+        the username and password
+        """
+        username = 'tester2'
+        password = 'tester2_pass'
+        result = client.api.add_user(username, password)
+        assert result['status'] == "success"
+
+    def test_add_existing_user(self, client):
+        """
+        Verify that adding an existing user raises
+        an exception
+        """
+        username = 'tester2'
+        password = 'tester2_pass'
+        with pytest.raises(EvengApiError):
+            result = client.api.add_user(username, password)
+
+    def test_edit_user(self, client):
+        pass
+
+    def test_edit_non_existing_user(self, client):
+        pass
+
+    def test_delete_user(self, client):
+        pass
+
+    def test_delete_non_existing_user(self, client):
+        pass
+
+    def test_list_networks(self, client):
+        """
+        Verify that we can retrieve EVE-NG networks. The
+        data returned is a dictionary that includes
+        network types and instances.
+        """
+        networks = client.api.list_networks()
+        assert networks['bridge'] is not None
+
+    def test_get_existing_lab(self, client):
+        """
+        Verify that we can get details for an existing lab.
+        The 'id' key in the return value should not be None.
+        """
+        lab_details = client.api.get_lab(LAB_PATH)
+        assert lab_details['id'] is not None
+
+    def test_get_non_existing_lab(self, client):
+        """
+        Verify that retrieving a non existing lab
+        returns and empty dict.
+        """
+        lab_details = client.api.get_lab('FAKE_LAB_PATH')
+        assert lab_details  == {}
+
+    def test_list_lab_networks(self, client):
+        """
+        Verify that we can list lab networks.
+        """
+        networks = client.api.list_lab_networks(LAB_PATH)
+        assert isinstance(networks, dict)
+
+    def test_get_lab_network(self, client):
+        """
+        Verify that we can retrieve a specific lab by id
+        """
+        network_details = client.api.get_lab_network(LAB_PATH, '1')
+        assert network_details['type'] is not None
+
+    def test_get_lab_network_by_name(self, client):
+        pass
+
+    def test_list_lab_links(self, client):
+        pass
+
+    def test_list_lab_nodes(self, client):
+        pass
+
+    def test_get_lab_node(self, client):
+        pass
+
+    def test_get_lab_node_by_name(self, client):
+        pass
