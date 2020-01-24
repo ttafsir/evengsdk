@@ -228,5 +228,25 @@ class TestEvengApi:
         assert node['name'] == TEST_NODE
 
     def test_get_node_configs(self, client):
+        """
+        Verify that we can retrieve information about the
+        node configs
+        """
         config_info = client.api.get_node_configs(LAB_PATH)
         assert config_info
+
+    def test_get_node_config_by_id(self, client):
+        """
+        Verify that we can retrieve configuration data
+        using a specific config ID
+        """
+        config = client.api.get_node_config_by_id(LAB_PATH, '1')
+        assert config['data'] is not None
+
+    def test_get_node_config_by_name(self, client):
+        """
+        Verify that we can retrieve configuration data
+        using a node name
+        """
+        config = client.api.get_node_config_by_name(LAB_PATH, TEST_NODE)
+        assert config['name'] == TEST_NODE

@@ -383,6 +383,50 @@ class EvengApi:
         config_data =  self.clnt.get(url)
         return config_data or {}
 
+    def get_node_config_by_id(self, path, config_id):
+        """
+        Return information about a specific node given
+        the configuration ID
+
+        Args:
+            path (str): the path to the lab
+            config_id (str): unique ID for the config to retrieve
+
+        Returns:
+            dict: configuration data
+        """
+        normpath = self.normalize_path(path)
+        url = "/labs/" + normpath + f"/configs/{config_id}"
+        config_data = self.clnt.get(url)
+        return config_data or {}
+
+    def get_node_config_by_name(self, path, node_name):
+        """
+        Return information about a specific node given
+        the configuration ID
+
+        Args:
+            path (str): the path to the lab
+            node_name (str): node name to retrieve configuration for
+
+        Returns:
+            dict: configuration data
+        """
+        configs = self.get_node_configs(path)
+        normpath = self.normalize_path(path)
+        url = "/labs/" + normpath + f"/configs/"
+
+        data = {}
+        try:
+            found_id = next(k for k,v in configs.items() if v['name'] == node_name)
+            if found_id:
+                data = self.get_node_config_by_id(path, found_id)
+                print(data)
+            return data
+        except StopIteration:
+            self.clnt.log.warning(f'no configuration for {node_name} found')
+        return data
+
     @staticmethod
     def find_node_interface(name, intf_list):
         interfaces = list(intf_list)
@@ -536,7 +580,8 @@ class EvengApi:
         return self.get_handle_response(url)
 
     def start_node(self, path, node_id):
-        """ start single node in a lab
+        """
+        start single node in a lab
         {
             "code": 200,
             "message": "Node started (80049).",
@@ -548,7 +593,8 @@ class EvengApi:
         return self.get_handle_response(url)
 
     def stop_node(self, path, node_id):
-        """Stop single node in a lab
+        """
+        Stop single node in a lab
 
           sample output:
             {
