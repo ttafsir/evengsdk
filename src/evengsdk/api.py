@@ -151,21 +151,31 @@ class EvengApi:
         user = self.get_user(username)
 
         updated_user = {}
+
         if user and data:
             updated_user = copy.deepcopy(user)
             updated_user.update(data)
-            r = self.clnt.put(url, data=json.dumps(updated_user))
-            return r
+            response = self.clnt.put(url, data=json.dumps(updated_user))
+            return response
         else:
             raise EvengApiError('User Does not exist')
 
     def delete_user(self, username):
         """
         Delete EVE-NG user
+
+        Args:
+            username (str): username to delete
+
+        Returns:
+            dict: dictionary with the status of the DELETE operation
+                  sample output:
+                   {'code': 201, 'status': 'success', 'message': 'User saved (60042).'}
         """
         existing = self.get_user(username)
         if existing:
-            return self.del_handle_response(f'/users/{username}')
+            response = self.clnt.delete(f'/users/{username}')
+            return response
         else:
             raise EvengApiError('User does not exists')
 
@@ -176,7 +186,8 @@ class EvengApi:
         Returns:
             dict: dictionary of networks
         """
-        return self.clnt.get('/list/networks')
+        networks = self.clnt.get('/list/networks')
+        return networks or {}
 
     # def list_folders(self):
     #     """
@@ -276,6 +287,7 @@ class EvengApi:
             dict: dictionary with network details
         """
         networks  = self.list_lab_networks(path)
+        print(networks)
 
         found = {}
         if networks:

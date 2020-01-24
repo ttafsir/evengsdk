@@ -16,7 +16,11 @@ DEVICE_UNDER_TEST = {
     'username': 'admin',
     'password': 'eve'
 }
-
+USERS = {
+    'to_create': [('tester1', 'test1_pass'), ('tester2', 'test2_pass')],
+    'non_existing': 'fake_user99'
+}
+TEST_NETWORK = 'ATC-vCloud'
 
 @pytest.fixture()
 def client():
@@ -80,7 +84,8 @@ class TestEvengApi:
         Verify that the api returns an empty dictionary
         if the user does not exist
         """
-        user_details = client.api.get_user('fakeuser')
+        user = USERS['non_existing']
+        user_details = client.api.get_user(user)
         assert user_details == {}
 
     def test_add_user(self, client):
@@ -88,22 +93,38 @@ class TestEvengApi:
         Verify that we can created a user with just
         the username and password
         """
-        username = 'tester2'
-        password = 'tester2_pass'
-        result = client.api.add_user(username, password)
-        assert result['status'] == "success"
+        for username, password in (user for user in USERS['to_create']):
+            result = client.api.add_user(username, password)
+            assert result['status'] == "success"
 
     def test_add_existing_user(self, client):
         """
         Verify that adding an existing user raises
         an exception
         """
-        username = 'tester2'
-        password = 'tester2_pass'
-        with pytest.raises(EvengApiError):
-            result = client.api.add_user(username, password)
+        for username, password in (user for user in USERS['to_create']):
+            with pytest.raises(EvengApiError):
+                result = client.api.add_user(username, password)
 
     def test_edit_existing_user(self, client):
+        """
+        Verify that we can edit existing user
+        """
+        new_data = {
+            'email': 'test1@testing.com',
+            'name': 'John Doe'
+        }
+        user = USERS['to_create'][0]
+        # edit user
+        client.api.edit_user(user[0], data=new_data)
+
+        # retrieve updates
+        updated_user = client.api.get_user(user[0])
+
+        # ensure new data was PUT successfully
+        assert updated_user['email'] == new_data['email']
+
+    def test_edit_non_existing_user(self, client):
         """
         Verify that we can edit existing user
         """
@@ -111,18 +132,27 @@ class TestEvengApi:
             'email': 'test@testing.com',
             'name': 'John Doe'
         }
-        username = 'tester2'
-        result = client.api.edit_user(username, data=new_data)
-        assert result['status'] == 'success'
+        username = USERS['non_existing']
+        with pytest.raises(EvengApiError):
+            result = client.api.edit_user(username, data=new_data)
 
-    def test_edit_non_existing_user(self, client):
-        pass
 
     def test_delete_user(self, client):
-        pass
+        """
+        Verify that we can delete users
+        """
+        for username, _ in (user for user in USERS['to_create']):
+            client.api.delete_user(username)
+            user = client.api.get_user(username)
+            assert user == {}
 
     def test_delete_non_existing_user(self, client):
-        pass
+        """
+        Verify that deleting non_existing users
+        raises an exception.
+        """
+        with pytest.raises(EvengApiError):
+            client.api.delete_user(USERS['non_existing'])
 
     def test_list_networks(self, client):
         """
@@ -164,7 +194,11 @@ class TestEvengApi:
         assert network_details['type'] is not None
 
     def test_get_lab_network_by_name(self, client):
-        pass
+        """
+        Verify that we can retrieve a specific lab by name
+        """
+        network_details = client.api.get_lab_network_by_name(LAB_PATH, TEST_NETWORK)
+        assert network_details['type'] is not None
 
     def test_list_lab_links(self, client):
         pass
