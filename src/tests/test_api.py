@@ -21,6 +21,7 @@ USERS = {
     'non_existing': 'fake_user99'
 }
 TEST_NETWORK = 'ATC-vCloud'
+TEST_NODE = 'vEOS4'
 
 @pytest.fixture()
 def client():
@@ -126,7 +127,8 @@ class TestEvengApi:
 
     def test_edit_non_existing_user(self, client):
         """
-        Verify that we can edit existing user
+        Verify that editing non existing users raises
+        an exception.
         """
         new_data = {
             'email': 'test@testing.com',
@@ -135,7 +137,6 @@ class TestEvengApi:
         username = USERS['non_existing']
         with pytest.raises(EvengApiError):
             result = client.api.edit_user(username, data=new_data)
-
 
     def test_delete_user(self, client):
         """
@@ -203,11 +204,29 @@ class TestEvengApi:
     def test_list_lab_links(self, client):
         pass
 
-    def test_list_lab_nodes(self, client):
-        pass
+    def test_list_nodes(self, client):
+        """
+        Verify that we can retrieve all node details
+        """
+        nodes = client.api.list_nodes(LAB_PATH)
+        assert nodes is not None and nodes
 
-    def test_get_lab_node(self, client):
-        pass
+    def test_get_node(self, client):
+        """
+        Verify that we can details for a single node by ID
+        """
+        # get with node with ID == 1
+        node = client.api.get_node(LAB_PATH, '1')
+        assert node['type'] is not None
 
-    def test_get_lab_node_by_name(self, client):
-        pass
+    def test_get_node_by_name(self, client):
+        """
+        Verify that we can details for a single node by node name
+        """
+        # get with node with name == TEST_NODE
+        node = client.api.get_node_by_name(LAB_PATH, TEST_NODE)
+        assert node['name'] == TEST_NODE
+
+    def test_get_node_configs(self, client):
+        config_info = client.api.get_node_configs(LAB_PATH)
+        assert config_info

@@ -313,7 +313,7 @@ class EvengApi:
         links =  self.clnt.get(url)
         return links or {}
 
-    def list_lab_nodes(self, path):
+    def list_nodes(self, path):
         """
         List all nodes in the lab
 
@@ -328,7 +328,7 @@ class EvengApi:
         nodes = self.clnt.get(url)
         return nodes or {}
 
-    def get_lab_node(self, path, node_id):
+    def get_node(self, path, node_id):
         """
         Retrieve single node from lab by ID
 
@@ -343,9 +343,9 @@ class EvengApi:
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + f"/nodes/{node_id}"
         node =  self.clnt.get(url)
-        return node
+        return node or {}
 
-    def get_lab_node_by_name(self, path, name):
+    def get_node_by_name(self, path, name):
         """
         Retrieve single node from lab by name
 
@@ -357,15 +357,31 @@ class EvengApi:
             dict: dictionary with single lab node details
 
         """
-        nodes  = self.list_lab_nodes(path)
+        nodes  = self.list_nodes(path)
+        found = {}
         if nodes:
             try:
-                found = next(v for k,v in nodes.items()
-                               if v['name'] == name)
-                return found
+                found = next(v for k,v in nodes.items() if v['name'] == name)
             except StopIteration:
-                return None
-        return
+                self.clnt.log.warning(f'node {name} not found')
+        else:
+            self.clnt.log.warning(f'0 nodes found in lab')
+        return found
+
+    def get_node_configs(self, path):
+        """
+        Return information about node configs
+
+        Args:
+            path (str): the path to the lab
+
+        Returns:
+            dict:
+        """
+        normpath = self.normalize_path(path)
+        url = "/labs/" + normpath + f"/configs"
+        config_data =  self.clnt.get(url)
+        return config_data or {}
 
     @staticmethod
     def find_node_interface(name, intf_list):
@@ -389,7 +405,7 @@ class EvengApi:
         if dst_type not in dest_types:
             raise ValueError("destination type not in allowed types: {dest_types}")
 
-        print(f"connecting {src} to {dst}")
+        self.clnt.log.debug(f"connecting {src} to {dst}")
         if dst_type == "network":
             r = self.connect_node_to_cloud(lab, src, src_intf, dst, media_type=media_type)
         else:
@@ -407,7 +423,7 @@ class EvengApi:
         data = {intf_id: str(net_id)}
 
         # connect interfaces
-        r1 = self.put_handle_response(url, data=json.dumps(data))
+        r1 = self.clnt.put(url, data=json.dumps(data))
 
         # set visibility for bridge to "0" to hide bridge
         r2 = self.edit_lab_network(lab, net_id, data={"visibility": "0"})
@@ -415,7 +431,7 @@ class EvengApi:
         return r1
 
     def connect_node_to_cloud(self, lab, node_name, node_intf, net_name, media_type="ethernet"):
-        node = self.get_lab_node_by_name(lab, node_name)
+        node = self.get_node_by_name(lab, node_name)
         net = self.get_lab_network_by_name(lab, net_name)
 
         if node and net:
@@ -445,8 +461,8 @@ class EvengApi:
         return
 
     def connect_node_to_node(self, lab, src_node_name, src_node_i, dst_node_name, dst_node_i, media_type="ethernet"):
-        src_node = self.get_lab_node_by_name(lab, src_node_name)
-        dst_node = self.get_lab_node_by_name(lab, dst_node_name)
+        src_node = self.get_node_by_name(lab, src_node_name)
+        dst_node = self.get_node_by_name(lab, dst_node_name)
 
         # Validate hosts
         if not all((src_node,dst_node)):
@@ -932,7 +948,7 @@ class EvengApi:
                 return ValueError(f"network with name/id '{name}' not found")
         return self.del_handle_response(url)
 
-    def add_lab_node(self, path, delay=0, name="", node_type="", template="",
+    def add_node(self, path, delay=0, name="", node_type="", template="",
                      top="", left="", console="telnet", config="Unconfigured",
                      image="", **kwargs):
         """ Add a new node to a lab
