@@ -103,8 +103,17 @@ class TestEvengApi:
         with pytest.raises(EvengApiError):
             result = client.api.add_user(username, password)
 
-    def test_edit_user(self, client):
-        pass
+    def test_edit_existing_user(self, client):
+        """
+        Verify that we can edit existing user
+        """
+        new_data = {
+            'email': 'test@testing.com',
+            'name': 'John Doe'
+        }
+        username = 'tester2'
+        result = client.api.edit_user(username, data=new_data)
+        assert result['status'] == 'success'
 
     def test_edit_non_existing_user(self, client):
         pass

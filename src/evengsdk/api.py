@@ -141,21 +141,23 @@ class EvengApi:
         Edit user details
 
         Args:
-            email(str): the email address of the user;
+            username(str): the user name for user
             data(dict): payload for user details to update
 
+        Returns:
+            dict:
         """
         url = self.clnt.url_prefix + f"/users/{username}"
-        r = None
-
-        existing = self.get_user(username)
+        user = self.get_user(username)
 
         updated_user = {}
-        if existing and data:
-            updated_user = copy.deepcopy(current_user)
+        if user and data:
+            updated_user = copy.deepcopy(user)
             updated_user.update(data)
-            r = self.clnt.put(url, headers=self.clnt.headers, data=json.dumps(updated_user))
-        return self.get_response_data(r)
+            r = self.clnt.put(url, data=json.dumps(updated_user))
+            return r
+        else:
+            raise EvengApiError('User Does not exist')
 
     def delete_user(self, username):
         """

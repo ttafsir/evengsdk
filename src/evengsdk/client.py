@@ -140,8 +140,11 @@ class EvengClient:
         self.log.debug('making {} request'.format(method))
         if self.url_prefix not in url:
             url = self.url_prefix + url
+
+        # craft and send the request
         r_obj = self._send_request(method, url, data=data, verify=self.verify, **kwargs)
 
+        # parse response
         r_data = None
         if r_obj:
             try:
