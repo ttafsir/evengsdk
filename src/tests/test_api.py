@@ -22,6 +22,12 @@ USERS = {
 }
 TEST_NETWORK = 'ATC-vCloud'
 TEST_NODE = 'vEOS4'
+TEST_CONFIG = """
+!
+hostname vEOS4
+!
+"""
+
 
 @pytest.fixture()
 def client():
@@ -250,3 +256,69 @@ class TestEvengApi:
         """
         config = client.api.get_node_config_by_name(LAB_PATH, TEST_NODE)
         assert config['name'] == TEST_NODE
+
+    def test_upload_node_config(self, client):
+        """
+        Upload node's config to set startup config
+        """
+        config = client.api.get_node_config_by_name(LAB_PATH, TEST_NODE)
+        node_id = config.get('id')
+        resp = client.api.upload_node_config(LAB_PATH, node_id, config=TEST_CONFIG)
+        assert resp['status'] == 'success'
+
+    def test_stop_all_nodes(self, client):
+        """
+        Stop all nodes in the lab
+        """
+        result = client.api.stop_all_nodes(LAB_PATH)
+        assert result['status'] == 'success'
+
+    def test_start_all_nodes(self, client):
+        """
+        Start all nodes in the lab
+        """
+        result = client.api.start_all_nodes(LAB_PATH)
+        assert result['status'] == 'success'
+
+    def test_stop_node(self, client):
+        """
+        Stop a single node in the lab
+        """
+        node = client.api.get_node_by_name(LAB_PATH, TEST_NODE)
+        result = client.api.stop_node(LAB_PATH, node['id'])
+        assert result['status'] == 'success'
+
+    def test_start_node(self, client):
+        """
+        Start a single node in the lab
+        """
+        node = client.api.get_node_by_name(LAB_PATH, TEST_NODE)
+        result = client.api.start_node(LAB_PATH, node['id'])
+        assert result['status'] == 'success'
+
+    def test_wipe_all_nodes(self, client):
+        """
+        Wipe all node startup configs and VLAN db
+        """
+        result = client.api.wipe_all_nodes(LAB_PATH)
+        assert result['status'] == 'success'
+
+    def test_wipe_node(self, client):
+        """
+        Wipe node startup configs and VLAN db
+        """
+        node = client.api.get_node_by_name(LAB_PATH, TEST_NODE)
+        result = client.api.wipe_node(LAB_PATH, node['id'])
+        assert result['status'] == 'success'
+
+    # def test_export_all_nodes(self, client):
+    #     result = client.api.export_all_nodes(LAB_PATH)
+    #     assert result['status'] == 'success'
+
+    def test_export_node(self, client):
+        node = client.api.get_node_by_name(LAB_PATH, TEST_NODE)
+        result = client.api.export_node(LAB_PATH, node['id'])
+        assert result['status'] == 'success'
+
+    def test_get_node_interfaces(self, client):
+        pass

@@ -427,6 +427,34 @@ class EvengApi:
             self.clnt.log.warning(f'no configuration for {node_name} found')
         return data
 
+    def upload_node_config(self, path, node_id, config=None):
+        """
+        Upload node's startup config.
+
+        Args:
+            path (str): the path to the lab
+            node_id (str): node name to upload configuration for
+            config (str): the configuration to upload
+
+        Returns:
+            dict: operation result
+                  sample: {
+                    'code': 201,
+                    'message': 'Lab has been saved (60023).',
+                    'status': 'success'
+                    }
+        """
+        current_cfg = self.get_node_config_by_id(path, node_id)
+
+        normpath = self.normalize_path(path)
+        url = f"/labs/{normpath}/configs/{node_id}"
+        payload = {
+            "id": node_id,
+            "data": config
+        }
+        resp = self.clnt.put(url, data=json.dumps(payload))
+        return resp
+
     @staticmethod
     def find_node_interface(name, intf_list):
         interfaces = list(intf_list)
@@ -556,7 +584,7 @@ class EvengApi:
         """
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + f"/nodes/start"
-        return self.get_handle_response(url)
+        return self.clnt.get(url)
 
     def stop_all_nodes(self, path):
         """
@@ -576,37 +604,48 @@ class EvengApi:
             }
         """
         normpath = self.normalize_path(path)
-        url = "/labs/" + normpath + f"/nodes/stop"
-        return self.get_handle_response(url)
+        url = f"/labs/{normpath}/nodes/stop"
+        return self.clnt.get(url)
 
     def start_node(self, path, node_id):
         """
         start single node in a lab
-        {
-            "code": 200,
-            "message": "Node started (80049).",
-            "status": "success"
-        }
+
+        Args:
+            path (str): the path to the lab
+            node_id (str): ID for node to start
+
+        Returns:
+            dict: dictionary with operation results
+                  sample: {
+                        "code": 200,
+                        "message": "Node started (80049).",
+                        "status": "success"
+                    }
         """
         normpath = self.normalize_path(path)
-        url = "/labs/" + normpath + f"/nodes/{node_id}/start"
-        return self.get_handle_response(url)
+        url = f"/labs/{normpath}/nodes/{node_id}/start"
+        return self.clnt.get(url)
 
     def stop_node(self, path, node_id):
         """
         Stop single node in a lab
 
-          sample output:
-            {
-                "code": 200,
-                "message": "Node stopped (80051).",
-                "status": "success"
-            }
+        Args:
+            path (str): the path to the lab
+            node_id (str): ID for node to start
 
+        Returns:
+            dict: dictionary with operation results
+                  sample: {
+                    "code": 200,
+                    "message": "Node stopped (80051).",
+                    "status": "success"
+                }
         """
         normpath = self.normalize_path(path)
-        url = "/labs/" + normpath + f"/nodes/{node_id}/stop"
-        return self.get_handle_response(url)
+        url = f"/labs/{normpath}/nodes/{node_id}/stop"
+        return self.clnt.get(url)
 
     def wipe_all_nodes(self, path):
         """
@@ -614,16 +653,20 @@ class EvengApi:
         all user config, included startup-config, VLANs, and so on. The
         next start will rebuild node from selected image.
 
-           sample output:
-            {
-                "code": 200,
-                "message": "Nodes cleared (80052).",
-                "status": "success"
-            }
+        Args:
+            path (str): the path to the lab
+
+        Returns:
+            dict: dictionary with operation results
+                  sample: {
+                    "code": 200,
+                    "message": "Nodes cleared (80052).",
+                    "status": "success"
+                  }
         """
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + f"/nodes/wipe"
-        return self.get_handle_response(url)
+        return self.clnt.get(url)
 
     def wipe_node(self, path, node_id):
         """
@@ -631,49 +674,64 @@ class EvengApi:
         all user config, included startup-config, VLANs, and so on. The
         next start will rebuild node from selected image.
 
-        sample output:
+        Args:
+            path (str): the path to the lab
+            node_id (str): ID for node to wipe
 
-            {
-                "code": 200,
-                "message": "Node cleared (80053).",
-                "status": "success"
-            }
+        Returns:
+            dict: {
+                    "code": 200,
+                    "message": "Node cleared (80053).",
+                    "status": "success"
+                }
         """
         normpath = self.normalize_path(path)
-        url = "/labs/" + normpath + f"/nodes/{node_id}/wipe"
-        return self.get_handle_response(url)
+        url = f"/labs/{normpath}/nodes/{node_id}/wipe"
+        return self.clnt.get(url)
 
     def export_all_nodes(self, path):
         """
-        Export one or all nodes configured in a lab. Exporting means saving
-        the startup-config into the lab file.
+        Export one or all nodes configured in a lab.
+        Exporting means saving the startup-config into
+        the lab file.
 
-        sample output:
-            {
-                "code": 200,
-                "message": "Nodes exported (80057).",
-                "status": "success"
-            }
+        Args:
+            path (str): the path to the lab
+
+        Returns:
+            dict: {
+                    "code": 200,
+                    "message": "Nodes exported (80057).",
+                    "status": "success"
+                }
         """
         normpath = self.normalize_path(path)
-        url = "/labs/" + normpath + f"/nodes/export"
-        return self.get_handle_response(url)
+        url = f"/labs/{normpath}/nodes/export"
+        resp = self.clnt.get(url)
+        print(resp)
+        return resp
 
     def export_node(self, path, node_id):
         """
-        Export node configuration. Exporting means saving the startup-config
-        into the lab file.
+        Export node configuration. Exporting means
+        saving the startup-config into the lab file.
 
-        sample output:
-            {
+        Args:
+            path (str): the path to the lab
+            node_id (str): ID for node to export
+
+        Returns:
+            dict: {
                 "code": 200,
                 "message": "Node exported (80058).",
                 "status": "success"
             }
         """
         normpath = self.normalize_path(path)
-        url = "/labs/" + normpath + f"/nodes/{node_id}/export"
-        return self.get_handle_response(url)
+        url = f"/labs/{normpath}/nodes/{node_id}/export"
+        resp = self.clnt.get(url)
+        print(node_id, url, resp)
+        return resp
 
     def get_node_interfaces(self, path, node_id):
         """
@@ -948,13 +1006,10 @@ class EvengApi:
 
 
     def add_lab_network(self, path, network_type="", visibility="0", name="", left="", top="", **kwargs):
-        """Add a new network to a lab
-        {
-            "code": 201,
-            "message": "Network has been added to the lab (60006).",
-            "status": "success"
-        }
-        Parameters:
+        """
+        Add a new network to a lab
+
+        Args:
             left: mergin from left, in percentage (i.e. 35%), default is a
                   random value between 30% and 70%;
             name: network name (i.e. Core Network), default is
@@ -962,6 +1017,14 @@ class EvengApi:
             top:  margin from top, in percentage (i.e. 25%), default is a
                   random value between 30% and 70%;
             type (mandatory): see “List network types”
+
+        Returns:
+            dict: {
+                    "code": 201,
+                    "message": "Network has been added to the lab (60006).",
+                    "status": "success"
+                }
+
         """
         network_type = kwargs.get('network_type') or network_type
         if network_type not in self.network_types:
@@ -1066,30 +1129,3 @@ class EvengApi:
     @staticmethod
     def slugify(string):
         return string.lower().replace(' ', '_')
-
-    # def response_data(self, resp):
-    #     if isinstance(resp, dict):
-    #         return resp
-    #     try:
-    #         clean_resp = resp.decode('utf-8')
-    #         json_resp = json.loads(clean_resp)
-    #         return json_resp
-    #     except Exception as e:
-    #         self.clnt.log.warning('error parsing response data')
-    #         return resp
-
-    # def get_handle_response(self, url):
-    #     r = self.clnt.get(url)
-    #     return self.get_response_data(r)
-
-    # def post_handle_response(self, url, data=None):
-    #     r = self.clnt.post(url, data=data)
-    #     return self.response_data(r)
-
-    # def del_handle_response(self, url):
-    #     r = self.clnt.delete(url)
-    #     return self.response_data(r)
-
-    # def put_handle_response(self, url, data=None):
-    #     r = self.clnt.put(url, data=data)
-    #     return self.response_data(r)
