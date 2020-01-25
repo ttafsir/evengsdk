@@ -208,7 +208,13 @@ class TestEvengApi:
         assert network_details['type'] is not None
 
     def test_list_lab_links(self, client):
-        pass
+        """
+        Get all remote endpoints for both ethernet
+        and serial interfaces. Returns dictionary
+        of existing links or empty dictionary.
+        """
+        links = client.api.list_lab_links(LAB_PATH)
+        assert 'links' is not None
 
     def test_list_nodes(self, client):
         """
@@ -311,14 +317,28 @@ class TestEvengApi:
         result = client.api.wipe_node(LAB_PATH, node['id'])
         assert result['status'] == 'success'
 
-    # def test_export_all_nodes(self, client):
-    #     result = client.api.export_all_nodes(LAB_PATH)
-    #     assert result['status'] == 'success'
+    @pytest.mark.xfail
+    def test_export_all_nodes(self, client):
+        """
+        Save all startup configs to lab
+        """
+        result = client.api.export_all_nodes(LAB_PATH)
+        assert result['status'] == 'success'
 
+    @pytest.mark.xfail
     def test_export_node(self, client):
+        """
+        Save node startup-config to lab
+        """
         node = client.api.get_node_by_name(LAB_PATH, TEST_NODE)
         result = client.api.export_node(LAB_PATH, node['id'])
         assert result['status'] == 'success'
 
     def test_get_node_interfaces(self, client):
-        pass
+        """
+        Get configured interfaces from a node
+        """
+        node = client.api.get_node_by_name(LAB_PATH, TEST_NODE)
+        result = client.api.get_node_interfaces(LAB_PATH, node['id'])
+        assert result is not None
+        assert isinstance(result, dict)

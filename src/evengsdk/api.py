@@ -239,7 +239,7 @@ class EvengApi:
         normpath = self.normalize_path(path)
         if not normpath.endswith(".unl"):
             normpath = normpath + ".unl"
-        url = "/labs/" + normpath
+        url = f"/labs/{normpath}"
         lab_details = self.clnt.get(url)
         return lab_details or {}
 
@@ -254,7 +254,7 @@ class EvengApi:
             dict: dictionary with configured networks
         """
         normpath = self.normalize_path(path)
-        url = "/labs/" + normpath + "/networks"
+        url = f"/labs/{normpath}/networks"
         lab_networks = self.clnt.get(url)
         return lab_networks or {}
 
@@ -270,7 +270,7 @@ class EvengApi:
             dict: dictionary with network details
         """
         normpath = self.normalize_path(path)
-        url = "/labs/" + normpath + f"/networks/{net_id}"
+        url = f"/labs/{normpath}/networks/{net_id}"
         network = self.clnt.get(url)
         return network or {}
 
@@ -309,7 +309,7 @@ class EvengApi:
             dict: dictionary with lab links
         """
         normpath = self.normalize_path(path)
-        url = "/labs/" + normpath + f"/links"
+        url = f"/labs/{normpath}/links"
         links =  self.clnt.get(url)
         return links or {}
 
@@ -324,7 +324,7 @@ class EvengApi:
             dict: dictionary with all lab node details
         """
         normpath = self.normalize_path(path)
-        url = "/labs/" + normpath + f"/nodes"
+        url = f"/labs/{normpath}/nodes"
         nodes = self.clnt.get(url)
         return nodes or {}
 
@@ -737,44 +737,53 @@ class EvengApi:
         """
         Get configured interfaces from a node.
 
-        sample output:
-            {
-                "code": 200,
-                "data": {
-                    "ethernet": [
-                        {
-                            "name": "Gi0/0",
-                            "network_id": 1
-                        },
-                        {
-                            "name": "Gi0/1",
-                            "network_id": 3
-                        },
-                        {
-                            "name": "Gi0/2",
-                            "network_id": 5
-                        },
-                        {
-                            "name": "Gi0/3",
-                            "network_id": 0
-                        }
-                    ],
-                    "serial": []
-                },
-                "message": "Successfully listed node interfaces (60030).",
-                "status": "success"
+        Args:
+            path (str): the path to the lab
+            node_id (str): ID for node to export
+
+        Returns:
+            dict: {
+                    "code": 200,
+                    "data": {
+                        "ethernet": [
+                            {
+                                "name": "Gi0/0",
+                                "network_id": 1
+                            },
+                            {
+                                "name": "Gi0/1",
+                                "network_id": 3
+                            },
+                            {
+                                "name": "Gi0/2",
+                                "network_id": 5
+                            },
+                            {
+                                "name": "Gi0/3",
+                                "network_id": 0
+                            }
+                        ],
+                        "serial": []
+                    },
+                    "message": "Successfully listed node interfaces (60030).",
+                    "status": "success"
             }
         """
         normpath = self.normalize_path(path)
-        url = "/labs/" + normpath + f"/nodes/{node_id}/interfaces"
-        return self.get_handle_response(url)
+        url = f"/labs/{normpath}/nodes/{node_id}/interfaces"
+        interfaces = self.clnt.get(url)
+        return interfaces or {}
 
     def get_lab_topology(self, path):
         """
         Get the lab topology
 
-        sample output:
-            {
+        Args:
+            path (str): the path to the lab
+            node_id (str): ID for node to export
+
+        Returns:
+            dict: {
                 "code": "200",
                 "data": [
                     {
@@ -803,15 +812,6 @@ class EvengApi:
                         "source_label": "e0/0",
                         "source_type": "node",
                         "type": "ethernet"
-                    },
-                    {
-                        "destination": "node1",
-                        "destination_label": "Gi0/1",
-                        "destination_type": "node",
-                        "source": "node3",
-                        "source_label": "e0/1",
-                        "source_type": "node",
-                        "type": "ethernet"
                     }
                 ],
                 "message": "Topology loaded",
@@ -819,8 +819,9 @@ class EvengApi:
             }
         """
         normpath = self.normalize_path(path)
-        url = "/labs/" + normpath + f"/topology"
-        return self.get_handle_response(url)
+        url = f"/labs/{normpath}/topology"
+        topology = self.clnt.get(url)
+        return topology or {}
 
     def get_lab_pictures(self, path):
         """
@@ -916,9 +917,10 @@ class EvengApi:
             raise(f"user {username} not found")
 
     def edit_lab(self, path, name="", version="", author="", description="", **kwargs):
-        """ Edit an existing lab. The request can set only one single
-            parameter. Optional parameter can be reverted to the default
-            setting an empty string “”.
+        """
+        Edit an existing lab. The request can set only one single
+        parameter. Optional parameter can be reverted to the default
+        setting an empty string “”.
 
             payload = {
                 "name":"Different Lab",
@@ -991,7 +993,8 @@ class EvengApi:
         return self._get_network_types()
 
     def edit_lab_network(self, path, net_id, data=None):
-        """Edit lab network
+        """
+        Edit lab network
         data = {
             "left": kwargs.get("left") or left,
             "name": kwargs.get("name") or name,
@@ -1061,46 +1064,39 @@ class EvengApi:
                      top="", left="", console="telnet", config="Unconfigured",
                      image="", **kwargs):
         """ Add a new node to a lab
-        sample output:
-            {
-                "code": 201,
-                "message": "Lab has been saved (60023).",
-                "status": "success"
-            }
-        # Parameters:
 
-        # config: can be Unconfigured or Saved, default is Unconfigured;
-        # delay: seconds to wait before starting the node, default is 0;
-        # icon: icon (located under /opt/unetlab/html/images/icons/) used to display the node, default is Router.png;
-        # image: image used to start the node, default is latest included in “List node templates”;
-        # left: mergin from left, in percentage (i.e. 35%), default is a random value between 30% and 70%;
-        # name: node name (i.e. “Core1”), default is NodeX (X = node_id);
-        # ram: MB of RAM configured for the node, default is 1024;
-        # template (mandatory): see “List node templates”;
-        # top: margin from top, in percentage (i.e. 25%), default is a random value between 30% and 70%;
-        # type (mandatory): can be iol, dynamips or qemu.
-        # Parameters for IOL nodes:
+        Args:
 
-        # ethernet: number of ethernet porgroups (each portgroup configures four interfaces), default is 2;
-        # nvram: size of NVRAM in KB, default is 1024;
-        # serial: number of serial porgroups (each portgroup configures four interfaces), default is 2.
+            name (str): node name (i.e. “Core1”), default is NodeX (X = node_id);
+            config (str): can be 'Unconfigured' or 'Saved', default is Unconfigured;
+            delay (int): seconds to wait before starting the node, default is 0;
+            icon (str): filename for icon (located under /opt/unetlab/html/images/icons/) used to display the node, default is Router.png;
+            image: image used to start the node, default is latest included in “List node templates”;
+            left: mergin from left, in percentage (i.e. 35%), default is a random value between 30% and 70%;
+            ram: MB of RAM configured for the node, default is 1024;
+            template (mandatory): see “List node templates”;
+            top: margin from top, in percentage (i.e. 25%), default is a random value between 30% and 70%;
+            type (mandatory): can be iol, dynamips or qemu.
+            Parameters for IOL nodes:
+            ethernet: number of ethernet porgroups (each portgroup configures four interfaces), default is 2;
+            nvram: size of NVRAM in KB, default is 1024;
+            serial: number of serial porgroups (each portgroup configures four interfaces), default is 2.
 
-        # Parameters for Dynamips nodes:
-        # idlepc: value used for Dynamips optimization (i.e. 0x80369ac4), default is 0x0 (no optimization);
-        # nvram: size of NVRAM in KB, default is 1024;
-        # slot[0-9]+: the module configured in a specific slot (i.e. slot1=NM-1FE-TX).
+            # for Dynamips nodes:
+            idlepc: value used for Dynamips optimization (i.e. 0x80369ac4), default is 0x0 (no optimization);
+            nvram: size of NVRAM in KB, default is 1024;
+            slot[0-9]+: the module configured in a specific slot (i.e. slot1=NM-1FE-TX).
 
-        # Parameters for QEMU nodes:
-        # console: can be telnet or vnc, default is telnet;
-        # cpu: number of configured CPU, default is 1;
-        # ethernet: number of ethernet interfaces, default is 4;
-        # uuid: UUID configured, default is a random UUID (i.e. 641a4800-1b19-427c-ae87-4a8ee90b7790).
+            # Parameters for QEMU nodes:
+            console: can be telnet or vnc, default is telnet;
+            cpu: number of configured CPU, default is 1;
+            ethernet: number of ethernet interfaces, default is 4;
+            uuid: UUID configured, default is a random UUID (i.e. 641a4800-1b19-427c-ae87-4a8ee90b7790).
         """
         normpath = self.normalize_path(path)
-        url = "/labs/" + normpath + f"/nodes"
+        url = f"/labs/{normpath}/nodes"
 
         template = kwargs.get("template") or template
-
         node_template_details = self.node_template_detail(template)
 
         icon = kwargs.get("icon") or node_template_details.get("icon")["value"]
@@ -1124,7 +1120,8 @@ class EvengApi:
             "console": kwargs.get("console") or console,
             "ethernet": int(ethernet),
         }
-        return self.post_handle_response(url, data=json.dumps(data))
+        resp = self.clnt.post(url, data=json.dumps(data))
+        return resp or {}
 
     @staticmethod
     def slugify(string):
