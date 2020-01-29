@@ -13,7 +13,6 @@ from evengsdk.api import EvengApi
 
 DISABLE_INSECURE_WARNINGS = True
 
-
 class EvengClient:
 
     def __init__(self, host, log_level='INFO', log_file=None):
@@ -109,7 +108,7 @@ class EvengClient:
                 self.log.debug('logged in as: {}'.format(self.authdata.get('username')))
         except Exception as e:
             self.session = {}
-            self.log.error(f'Error: {error}')
+            return
 
     def logout(self):
         """
@@ -142,23 +141,20 @@ class EvengClient:
             url = self.url_prefix + url
 
         # craft and send the request
-        r_obj = self._send_request(method, url, data=data, verify=self.verify, **kwargs)
+        r = self._send_request(method, url, data=data, verify=self.verify, **kwargs)
+        if  r.status_code in range(200, 300):
+            self.log.debug('retrieving response data'.format(method))
+            r_json = r.json()
+            resp = r_json.get('data') or r_json
+            return None, resp
+        else:
+            # return the errors
+            self.log.error(r.text)
+            return r.text, None
 
-        # parse response
-        r_data = None
-        if r_obj:
-            try:
-                self.log.debug('retrieving response data'.format(method))
-                json_resp = r_obj.json()
-                return json_resp.get('data') or json_resp
-            except Exception as e:
-                msg = f"Error retrieving request data: {str(e)}"
-                self.log.error(msg)
-                raise EvengClientError(msg)
-        return
 
     def _send_request(self, method, url, data=None, **kwargs):
-        resp = None
+        # resp = None
         self.log.debug('sending {} request'.format(method))
         try:
             if method == 'DELETE':
@@ -172,7 +168,7 @@ class EvengClient:
             return resp
 
         except HTTPError as e:
-            raise EvengHTTPError('HTTP error: {0}\n\t{1}'.format(url, str(e)))
+            raise EvengHTTPError('HTTP Error: {0}\n\t{1}'.format(url, str(e)))
 
         except Exception as e:
-            raise EvengClientError(f'Error: {str(e)}')
+            raise e

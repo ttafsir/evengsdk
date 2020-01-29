@@ -101,8 +101,8 @@ class TestEvengApi:
         the username and password
         """
         for username, password in (user for user in USERS['to_create']):
-            result = client.api.add_user(username, password)
-            assert result['status'] == "success"
+            r = client.api.add_user(username, password)
+            assert r.get('status') == 'success'
 
     def test_add_existing_user(self, client):
         """
@@ -117,10 +117,7 @@ class TestEvengApi:
         """
         Verify that we can edit existing user
         """
-        new_data = {
-            'email': 'test1@testing.com',
-            'name': 'John Doe'
-        }
+        new_data = {'email': 'test1@testing.com', 'name': 'John Doe'}
         user = USERS['to_create'][0]
         # edit user
         client.api.edit_user(user[0], data=new_data)
@@ -170,21 +167,6 @@ class TestEvengApi:
         networks = client.api.list_networks()
         assert networks['bridge'] is not None
 
-    def test_get_existing_lab(self, client):
-        """
-        Verify that we can get details for an existing lab.
-        The 'id' key in the return value should not be None.
-        """
-        lab_details = client.api.get_lab(LAB_PATH)
-        assert lab_details['id'] is not None
-
-    def test_get_non_existing_lab(self, client):
-        """
-        Verify that retrieving a non existing lab
-        returns and empty dict.
-        """
-        lab_details = client.api.get_lab('FAKE_LAB_PATH')
-        assert lab_details  == {}
 
     def test_list_lab_networks(self, client):
         """

@@ -1,10 +1,20 @@
-#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""
+evegnsdk.api
+~~~~~~~~~~~~~~~
+This module contains the primary object for
+the EVE-NG API wrapper
+"""
+
 import copy
 import json
 import os
+import sys
 
 from evengsdk.exceptions import EvengApiError
 from urllib.parse import quote_plus
+from requests.exceptions import HTTPError
 
 NETWORK_TYPES = ["bridge","ovs"]
 VIRTUAL_CLOUD_COUNT = 9
@@ -12,9 +22,9 @@ VIRTUAL_CLOUD_COUNT = 9
 class EvengApi:
 
     def __init__(self, clnt, timeout=30):
-        """ Initialize the class.
-            Args:
-                clnt (obj): A EvengClient object
+        """User-created :class: `EvengAPI <EvengAPI>` object.
+        Used by :class: `EvengClient <EvengClient>`, to make API calls to EVE-NG host
+        :param clnt (obj): A EvengClient object
         """
         self.clnt = clnt
         self.log = clnt.log
@@ -26,30 +36,14 @@ class EvengApi:
         return '{}({})'.format(self.__class__.__name__, self.session)
 
     def get_server_status(self):
-        """
-        Get server status
-
-        Returns:
-            dict: server status details
-        """
-        return self.clnt.get('/status')
+        """Get server status"""
+        errors, status = self.clnt.get('/status')
+        return status if not errors else {}
 
     def list_node_templates(self):
-        """
-        List details for all node template
-
-        Returns:
-            dict: dictionary of node templates
-
-        example:
-            {
-                'a10': 'A10 vThunder.missing',
-                'acs': 'Cisco ACS.missing',
-                'alteon': 'Radware AlteonVA.missing',
-                'ampcloud': 'Cisco AMP Cloud.missing',
-            }
-        """
-        return self.clnt.get('/list/templates/')
+        """List details for all node template"""
+        errors, templates = self.clnt.get('/list/templates/')
+        return templates if not errors else {}
 
     def node_template_detail(self, node_type):
         """
@@ -58,9 +52,9 @@ class EvengApi:
 
         Args:
             node_type (str): type of node
-
         """
-        return self.clnt.get(f'/list/templates/{node_type}')
+        errors, node_templates = self.clnt.get(f'/list/templates/{node_type}')
+        return node_templates if not errors else {}
 
     def list_users(self):
         """
@@ -69,13 +63,13 @@ class EvengApi:
         Returns:
             dict: returns dictionary containing user details
         """
-        return self.clnt.get('/users/')
+        errors, users = self.clnt.get('/users/')
+        return users if not errors else {}
 
     def list_user_roles(self):
-        """
-        list user roles
-        """
-        return self.clnt.get('/list/roles')
+        """list user roles"""
+        errors, roles =  self.clnt.get('/list/roles')
+        return roles if not errors else {}
 
     def get_user(self, username):
         """
@@ -88,8 +82,9 @@ class EvengApi:
         Returns:
             dict: user details
         """
-        user = self.clnt.get(f"/users/{username}")
-        return user or {}
+        errors, user = self.clnt.get(f"/users/{username}")
+        return user if not errors else {}
+
 
     def add_user(self,
                 username,
@@ -111,30 +106,31 @@ class EvengApi:
             username (str): a unique alphanumeric string used to login
 
         Returns:
-            Dictionary with user data
+            Dictionary with user data.
 
         """
         username = username or kwargs.get('username')
         password = password or kwargs.get('password')
         if not (username and password):
-            raise ValueError('Missing username and/or password for user')
+            raise ValueError('missing required username and/or password')
+
+        user = {
+            "username": username,
+            "name": kwargs.get('name') or name,
+            "email": kwargs.get('email') or email,
+            "password": password,
+            "role": kwargs.get('role') or role,
+            "expiration": "-1"
+        }
+
+        self.clnt.log.debug('creating new user {}'.format(username))
+        data = json.dumps(user)
+        errors, resp = self.clnt.post('/users', data=data)
+        if not errors:
+            return resp
         else:
-            existing = self.get_user(username)
-            if not existing:
-                user = {
-                    "username": username,
-                    "name": kwargs.get('name') or name,
-                    "email": kwargs.get('email') or email,
-                    "password": password,
-                    "role": kwargs.get('role') or role,
-                    "expiration": "-1"
-                }
-                self.clnt.log.debug('creating new user {}'.format(username))
-                data = json.dumps(user)
-                return self.clnt.post('/users', data=data)
-            else:
-                raise EvengApiError('User already exists')
-        return
+            raise EvengApiError(f'Cannot create user: {errors}')
+
 
     def edit_user(self, username, data=None):
         """
@@ -155,10 +151,10 @@ class EvengApi:
         if user and data:
             updated_user = copy.deepcopy(user)
             updated_user.update(data)
-            response = self.clnt.put(url, data=json.dumps(updated_user))
-            return response
-        else:
-            raise EvengApiError('User Does not exist')
+            errors, resp = self.clnt.put(url, data=json.dumps(updated_user))
+            if not errors:
+                return resp
+        raise EvengApiError('User Does not exist or could not be updated')
 
     def delete_user(self, username):
         """
@@ -174,10 +170,10 @@ class EvengApi:
         """
         existing = self.get_user(username)
         if existing:
-            response = self.clnt.delete(f'/users/{username}')
-            return response
-        else:
-            raise EvengApiError('User does not exists')
+            errors, resp = self.clnt.delete(f'/users/{username}')
+            if not errors:
+                return resp
+        raise EvengApiError('User does not exists or could not be deleted')
 
     def list_networks(self):
         """
@@ -186,8 +182,8 @@ class EvengApi:
         Returns:
             dict: dictionary of networks
         """
-        networks = self.clnt.get('/list/networks')
-        return networks or {}
+        errors, networks = self.clnt.get('/list/networks')
+        return networks if not errors else {}
 
     # def list_folders(self):
     #     """
@@ -239,9 +235,11 @@ class EvengApi:
         normpath = self.normalize_path(path)
         if not normpath.endswith(".unl"):
             normpath = normpath + ".unl"
+
         url = f"/labs/{normpath}"
-        lab_details = self.clnt.get(url)
-        return lab_details or {}
+        errors, resp = self.clnt.get(url)
+        return resp if not errors else {}
+
 
     def list_lab_networks(self, path):
         """
@@ -255,8 +253,8 @@ class EvengApi:
         """
         normpath = self.normalize_path(path)
         url = f"/labs/{normpath}/networks"
-        lab_networks = self.clnt.get(url)
-        return lab_networks or {}
+        errors, resp = self.clnt.get(url)
+        return resp if not errors else {}
 
     def get_lab_network(self, path, net_id):
         """
@@ -271,8 +269,8 @@ class EvengApi:
         """
         normpath = self.normalize_path(path)
         url = f"/labs/{normpath}/networks/{net_id}"
-        network = self.clnt.get(url)
-        return network or {}
+        errors, resp = self.clnt.get(url)
+        return resp if not errors else {}
 
     def get_lab_network_by_name(self, path, name):
         """
@@ -310,8 +308,8 @@ class EvengApi:
         """
         normpath = self.normalize_path(path)
         url = f"/labs/{normpath}/links"
-        links =  self.clnt.get(url)
-        return links or {}
+        errors, links =  self.clnt.get(url)
+        return links if not errors else {}
 
     def list_nodes(self, path):
         """
@@ -325,8 +323,8 @@ class EvengApi:
         """
         normpath = self.normalize_path(path)
         url = f"/labs/{normpath}/nodes"
-        nodes = self.clnt.get(url)
-        return nodes or {}
+        errors, nodes = self.clnt.get(url)
+        return nodes if not errors else {}
 
     def get_node(self, path, node_id):
         """
@@ -342,8 +340,8 @@ class EvengApi:
         """
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + f"/nodes/{node_id}"
-        node =  self.clnt.get(url)
-        return node or {}
+        errors, node =  self.clnt.get(url)
+        return node if not errors else {}
 
     def get_node_by_name(self, path, name):
         """
@@ -380,8 +378,8 @@ class EvengApi:
         """
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + f"/configs"
-        config_data =  self.clnt.get(url)
-        return config_data or {}
+        errors, configs =  self.clnt.get(url)
+        return configs if not errors else {}
 
     def get_node_config_by_id(self, path, config_id):
         """
@@ -397,8 +395,8 @@ class EvengApi:
         """
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + f"/configs/{config_id}"
-        config_data = self.clnt.get(url)
-        return config_data or {}
+        errors, node_config =  self.clnt.get(url)
+        return node_config if not errors else {}
 
     def get_node_config_by_name(self, path, node_name):
         """
@@ -421,7 +419,6 @@ class EvengApi:
             found_id = next(k for k,v in configs.items() if v['name'] == node_name)
             if found_id:
                 data = self.get_node_config_by_id(path, found_id)
-                print(data)
             return data
         except StopIteration:
             self.clnt.log.warning(f'no configuration for {node_name} found')
@@ -438,11 +435,11 @@ class EvengApi:
 
         Returns:
             dict: operation result
-                  sample: {
-                    'code': 201,
-                    'message': 'Lab has been saved (60023).',
-                    'status': 'success'
-                    }
+                sample: {
+                'code': 201,
+                'message': 'Lab has been saved (60023).',
+                'status': 'success'
+                }
         """
         current_cfg = self.get_node_config_by_id(path, node_id)
 
@@ -452,7 +449,9 @@ class EvengApi:
             "id": node_id,
             "data": config
         }
-        resp = self.clnt.put(url, data=json.dumps(payload))
+        errors, resp = self.clnt.put(url, data=json.dumps(payload))
+        if errors:
+            raise EvengApiError(f'Could not upload configs\n{errors}')
         return resp
 
     @staticmethod
@@ -584,7 +583,10 @@ class EvengApi:
         """
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + f"/nodes/start"
-        return self.clnt.get(url)
+        errors, resp = self.clnt.get(url)
+        if errors:
+            raise EvengApiError(f'Could not start nodes\n{errors}')
+        return resp
 
     def stop_all_nodes(self, path):
         """
@@ -605,7 +607,10 @@ class EvengApi:
         """
         normpath = self.normalize_path(path)
         url = f"/labs/{normpath}/nodes/stop"
-        return self.clnt.get(url)
+        errors, resp = self.clnt.get(url)
+        if errors:
+            raise EvengApiError(f'Could not stop nodes\n{errors}')
+        return resp
 
     def start_node(self, path, node_id):
         """
@@ -625,7 +630,10 @@ class EvengApi:
         """
         normpath = self.normalize_path(path)
         url = f"/labs/{normpath}/nodes/{node_id}/start"
-        return self.clnt.get(url)
+        errors, resp = self.clnt.get(url)
+        if errors:
+            raise EvengApiError(f'Could not start node\n{errors}')
+        return resp
 
     def stop_node(self, path, node_id):
         """
@@ -645,7 +653,10 @@ class EvengApi:
         """
         normpath = self.normalize_path(path)
         url = f"/labs/{normpath}/nodes/{node_id}/stop"
-        return self.clnt.get(url)
+        errors, resp = self.clnt.get(url)
+        if errors:
+            raise EvengApiError(f'Could not stop nodes\n{errors}')
+        return resp
 
     def wipe_all_nodes(self, path):
         """
@@ -666,7 +677,10 @@ class EvengApi:
         """
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + f"/nodes/wipe"
-        return self.clnt.get(url)
+        errors, resp = self.clnt.get(url)
+        if errors:
+            raise EvengApiError(f'Could not wipe nodes\n{errors}')
+        return resp
 
     def wipe_node(self, path, node_id):
         """
@@ -687,7 +701,10 @@ class EvengApi:
         """
         normpath = self.normalize_path(path)
         url = f"/labs/{normpath}/nodes/{node_id}/wipe"
-        return self.clnt.get(url)
+        errors, resp = self.clnt.get(url)
+        if errors:
+            raise EvengApiError(f'Could not wipe node\n{errors}')
+        return resp
 
     def export_all_nodes(self, path):
         """
@@ -707,8 +724,9 @@ class EvengApi:
         """
         normpath = self.normalize_path(path)
         url = f"/labs/{normpath}/nodes/export"
-        resp = self.clnt.get(url)
-        print(resp)
+        errors, resp = self.clnt.get(url)
+        if errors:
+            raise EvengApiError(f'Could not export nodes\n{errors}')
         return resp
 
     def export_node(self, path, node_id):
@@ -729,8 +747,9 @@ class EvengApi:
         """
         normpath = self.normalize_path(path)
         url = f"/labs/{normpath}/nodes/{node_id}/export"
-        resp = self.clnt.get(url)
-        print(node_id, url, resp)
+        errors, resp = self.clnt.get(url)
+        if errors:
+            raise EvengApiError(f'Could not export node\n{errors}')
         return resp
 
     def get_node_interfaces(self, path, node_id):
@@ -751,14 +770,6 @@ class EvengApi:
                                 "network_id": 1
                             },
                             {
-                                "name": "Gi0/1",
-                                "network_id": 3
-                            },
-                            {
-                                "name": "Gi0/2",
-                                "network_id": 5
-                            },
-                            {
                                 "name": "Gi0/3",
                                 "network_id": 0
                             }
@@ -771,8 +782,8 @@ class EvengApi:
         """
         normpath = self.normalize_path(path)
         url = f"/labs/{normpath}/nodes/{node_id}/interfaces"
-        interfaces = self.clnt.get(url)
-        return interfaces or {}
+        errors, interfaces = self.clnt.get(url)
+        return interfaces if not errors else {}
 
     def get_lab_topology(self, path):
         """
@@ -803,15 +814,6 @@ class EvengApi:
                         "source_label": "Gi0/0",
                         "source_type": "node",
                         "type": "ethernet"
-                    },
-                    {
-                        "destination": "network1",
-                        "destination_label": "",
-                        "destination_type": "network",
-                        "source": "node3",
-                        "source_label": "e0/0",
-                        "source_type": "node",
-                        "type": "ethernet"
                     }
                 ],
                 "message": "Topology loaded",
@@ -820,8 +822,8 @@ class EvengApi:
         """
         normpath = self.normalize_path(path)
         url = f"/labs/{normpath}/topology"
-        topology = self.clnt.get(url)
-        return topology or {}
+        errors, topology = self.clnt.get(url)
+        return topology if not errors else {}
 
     def get_lab_pictures(self, path):
         """
@@ -845,7 +847,8 @@ class EvengApi:
         """
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + f"/pictures"
-        return self.get_handle_response(url)
+        errors, pics = self.clnt.get(url)
+        return pics if not errors else {}
 
     def get_lab_picture_details(self, path, picture_id):
         """
@@ -868,17 +871,21 @@ class EvengApi:
         """
         normpath = self.normalize_path(path)
         url = "/labs/" + normpath + f"/pictures/{picture_id}"
-        return self.get_handle_response(url)
+        errors, pic = self.clnt.get(url)
+        return pic if not errors else {}
 
-    def get_lab_picture_data():
-        # curl -s -c /tmp/cookie -b /tmp/cookie -X GET -H 'Content-type: application/json'
-        # http://127.0.0.1/api/labs/User1/Lab%201.unl/pictures/1/data/32/32
 
-        # The resized picture is generated with original aspect-ratio using given values as maximum witdh/lenght.
-        pass
+    def lab_exists(self, path, name):
+        exists = False
+        fullpath = path + name.lower() + '.unl'
+        lab = self.get_lab(fullpath)
+        if lab is not None:
+            exists = lab.get('name') == name.lower()
+        return exists
+
 
     def create_lab(self, username, path="/", name="", version="1", description="", body="", **kwargs):
-        """ Create a new lab
+        """Create a new lab
 
         payload = {
             "path":"/User1/Folder 3",
@@ -890,14 +897,13 @@ class EvengApi:
         }
 
         sample response:
-            {
-                "code": 200,
-                "message": "Lab has been created (60019).",
-                "status": "success"
-            }
+        {
+            "code": 200,
+            "message": "Lab has been created (60019).",
+            "status": "success"
+        }
         """
         user = self.get_user(username)
-
         if user:
             author = user.get('name')
             path = kwargs.get('path') or path
@@ -906,15 +912,25 @@ class EvengApi:
             normpath = self.normalize_path(path)
             data = {
                 "path": normpath,
-                "name": self.slugify(name),
+                "name": self.slugify(name) \
+                        if not name.endswith('unl')
+                        else self.slugify(name.split('.')[0]),
                 "version": kwargs.get('version') or version,
                 "author": author,
                 "description": kwargs.get('version') or description,
                 "body": kwargs.get('body') or body,
             }
-            return self.post_handle_response('/labs', data=json.dumps(data))
+
+            if self.lab_exists(path, name):
+                raise EvengApiError('Lab already exists')
+            else:
+                errors, resp = self.clnt.post('/labs', data=json.dumps(data))
+                if errors:
+                    raise EvengApiError(errors)
+                return resp
         else:
-            raise(f"user {username} not found")
+            raise Does(f"user {username} not found")
+
 
     def edit_lab(self, path, name="", version="", author="", description="", **kwargs):
         """
@@ -922,19 +938,19 @@ class EvengApi:
         parameter. Optional parameter can be reverted to the default
         setting an empty string “”.
 
-            payload = {
-                "name":"Different Lab",
-                "version":"2",
-                "author":"AD",
-                "description":"A different demo lab"
-            }
+        payload = {
+            "name":"Different Lab",
+            "version":"2",
+            "author":"AD",
+            "description":"A different demo lab"
+        }
 
-            sample output:
-                {
-                    "code": 200,
-                    "message": "Lab has been saved (60023).",
-                    "status": "success"
-                }
+        sample output:
+            {
+                "code": 200,
+                "message": "Lab has been saved (60023).",
+                "status": "success"
+            }
         """
         normpath = self.normalize_path(path)
         name = kwargs.get("name") or name
@@ -945,20 +961,10 @@ class EvengApi:
             "description": kwargs.get("description") or description,
         }
         url = "/labs/" + normpath
-        return self.put_handle_response(url, data=json.dumps(data))
+        return self.clnt.put(url, data=json.dumps(data))
 
-    def move_lab():
-        # Move an existing lab to a different folder
-        # curl -s -c /tmp/cookie -b /tmp/cookie -X PUT -d '{"path":"/User1/Folder 2"}' -H 'Content-type: application/json' http://127.0.0.1/api/labs/User1/Folder%203/New%20Lab.unl/move
 
-        # {
-        #     "code": 200,
-        #     "message": "Lab moved (60035).",
-        #     "status": "success"
-        # }
-        pass
-
-    def delete_lab(self, path):
+    def delete_lab(self, path, name):
         """ Delete an existent lab
 
             sample output:
@@ -969,19 +975,14 @@ class EvengApi:
                 }
         """
         normpath = self.normalize_path(path)
-        if not normpath.endswith(".unl"):
-            normpath = normpath + ".unl"
 
-        try:
-            existing = self.get_lab(path)
-        except EvengApiError:
-            return {"message": "does not exist"}
-
-        if existing:
-            path = '/labs' + normpath
-            return self.del_handle_response(path)
+        if self.lab_exists(path, name.lower()):
+            url = '/labs' + normpath + name.lower() + '.unl'
+            resp =  self.clnt.delete(url)
+            return resp
         else:
-            raise EvengApiError('lab does not exists')
+            raise EvengApiError('Lab does not exists')
+
 
     def _get_network_types(self):
         network_types = set(NETWORK_TYPES)
@@ -1045,6 +1046,7 @@ class EvengApi:
         url = '/labs/' + normpath + '/networks'
         return self.post_handle_response(url, data=json.dumps(data))
 
+
     def delete_lab_network(self, path, name):
         normpath = self.normalize_path(path)
         url = None
@@ -1059,6 +1061,7 @@ class EvengApi:
             else:
                 return ValueError(f"network with name/id '{name}' not found")
         return self.del_handle_response(url)
+
 
     def add_node(self, path, delay=0, name="", node_type="", template="",
                      top="", left="", console="telnet", config="Unconfigured",
