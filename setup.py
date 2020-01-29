@@ -15,9 +15,9 @@ setup(
     packages=find_packages('src'),
     package_dir={'': 'src'},
     install_requires=['evengsdk'],
-    # entry_points={
-    #     'console_scripts': [
-    #         'eveng_cli=evengsdk.cli:main'
-    #     ],
-    # }
+    entry_points={
+        'console_scripts': [
+            'evengcli=evengsdk.cli:main'
+        ],
+    }
 )

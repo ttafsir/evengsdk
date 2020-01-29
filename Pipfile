@@ -9,6 +9,7 @@ pylint = "*"
 
 [packages]
 requests = "*"
+pyyaml = "*"
 
 [requires]
 python_version = "3.7"
