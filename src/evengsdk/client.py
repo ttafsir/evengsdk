@@ -25,6 +25,7 @@ class EvengClient:
         self.api = None
         self.session = {}
         self.timeout = 10
+        self.html5 = -1
         self.headers = {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
@@ -69,7 +70,7 @@ class EvengClient:
             password (str): password to login with
         """
         self.verify = verify
-        self.authdata = {'username': username, 'password': password}
+        self.authdata = {'username': username, 'password': password, 'html5': self.html5}
 
         self.log.debug('creating session')
         self._create_session()
@@ -145,7 +146,8 @@ class EvengClient:
         if  r.status_code in range(200, 300):
             self.log.debug('retrieving response data'.format(method))
             r_json = r.json()
-            resp = r_json.get('data') or r_json
+            data = r_json.get('data')
+            resp = data if data is not None else r_json
             return None, resp
         else:
             # return the errors
@@ -155,7 +157,7 @@ class EvengClient:
 
     def _send_request(self, method, url, data=None, **kwargs):
         # resp = None
-        self.log.debug('sending {} request'.format(method))
+        self.log.debug(f'Request: {method} {url}')
         try:
             if method == 'DELETE':
                 resp = self.session.delete(url, **kwargs)
