@@ -11,11 +11,13 @@ import copy
 import json
 import os
 import sys
+from pathlib import Path
 
-from evengsdk.exceptions import EvengApiError
-from pprint import pprint as PP
+
 from urllib.parse import quote_plus
 from requests.exceptions import HTTPError
+
+from evengsdk.exceptions import EvengApiError
 
 NETWORK_TYPES = ["bridge","ovs"]
 VIRTUAL_CLOUD_COUNT = 9
@@ -26,7 +28,7 @@ class EvengApi:
         """
         User-created :class: `EvengAPI <EvengAPI>` object.
         Used by :class: `EvengClient <EvengClient>`, to make API calls to EVE-NG host
-        :param clnt (obj): A EvengClient object
+        clnt (obj): A EvengClient object
         """
         self.clnt = clnt
         self.log = clnt.log
@@ -105,7 +107,8 @@ class EvengApi:
 
         Args:
             email(str): the email address of the user;
-            expiration(str): date until the user is valid (UNIX timestamp) or -1 if never expires;
+            expiration(str): date until the user is valid (UNIX timestamp)
+                or -1 if never expires;
             name(str): a description for the user, usually salutation;
             password (string): the user password used to login;
             role(string): choices are ['user', 'admin']
@@ -205,28 +208,6 @@ class EvengApi:
         errors, folder_data =  self.clnt.get(f"/folders/{folder}")
         return folder_data if not errors else {}
 
-    # def add_folder(self, name):
-    #     """
-    #     Add a new folder for user account
-    #     """
-    #     slug = self.slugify(name)
-    #     data = {"path": f"/{slug}", "name": slug}
-    #     return self.clnt.get("/folders", data=json.dumps(data))
-
-    # def move_folder(self, old_path, new_path):
-    #     """
-    #     Move/rename an existent folder
-    #     """
-    #     data = {'path': new_path}
-    #     endpoint = f"/folders/{old_path}"
-    #     return self.put_handle_response(endpoint, data=json.dumps(data))
-
-    # def delete_folder(self, path):
-    #     """
-    #     Delete an existing folder
-    #     """
-    #     return self.del_handle_response(f"/folders/{path}")
-
     @staticmethod
     def normalize_path(path):
         if path:
@@ -263,6 +244,33 @@ class EvengApi:
         url = f"/labs/{normpath}"
         errors, resp = self.clnt.get(url)
         return resp if not errors else {}
+
+    def export_lab(self, path, filename='lab_export.zip'):
+        """
+        Export a lab as a .unl file
+
+        Args:
+            path (str): the path of the lab
+
+        Returns:
+            file: zip file with exported lab
+        """
+        url = f"/export"
+        lab_filepath = Path(path)
+
+        payload = {
+            '0': str(lab_filepath),
+            'path': str(lab_filepath.parent)
+        }
+
+        errors, resp = self.clnt.post(url, data=json.dumps(payload))
+        if resp:
+            client = self.clnt
+            download_url = f"http://{client.host}:{client.port}{resp}"
+            _, r = self.clnt.get(download_url)
+
+            with open(filename, 'wb') as handle:
+                handle.write(r.content)
 
 
     def list_lab_networks(self, path):
@@ -346,7 +354,6 @@ class EvengApi:
         """
         normpath = self.normalize_path(path)
         url = f"/labs/{normpath}/nodes"
-        print(url)
         errors, nodes = self.clnt.get(url)
         return nodes if not errors else []
 
@@ -448,7 +455,7 @@ class EvengApi:
             self.clnt.log.warning(f'no configuration for {node_name} found')
         return data
 
-    def upload_node_config(self, path, node_id, config=None):
+    def upload_node_config(self, path, node_id, config=None, enable=False):
         """
         Upload node's startup config.
 
@@ -475,10 +482,15 @@ class EvengApi:
             }
             errors, resp = self.clnt.put(url, data=json.dumps(payload))
             if errors:
-                raise EvengApiError(f'Could not upload configs\n{errors}')
+                raise EvengApiError(f'Could not upload configs:\n{errors}')
+            # if enable:
+            #     node_url = f"/labs/{normpath}/nodes/{node_id}"
+            #     err, r2 = self.clnt.put(url, data=json.dumps({'id': node_id, 'config': '1'}))
+            #     if err:
+            #         raise EvengApiError('Could not enable config for node')
             return resp
         else:
-            print('Node ID is required.')
+            raise ValueError('Node ID is required.')
 
     @staticmethod
     def find_node_interface(name, intf_list):
@@ -570,7 +582,13 @@ class EvengApi:
             raise ValueError(f"invalid network and/or network")
         return
 
-    def connect_node_to_node(self, lab, src_node_name, src_node_i, dst_node_name, dst_node_i, media="ethernet"):
+    def connect_node_to_node(self,
+                             lab,
+                             src_node_name,
+                             src_node_i,
+                             dst_node_name,
+                             dst_node_i,
+                             media="ethernet"):
         src_node = self.get_node_by_name(lab, src_node_name)
         dst_node = self.get_node_by_name(lab, dst_node_name)
 
@@ -673,7 +691,7 @@ class EvengApi:
         url = f"/labs/{normpath}/nodes/{node_id}/start"
         errors, resp = self.clnt.get(url)
         if errors:
-            raise EvengApiError(f'Could not start node\n{errors}')
+            raise EvengApiError(f'Could not start node: {errors}')
         return resp
 
     def stop_node(self, path, node_id):
@@ -696,7 +714,7 @@ class EvengApi:
         url = f"/labs/{normpath}/nodes/{node_id}/stop"
         errors, resp = self.clnt.get(url)
         if errors:
-            raise EvengApiError(f'Could not stop nodes\n{errors}')
+            raise EvengApiError(f'Could not stop node: {errors}')
         return resp
 
     def wipe_all_nodes(self, path):
@@ -767,7 +785,7 @@ class EvengApi:
         url = f"/labs/{normpath}/nodes/export"
         errors, resp = self.clnt.get(url)
         if errors:
-            raise EvengApiError(f'Could not export nodes\n{errors}')
+            raise EvengApiError(f'Could not export nodes:\n{errors}')
         return resp
 
     def export_node(self, path, node_id):
@@ -893,7 +911,7 @@ class EvengApi:
 
     def get_lab_picture_details(self, path, picture_id):
         """
-        A single picture can be retrieved
+        Retrieve single picture
 
             sample output:
                 {
@@ -914,8 +932,6 @@ class EvengApi:
         url = "/labs/" + normpath + f"/pictures/{picture_id}"
         errors, pic = self.clnt.get(url)
         return pic if not errors else {}
-
-
 
     def lab_exists(self, path, name):
         exists = False
@@ -987,21 +1003,26 @@ class EvengApi:
             raise Does(f"user {username} not found")
 
 
-    def edit_lab(self, path, name="", version="", author="", description="", **kwargs):
+    def edit_lab(self,
+                 path,
+                 name="",
+                 version="",
+                 author="",
+                 description="",
+                 **kwargs):
         """
         Edit an existing lab. The request can set only one single
         parameter. Optional parameter can be reverted to the default
         setting an empty string “”.
 
-        payload = {
-            "name":"Different Lab",
-            "version":"2",
-            "author":"AD",
-            "description":"A different demo lab"
-        }
+        Args:
+            path (str): path to lab on EVE-NG host. ex /MYLABS/lab1.unl
+            version (int): version of the lab
+            author (str): name of the author
+            descritpion (str): a description for the lab
 
-        sample output:
-            {
+        Returns:
+            dict: {
                 "code": 200,
                 "message": "Lab has been saved (60023).",
                 "status": "success"
@@ -1039,14 +1060,17 @@ class EvengApi:
 
     def lock_lab(self, name="", path="/"):
         """Lock lab to prevent edits"""
-        name = self.slugify(name) if not name.endswith('unl') else self.slugify(name.split('.')[0])
+        name = self.slugify(name) if not name.endswith('unl') \
+               else self.slugify(name.split('.')[0])
         url = f'/labs/{normpath}/name/lock'
         errors, resp = self.clnt.put(url)
         return resp
 
     def unlock_lab(self, name="", path="/"):
-        """Unlock lab to allow edits"""
-        name = self.slugify(name) if not name.endswith('unl') else self.slugify(name.split('.')[0])
+        """Unlock lab to allow edits
+        """
+        name = self.slugify(name) if not name.endswith('unl') \
+               else self.slugify(name.split('.')[0])
         url = f'/labs/{normpath}/name/Unlock'
         errors, resp = self.clnt.put(url)
         return resp
@@ -1079,18 +1103,24 @@ class EvengApi:
         raise EvengApiError(errors)
 
 
-    def add_lab_network(self, path="/", network_type="", visibility="0", name="", left="", top="", **kwargs):
+    def add_lab_network(self,
+                        path="/",
+                        network_type="",
+                        visibility="0",
+                        name="",
+                        left="",
+                        top="", **kwargs):
         """
         Add a new network to a lab
 
         Args:
-            left: mergin from left, in percentage (i.e. 35%), default is a
-                  random value between 30% and 70%;
-            name: network name (i.e. Core Network), default is
+            left (int): mergin from left, in percentage (i.e. 35%),
+                default is a random value between 30% and 70%;
+            name (str): network name (i.e. Core Network), default is
                   NetX (X = network_id)
-            top:  margin from top, in percentage (i.e. 25%), default is a
-                  random value between 30% and 70%;
-            type (mandatory): see “List network types”
+            top (int):  margin from top, in percentage (i.e. 25%),
+                default is a random value between 30% and 70%;
+            type (int): see “List network types”
 
         Returns:
             dict: {
@@ -1147,27 +1177,25 @@ class EvengApi:
             config (str): can be 'Unconfigured' or 'Saved', default is Unconfigured;
             delay (int): seconds to wait before starting the node, default is 0;
             icon (str): filename for icon (located under /opt/unetlab/html/images/icons/) used to display the node, default is Router.png;
-            image: image used to start the node, default is latest included in “List node templates”;
-            left: mergin from left, in percentage (i.e. 35%), default is a random value between 30% and 70%;
-            ram: MB of RAM configured for the node, default is 1024;
-            template (mandatory): see “List node templates”;
-            top: margin from top, in percentage (i.e. 25%), default is a random value between 30% and 70%;
-            type (mandatory): can be iol, dynamips or qemu.
-            Parameters for IOL nodes:
-            ethernet: number of ethernet porgroups (each portgroup configures four interfaces), default is 2;
-            nvram: size of NVRAM in KB, default is 1024;
-            serial: number of serial porgroups (each portgroup configures four interfaces), default is 2.
+            image (str): image used to start the node, default is latest included in “List node templates”;
+            left (int): mergin from left, in percentage (i.e. 35%), default is a random value between 30% and 70%;
+            ram (int): MB of RAM configured for the node, default is 1024;
+            template (str): (mandatory) - template for device type
+            top (int): margin from top, in percentage (i.e. 25%), default is a random value between 30% and 70%;
+            type (str): (mandatory) value ccan be one of ['iol', 'dynamips', 'qemu'].
+            ethernet (int): number of ethernet porgroups (each portgroup configures four interfaces), default is 2;
+            nvram (int): size of NVRAM in KB, default is 1024;
+            serial (int): number of serial porgroups (each portgroup configures four interfaces), default is 2.
 
             # for Dynamips nodes:
             idlepc: value used for Dynamips optimization (i.e. 0x80369ac4), default is 0x0 (no optimization);
             nvram: size of NVRAM in KB, default is 1024;
-            slot[0-9]+: the module configured in a specific slot (i.e. slot1=NM-1FE-TX).
+            slot (str): 0-9]+ the module configured in a specific slot (i.e. slot1=NM-1FE-TX).
 
             # Parameters for QEMU nodes:
-            console: can be telnet or vnc, default is telnet;
-            cpu: number of configured CPU, default is 1;
-            ethernet: number of ethernet interfaces, default is 4;
-            uuid: UUID configured, default is a random UUID (i.e. 641a4800-1b19-427c-ae87-4a8ee90b7790).
+            console (str): can be telnet or vnc, default is telnet;
+            cpu (int): number of configured CPU, default is 1;
+            uuid (str): UUID configured, default is a random UUID (i.e. 641a4800-1b19-427c-ae87-4a8ee90b7790).
         """
         normpath = self.normalize_path(path)
         url = f"/labs/{normpath}/nodes"
