@@ -7,7 +7,7 @@ REQUIRES = [
     "click",
     "requests>=2.20.0",
     "tabulate",
-    "python-dotenv"
+    "python-dotenv",
     "pyyaml",
     "jinja2",
 ]

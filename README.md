@@ -14,7 +14,7 @@ Python SDK and utilities to work with [EVE-NG](https://www.eve-ng.net/) API.
 1. Clone this repository
 
 ```sh
-git clone https://github.com/ttafsir/evengsdk
+git clone --single-branch --branch develop https://github.com/ttafsir/evengsdk
 ```
 
 2. Create and activate a Python virtual environment
