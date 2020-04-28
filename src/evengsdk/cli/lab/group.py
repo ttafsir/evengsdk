@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import click
-import yaml
 from tabulate import tabulate
 from evengsdk.cli.lab.generate import generate
 from evengsdk.inventory import build_inventory
@@ -36,6 +35,7 @@ def export(ctx, lab_path):
     """
     client = ctx.obj['CLIENT']
     resp = client.api.export_lab(lab_path)
+    click.echo(resp)
 
 
 @click.command()
@@ -81,7 +81,7 @@ def networks(ctx, lab_path):
     client = ctx.obj['CLIENT']
 
     resp = client.api.list_lab_networks(lab_path)
-    networks = [ _dict for key, _dict in resp.items()]
+    networks = [_dict for key, _dict in resp.items()]
     click.echo(tabulate(networks, headers="keys", tablefmt="fancy_grid"))
 
 
@@ -114,7 +114,7 @@ def stop(ctx, lab_path):
 @click.command()
 @click.option('--lab-path', default="/",
               help='Path to the lab in EVE-NG host. ex: /MYLAB.unl')
-@click.option('-o','--output', help="Output filename.")
+@click.option('-o', '--output', help="Output filename.")
 @click.pass_context
 def inventory(ctx, lab_path, output):
     """
@@ -130,6 +130,7 @@ def inventory(ctx, lab_path, output):
     if output:
         with open(output, 'w') as handle:
             handle.write(inventory)
+
 
 @click.group()
 @click.pass_context

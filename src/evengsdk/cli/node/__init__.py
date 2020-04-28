@@ -1,4 +1,4 @@
-import click
+# -*- coding: utf-8 -*-
 
 NODE_STATUS_CODES = {
     0: 'stopped',

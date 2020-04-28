@@ -6,6 +6,7 @@ from evengsdk.cli.lab.group import lab
 from evengsdk.cli.node.group import node
 from evengsdk.cli.system.group import system
 
+
 @click.group()
 @click.option('--host', envvar='EVE_NG_HOST', required=True)
 @click.option('--username', prompt=True,

@@ -14,15 +14,17 @@ def build_lab_details(lab):
     return {'name': lab['name'],
             'author': lab['author'],
             'description': lab['description'],
-            'filename': lab['filename']
-        }
+            'filename': lab['filename']}
 
 
 def build_node_details(nodes: dict) -> list:
-    keys = 'console id left top icon image name ram template type config ethernet'
+    keys = (
+        'console id left top icon image'
+        'name ram template type config ethernet'
+    )
     filtered_nodes = []
     for _, node in nodes.items():
-        filtered_node = { k:v for k,v in node.items() if k in keys.split()}
+        filtered_node = {k: v for k, v in node.items() if k in keys.split()}
         filtered_nodes.append(filtered_node)
     return filtered_nodes
 
@@ -31,10 +33,9 @@ def build_link_details(links: list) -> list:
     cloud_filters = "source source_label type"
     p2p_filters = "destination destination_label source source_label type"
 
-    p2p_links = [
-        x for x in links
-        if (x['source_type'] == 'node'
-        and x['destination_type'] == 'node')]
+    p2p_links = [x for x in links
+                 if (x['source_type'] == 'node'
+                     and x['destination_type'] == 'node')]
 
     cloud_links = [
         x for x in links
@@ -43,19 +44,19 @@ def build_link_details(links: list) -> list:
     ]
 
     filtered_clouds = defaultdict(list)
+
     for cloud in cloud_links:
-        new_cloud = {
-            k:v for k,v in cloud.items()
-            if k in cloud_filters.split()
-        }
+        new_cloud = {k: v for k, v in cloud.items()
+                     if k in cloud_filters.split()}
         cloud_id_regex = re.findall(ALPHANUM_RE, cloud['destination'])
+
         if len(cloud_id_regex) > 1:
             cloud_id = cloud_id_regex[-1]
             filtered_clouds[cloud_id].append(new_cloud)
 
     filtered_links = []
     for link in p2p_links:
-        new_link = {k:v for k,v in link.items() if k in p2p_filters.split()}
+        new_link = {k: v for k, v in link.items() if k in p2p_filters.split()}
         filtered_links.append(new_link)
 
     return {
@@ -66,14 +67,15 @@ def build_link_details(links: list) -> list:
 
 def build_network_details(networks: dict) -> list:
     keys = "id name left top"
-    visible_networks = [ v for k,v in networks.items() if int(v['visibility']) == 1 ]
+    visible_networks = [v for k, v in networks.items()
+                        if int(v['visibility']) == 1]
 
     filtered_networks = []
     for net in visible_networks:
         new_dict = {}
-        for k,v in net.items():
+        for k, v in net.items():
             if k in keys.split():
-                new_dict.update({k:v})
+                new_dict.update({k: v})
         filtered_networks.append(new_dict)
     return filtered_networks
 
@@ -88,10 +90,13 @@ def build_topology(lab, nodes, links, networks):
     }
     return topology
 
+
 @click.command()
 @click.option('--lab-path', required=True,
               help='Path to the lab in EVE-NG host. ex: /MYLAB.unl')
-@click.option('-o', '--output-file', default='topology', help="output file destination")
+@click.option('-o', '--output-file',
+              default='topology',
+              help="output file destination")
 @click.option('--yaml/--json')
 @click.pass_context
 def topology(ctx, lab_path, output_file, **kwargs):
@@ -121,11 +126,13 @@ def topology(ctx, lab_path, output_file, **kwargs):
 def inventory():
     pass
 
+
 @click.group()
 def generate():
     """
     Generate lab artifacts
     """
+
 
 generate.add_command(topology)
 generate.add_command(inventory)

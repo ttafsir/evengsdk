@@ -7,6 +7,7 @@ verify_ssl = true
 pytest = "*"
 pylint = "*"
 colorama = "*"
+flake8 = "*"
 
 [packages]
 requests = "*"

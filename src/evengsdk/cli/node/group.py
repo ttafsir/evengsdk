@@ -17,7 +17,7 @@ def get_configs(src):
         fullpath = os.path.join(src, filepath)
         with open(fullpath, 'r') as handle:
             stream = handle.read()
-            configs.append({ 'hostname': hostname, 'config': stream })
+            configs.append({'hostname': hostname, 'config': stream})
     return configs
 
 
@@ -28,6 +28,7 @@ def get_config(src):
     with open(src, 'r') as handle:
         stream = handle.read()
         return stream
+
 
 @click.command()
 @click.option('--lab-path', required=True)
@@ -40,7 +41,10 @@ def upload_config(ctx, node_id, lab_path, src):
     """
     client = ctx.obj['CLIENT']
     config = get_config(src)
-    client.api.upload_node_config(lab_path, node_id, config=config, enable=True)
+    client.api.upload_node_config(
+        lab_path, node_id,
+        config=config,
+        enable=True)
 
 
 @click.command()
@@ -97,7 +101,7 @@ def ls(ctx, lab_path):
                 'template': n['template'],
                 'uuid': n['uuid'],
                 'status': click.style(NODE_STATUS_CODES[status_code],
-                                    fg=NODE_STATUS_COLOR[status_code])
+                                      fg=NODE_STATUS_COLOR[status_code])
             }
             node_table.append(table_row)
         click.echo(tabulate(node_table, headers="keys",

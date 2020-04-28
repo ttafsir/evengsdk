@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import click
 from pprint import PrettyPrinter
-from tabulate import tabulate
 
 
 @click.command()
@@ -21,5 +20,6 @@ def system():
     """
     EVE-NG system commands
     """
+
 
 system.add_command(status)

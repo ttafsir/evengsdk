@@ -37,4 +37,3 @@ def render_from_path(path, data):
     with open(path, 'r') as f:
         template_string = f.read()
         return render_template(template_string, data)
-
