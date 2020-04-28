@@ -3,14 +3,14 @@ import json
 import logging
 import requests
 
-from requests.exceptions import HTTPError
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
-from evengsdk.exceptions import EvengLoginError, EvengApiError, EvengClientError
+from evengsdk.exceptions import EvengLoginError
 from evengsdk.api import EvengApi
 
 
 DISABLE_INSECURE_WARNINGS = True
+
 
 class EvengClient:
 
@@ -52,7 +52,14 @@ class EvengClient:
 
         """
         log_level = log_level.upper()
-        LOG_LEVELS =  ('NOTSET','DEBUG','INFO','WARNING','ERROR','CRITICAL')
+        LOG_LEVELS = (
+            'NOTSET',
+            'DEBUG',
+            'INFO',
+            'WARNING',
+            'ERROR',
+            'CRITICAL'
+        )
         if log_level not in LOG_LEVELS:
             log_level = 'INFO'
         self.log.setLevel(getattr(logging, log_level))
@@ -100,15 +107,21 @@ class EvengClient:
 
         error = ''
         try:
-            r = self.session.post(url, data=json.dumps(self.authdata), verify=self.verify)
+            r = self.session.post(
+                url,
+                data=json.dumps(self.authdata),
+                verify=self.verify
+            )
             r_json = r.json()
             # The response is None for unsuccessful login attempt
             if not r_json.get('status') == 'success':
                 error += 'invalid login'
                 self.session = {}
             else:
-                self.log.debug('logged in as: {}'.format(self.authdata.get('username')))
+                msg = 'logged in as: {}'.format(self.authdata.get('username'))
+                self.log.debug(msg)
         except Exception as e:
+            self.log.error(str(e))
             self.session = {}
             return
 
@@ -118,7 +131,7 @@ class EvengClient:
         """
         logout_endpoint = '/auth/logout'
         if self.session:
-            r_obj = self.get(logout_endpoint)
+            self.get(logout_endpoint)
             self.session = {}
 
     def post(self, url, data=None, **kwargs):
@@ -137,14 +150,17 @@ class EvengClient:
         if not self.session:
             raise ValueError('No valid session exist')
 
-        r_obj = None
         self.log.debug('making {} request'.format(method))
         if self.url_prefix not in url:
             url = self.url_prefix + url
 
         # craft and send the request
-        r = self._send_request(method,
-            url, data=data, verify=self.verify, **kwargs)
+        r = self._send_request(
+            method,
+            url, data=data,
+            verify=self.verify,
+            **kwargs
+        )
 
         # parse response data
         self.log.debug('retrieving response data'.format(method))
@@ -152,7 +168,6 @@ class EvengClient:
         data = r_json.get('data')
         parsed_data = data if data is not None else r_json
         return parsed_data
-
 
     def _send_request(self, method, url, data=None, **kwargs):
         self.log.debug(f'Request: {method} {url}')
