@@ -9,7 +9,6 @@ the EVE-NG API wrapper
 
 import copy
 import json
-import os
 from pathlib import Path
 
 
@@ -223,7 +222,13 @@ class EvengApi:
 
     def get_folder(self, folder):
         """
-        List folders for user
+        List folders for user. folders contain lab files.
+
+        Args:
+            folder (str): folder name/path
+
+        Returns:
+            dict: dictionary with folder details
         """
         folder_details = self.clnt.get(f"/folders/{folder}")
         return folder_details
@@ -231,19 +236,19 @@ class EvengApi:
     @staticmethod
     def normalize_path(path):
         if path:
-            # Remove leading slash and render url safe path
-            path = path.lstrip("/")
-            dir_, file_ = os.path.split(path)
-            q_plus = quote_plus(dir_)
+            if not path.startswith('/'):
+                path = '/' + path
+            path = Path(path).resolve()
 
-            # build normalized path
-            normpath = "/".join((q_plus, file_))
+            # Add extension if needed
+            path = path.with_suffix('.unl')
 
-            # Add extension if need
-            if not (normpath.endswith('.unl')):
-                normpath += '.unl'
-            return normpath
+            # make parts of the path url safe
+            quoted_parts = [str(quote_plus(x)) for x in path.parts[1:]]
 
+            # rejoin the path and return string
+            new_path = Path('/').joinpath(*quoted_parts)
+            return str(new_path)
         return path
 
     def get_lab(self, path):
@@ -257,11 +262,7 @@ class EvengApi:
         Returns:
             dict: dictionary with lab details
         """
-        normpath = self.normalize_path(path)
-        if not normpath.endswith(".unl"):
-            normpath = normpath + ".unl"
-
-        url = f"/labs/{normpath}"
+        url = "/labs" + self.normalize_path(path)
         return self.clnt.get(url)
 
     def export_lab(self, path, filename='lab_export.zip'):
@@ -301,8 +302,8 @@ class EvengApi:
         Returns:
             dict: dictionary with configured networks
         """
-        normpath = self.normalize_path(path)
-        url = f"/labs/{normpath}/networks"
+        uri = "/networks"
+        url = "/labs" + self.normalize_path(path) + uri
         return self.clnt.get(url)
 
     def get_lab_network(self, path, net_id):
@@ -316,8 +317,8 @@ class EvengApi:
         Returns:
             dict: dictionary with network details
         """
-        normpath = self.normalize_path(path)
-        url = f"/labs/{normpath}/networks/{net_id}"
+        uri = f"/networks/{net_id}"
+        url = "/labs" + self.normalize_path(path) + uri
         return self.clnt.get(url)
 
     def get_lab_network_by_name(self, path, name):
@@ -354,8 +355,7 @@ class EvengApi:
         Returns:
             dict: dictionary with lab links
         """
-        normpath = self.normalize_path(path)
-        url = f"/labs/{normpath}/links"
+        url = f"/labs" + self.normalize_path(path) + "/links"
         links = self.clnt.get(url)
         return links
 
@@ -369,8 +369,8 @@ class EvengApi:
         Returns:
             dict: dictionary with all lab node details
         """
-        normpath = self.normalize_path(path)
-        url = f"/labs/{normpath}/nodes"
+        uri = "/nodes"
+        url = "/labs" + self.normalize_path(path) + uri
         nodes = self.clnt.get(url)
         return nodes
 
@@ -386,10 +386,9 @@ class EvengApi:
             dict: dictionary with single lab node details
 
         """
-        normpath = self.normalize_path(path)
-        url = "/labs/" + normpath + f"/nodes/{node_id}"
-        node = self.clnt.get(url)
-        return node
+        uri = f"/nodes/{node_id}"
+        url = "/labs" + self.normalize_path(path) + uri
+        return self.clnt.get(url)
 
     def get_node_by_name(self, path, name):
         """
@@ -424,8 +423,7 @@ class EvengApi:
         Returns:
             dict:
         """
-        normpath = self.normalize_path(path)
-        url = "/labs/" + normpath + f"/configs"
+        url = "/labs" + self.normalize_path(path) + f"/configs"
         configs = self.clnt.get(url)
         return configs
 
@@ -441,10 +439,9 @@ class EvengApi:
         Returns:
             dict: configuration data
         """
-        normpath = self.normalize_path(path)
-        url = "/labs/" + normpath + f"/configs/{config_id}"
-        node_config = self.clnt.get(url)
-        return node_config
+        uri = f"/configs/{config_id}"
+        url = "/labs" + self.normalize_path(path) + uri
+        return self.clnt.get(url)
 
     def get_node_config_by_name(self, path, node_name):
         """
@@ -489,12 +486,9 @@ class EvengApi:
         """
         # current_cfg = self.get_node_config_by_id(path, node_id)
         if node_id:
-            normpath = self.normalize_path(path)
-            url = f"/labs/{normpath}/configs/{node_id}"
-            payload = {
-                "id": node_id,
-                "data": config
-            }
+            uri = f"/configs/{node_id}"
+            url = "/labs" + self.normalize_path(path) + uri
+            payload = {"id": node_id, "data": config}
             resp = self.clnt.put(url, data=json.dumps(payload))
             return resp
         else:
@@ -549,8 +543,8 @@ class EvengApi:
         """
         Connect node interface to a network
         """
-        normpath = self.normalize_path(lab)
-        url = "/labs/" + normpath + f"/nodes/{node_id}/interfaces"
+        uri = f"/nodes/{node_id}/interfaces"
+        url = "/labs" + self.normalize_path(lab) + uri
 
         intf_id = interface[0]
         data = {intf_id: str(net_id)}
@@ -585,9 +579,8 @@ class EvengApi:
             net_id = net.get("id")
             data = {intf_id: str(net_id)}
 
-            # Build url for ree quest
-            normpath = self.normalize_path(lab)
-            url = "/labs/" + normpath + f"/nodes/{node_id}/interfaces"
+            uri = f"/nodes/{node_id}/interfaces"
+            url = "/labs" + self.normalize_path(lab) + uri
 
             # connect interface to cloud
             r1 = self.clnt.put(url, data=json.dumps(data))
@@ -621,8 +614,10 @@ class EvengApi:
 
         if src_node_id and dst_node_id:
             # Get all current interfaces of type media ("ethernet" or "serial")
-            src_node_ports = self.get_node_interfaces(lab, src_node_id).get(media)
-            dst_node_ports = self.get_node_interfaces(lab, dst_node_id).get(media)
+            src_node_ports = self.get_node_interfaces(
+                lab, src_node_id).get(media)
+            dst_node_ports = self.get_node_interfaces(
+                lab, dst_node_id).get(media)
 
             # Extract interface dicts from list of interfaces
             src_intf = self.find_node_interface(src_node_i, src_node_ports)
@@ -666,8 +661,7 @@ class EvengApi:
         Returns:
             dict: dictionary with operation results
         """
-        normpath = self.normalize_path(path)
-        url = "/labs/" + normpath + f"/nodes/start"
+        url = "/labs" + self.normalize_path(path) + f"/nodes/start"
         return self.clnt.get(url)
 
     def stop_all_nodes(self, path):
@@ -687,8 +681,7 @@ class EvengApi:
                 "status": "success"
             }
         """
-        normpath = self.normalize_path(path)
-        url = f"/labs/{normpath}/nodes/stop"
+        url = f"/labs" + self.normalize_path(path) + "/nodes/stop"
         return self.clnt.get(url)
 
     def start_node(self, path, node_id):
@@ -707,8 +700,8 @@ class EvengApi:
                         "status": "success"
                     }
         """
-        normpath = self.normalize_path(path)
-        url = f"/labs/{normpath}/nodes/{node_id}/start"
+        uri = f"/nodes/{node_id}/start"
+        url = "/labs" + self.normalize_path(path) + uri
         return self.clnt.get(url)
 
     def stop_node(self, path, node_id):
@@ -727,8 +720,8 @@ class EvengApi:
                     "status": "success"
                 }
         """
-        normpath = self.normalize_path(path)
-        url = f"/labs/{normpath}/nodes/{node_id}/stop"
+        uri = f"/nodes/{node_id}/stop"
+        url = "/labs" + self.normalize_path(path) + uri
         return self.clnt.get(url)
 
     def wipe_all_nodes(self, path):
@@ -748,8 +741,7 @@ class EvengApi:
                     "status": "success"
                   }
         """
-        normpath = self.normalize_path(path)
-        url = "/labs/" + normpath + f"/nodes/wipe"
+        url = "/labs" + self.normalize_path(path) + "/nodes/wipe"
         return self.clnt.get(url)
 
     def wipe_node(self, path, node_id):
@@ -769,8 +761,8 @@ class EvengApi:
                     "status": "success"
                 }
         """
-        normpath = self.normalize_path(path)
-        url = f"/labs/{normpath}/nodes/{node_id}/wipe"
+        uri = f"/nodes/{node_id}/wipe"
+        url = "/labs" + self.normalize_path(path) + uri
         return self.clnt.get(url)
 
     def export_all_nodes(self, path):
@@ -789,8 +781,7 @@ class EvengApi:
                     "status": "success"
                 }
         """
-        normpath = self.normalize_path(path)
-        url = f"/labs/{normpath}/nodes/export"
+        url = "/labs" + self.normalize_path(path) + "/nodes/export"
         return self.clnt.get(url)
 
     def export_node(self, path, node_id):
@@ -809,8 +800,8 @@ class EvengApi:
                 "status": "success"
             }
         """
-        normpath = self.normalize_path(path)
-        url = f"/labs/{normpath}/nodes/{node_id}/export"
+        uri = f"/nodes/{node_id}/export"
+        url = "/labs" + self.normalize_path(path) + uri
         return self.clnt.get(url)
 
     def get_node_interfaces(self, path, node_id):
@@ -841,10 +832,9 @@ class EvengApi:
                     "status": "success"
             }
         """
-        normpath = self.normalize_path(path)
-        url = f"/labs/{normpath}/nodes/{node_id}/interfaces"
-        interfaces = self.clnt.get(url)
-        return interfaces
+        uri = f"/nodes/{node_id}/interfaces"
+        url = "/labs" + self.normalize_path(path) + uri
+        return self.clnt.get(url)
 
     def get_lab_topology(self, path):
         """
@@ -881,10 +871,9 @@ class EvengApi:
                 "status": "success"
             }
         """
-        normpath = self.normalize_path(path)
-        url = f"/labs/{normpath}/topology"
-        topology = self.clnt.get(url)
-        return topology
+        url = "/labs" + self.normalize_path(path) + "/topology"
+        r = self.clnt.get(url)
+        return r
 
     def get_lab_pictures(self, path):
         """
@@ -906,16 +895,15 @@ class EvengApi:
                 "status": "success"
             }
         """
-        normpath = self.normalize_path(path)
-        url = "/labs/" + normpath + f"/pictures"
+        url = "/labs" + self.normalize_path(path) + f"/pictures"
         return self.clnt.get(url)
 
     def get_lab_picture_details(self, path, picture_id):
         """
         Retrieve single picture
         """
-        normpath = self.normalize_path(path)
-        url = "/labs/" + normpath + f"/pictures/{picture_id}"
+        uri = f"/pictures/{picture_id}"
+        url = "/labs" + self.normalize_path(path) + uri
         return self.clnt.get(url)
 
     def lab_exists(self, path, name):
@@ -1021,11 +1009,12 @@ class EvengApi:
             "author": kwargs.get("author") or author,
             "description": kwargs.get("description") or description,
         }
-        url = "/labs/" + normpath
+        url = "/labs" + normpath
         return self.clnt.put(url, data=json.dumps(data))
 
     def delete_lab(self, name="", path="/"):
-        """ Delete an existent lab
+        """
+        Delete an existent lab
 
             sample output:
                 {
@@ -1047,8 +1036,7 @@ class EvengApi:
         name = self.slugify(name) \
             if not name.endswith('unl') \
             else self.slugify(name.split('.')[0])
-        normpath = self.normalize_path(path)
-        url = f'/labs/{normpath}/name/lock'
+        url = '/labs' + self.normalize_path(path) + '/name/lock'
         resp = self.clnt.put(url)
         return resp
 
@@ -1058,8 +1046,7 @@ class EvengApi:
         name = self.slugify(name) \
             if not name.endswith('unl') \
             else self.slugify(name.split('.')[0])
-        normpath = self.normalize_path(path)
-        url = f'/labs/{normpath}/name/Unlock'
+        url = '/labs' + self.normalize_path(path) + '/name/Unlock'
         resp = self.clnt.put(url)
         return resp
 
@@ -1084,8 +1071,7 @@ class EvengApi:
             visibility (int): 0 or 1 to indicate visibility
 
         """
-        normpath = self.normalize_path(path)
-        url = '/labs/' + normpath + f'/networks/{net_id}'
+        url = '/labs' + self.normalize_path(path) + f'/networks/{net_id}'
         return self.clnt.put(url, data=json.dumps(data))
 
     def add_lab_network(self,
@@ -1127,8 +1113,7 @@ class EvengApi:
             "type": kwargs.get("type") or network_type,
             "visibility": kwargs.get("visibility") or visibility
         }
-        normpath = self.normalize_path(path.lower())
-        url = '/labs/' + normpath + '/networks'
+        url = '/labs' + self.normalize_path(path) + '/networks'
 
         if not self.network_exists(path, name):
             return self.clnt.post(url, data=json.dumps(data))
@@ -1136,16 +1121,15 @@ class EvengApi:
             raise EvengApiError('Network Already Exists')
 
     def delete_lab_network(self, name="", path="/"):
-        normpath = self.normalize_path(path)
-        url = None
         try:
             int(name)
-            url = '/labs/' + normpath + '/networks/' + name
+            url = '/labs' + self.normalize_path(path) + '/networks/' + name
         except ValueError:
             net = self.get_lab_network_by_name(path, name)
             if net is not None:
                 net_id = net.get('id')
-                url = '/labs/' + normpath + '/networks/' + str(net_id)
+                uri = '/networks/' + str(net_id)
+                url = '/labs' + self.normalize_path(path) + uri
             else:
                 return ValueError(f"network with name/id '{name}' not found")
         return self.clnt.delete(url)
@@ -1193,8 +1177,7 @@ class EvengApi:
             uuid (str): UUID configured, default is a random UUID
                     (i.e. 641a4800-1b19-427c-ae87-4a8ee90b7790).
         """
-        normpath = self.normalize_path(path)
-        url = f"/labs/{normpath}/nodes"
+        url = '/labs' + self.normalize_path(path) + "/nodes"
 
         template = kwargs.get("template") or template
         resp = self.node_template_detail(template)
