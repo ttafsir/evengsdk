@@ -131,3 +131,4 @@ dmypy.json
 # local
 *.local*
 .vscode
+*.old
