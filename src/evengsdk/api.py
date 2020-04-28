@@ -488,11 +488,6 @@ class EvengApi:
                 "data": config
             }
             resp = self.clnt.put(url, data=json.dumps(payload))
-            # if enable:
-            #     node_url = f"/labs/{normpath}/nodes/{node_id}"
-            #     err, r2 = self.clnt.put(url, data=json.dumps({'id': node_id, 'config': '1'}))
-            #     if err:
-            #         raise EvengApiError('Could not enable config for node')
             return resp
         else:
             raise ValueError('Node ID is required.')
