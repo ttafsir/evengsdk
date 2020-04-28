@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 # -*- coding: utf-8 -*-
 import json
 import logging
@@ -35,11 +34,9 @@ class EvengClient:
         if DISABLE_INSECURE_WARNINGS:
             requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
-        # Create Logger
+        # Create Logger and set Set log level
         self.log = logging.getLogger('eve-client')
-        # Set log level
         self.set_log_level(log_level)
-        # Log to file is filename is provided
         if log_file:
             self.log.addHandler(logging.FileHandler(log_file))
         else:
@@ -70,7 +67,11 @@ class EvengClient:
             password (str): password to login with
         """
         self.verify = verify
-        self.authdata = {'username': username, 'password': password, 'html5': self.html5}
+        self.authdata = {
+            'username': username,
+            'password': password,
+            'html5': self.html5
+        }
 
         self.log.debug('creating session')
         self._create_session()
@@ -142,35 +143,26 @@ class EvengClient:
             url = self.url_prefix + url
 
         # craft and send the request
-        r = self._send_request(method, url, data=data, verify=self.verify, **kwargs)
-        if  r.status_code in range(200, 300):
-            self.log.debug('retrieving response data'.format(method))
-            r_json = r.json()
-            data = r_json.get('data')
-            resp = data if data is not None else r_json
-            return None, resp
-        else:
-            # return the errors
-            self.log.error(r.text)
-            return r.text, None
+        r = self._send_request(method,
+            url, data=data, verify=self.verify, **kwargs)
+
+        # parse response data
+        self.log.debug('retrieving response data'.format(method))
+        r_json = r.json()
+        data = r_json.get('data')
+        parsed_data = data if data is not None else r_json
+        return parsed_data
 
 
     def _send_request(self, method, url, data=None, **kwargs):
-        # resp = None
         self.log.debug(f'Request: {method} {url}')
-        try:
-            if method == 'DELETE':
-                resp = self.session.delete(url, **kwargs)
-            elif method == 'GET':
-                resp = self.session.get(url)
-            elif method == 'PUT':
-                resp = self.session.put(url, data=data, **kwargs)
-            elif method == 'POST':
-                resp = self.session.post(url, data=data, **kwargs)
-            return resp
-
-        except HTTPError as e:
-            raise EvengHTTPError('HTTP Error: {0}\n\t{1}'.format(url, str(e)))
-
-        except Exception as e:
-            raise e
+        if method == 'DELETE':
+            resp = self.session.delete(url, **kwargs)
+        elif method == 'GET':
+            resp = self.session.get(url)
+        elif method == 'PUT':
+            resp = self.session.put(url, data=data, **kwargs)
+        elif method == 'POST':
+            resp = self.session.post(url, data=data, **kwargs)
+        resp.raise_for_status()
+        return resp
