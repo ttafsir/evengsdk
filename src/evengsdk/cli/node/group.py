@@ -48,7 +48,7 @@ def upload_config(ctx, node_id, lab_path, src):
 
 
 @click.command()
-@click.option('--lab-path')
+@click.option('--lab-path', required=True)
 @click.option('--node-id')
 @click.pass_context
 def start(ctx, lab_path, node_id):
@@ -61,7 +61,7 @@ def start(ctx, lab_path, node_id):
 
 
 @click.command()
-@click.option('--lab-path')
+@click.option('--lab-path', required=True)
 @click.option('--node-id')
 @click.pass_context
 def stop(ctx, lab_path, node_id):
@@ -76,7 +76,7 @@ def stop(ctx, lab_path, node_id):
 
 
 @click.command()
-@click.option('--lab-path')
+@click.option('--lab-path', required=True)
 @click.pass_context
 def ls(ctx, lab_path):
     """
