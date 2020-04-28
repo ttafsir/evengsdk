@@ -10,7 +10,7 @@ from evengsdk.exceptions import EvengClientError, EvengLoginError, EvengHTTPErro
 
 
 DEVICE_UNDER_TEST = {
-    'host': '10.246.49.23',
+    'host': '10.246.48.76',
     'username': 'admin',
     'password': 'eve'
 }
