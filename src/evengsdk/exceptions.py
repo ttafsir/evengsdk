@@ -1,7 +1,8 @@
 #! /usr/bin/env python
 
-class  EvengClientError(Exception):
-    ''' Eveng Restful API client error'''
+
+class EvengClientError(Exception):
+    '''Eveng Restful API client error'''
 
     def __init__(self, msg):
         Exception.__init__(self)
