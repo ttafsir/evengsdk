@@ -6,10 +6,16 @@ verify_ssl = true
 [dev-packages]
 pytest = "*"
 pylint = "*"
+colorama = "*"
+flake8 = "*"
 
 [packages]
 requests = "*"
 pyyaml = "*"
+click = "*"
+tabulate = "*"
+jinja2 = "*"
+python-dotenv = "*"
 
 [requires]
 python_version = "3.7"

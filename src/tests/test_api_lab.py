@@ -7,14 +7,15 @@ print('__file__={0:<35} | __name__={1:<20} | __package__={2:<20}'.format(__file_
 
 from evengsdk.client import EvengClient
 from evengsdk.exceptions import EvengLoginError, EvengApiError
+from requests.exceptions import HTTPError
 
 
-LAB_PATH = '/enablement labs/'
-LAB_NAME = 'a_leaf_spine'
+LAB_PATH = '/datacenter/'
+LAB_NAME = 'leaf_spine_lab'
 EXT = '.unl'
 
 DEVICE_UNDER_TEST = {
-    'host': '10.246.49.23',
+    'host': '10.246.48.76',
     'username': 'admin',
     'password': 'eve'
 }
@@ -54,5 +55,5 @@ class TestEvengApiLab:
         raises an error.
         """
         fullpath = LAB_PATH + LAB_NAME
-        lab = client.api.get_lab('FAKE_LAB_PATH')
-        assert not(lab)
+        with pytest.raises(HTTPError):
+            lab = client.api.get_lab('FAKE_LAB_PATH')

@@ -1,0 +1,6 @@
+# INI Inventory file generated for {{ lab_path }}
+
+{%- for group, nodes in groups.items() %}
+[{{group}}]
+{%- for node in nodes %}
+{{ node.name }} ansible_host={{ eve_host }}{%- if node.console %}{%- if node.url %} console_server={{ node.console_server }} console_port={{ node.console_port }}{%- endif %}{%- if node.os %} ansible_network_os={{ node.os }}{%- endif %}{%- endif %}{%- endfor %}{% endfor %}

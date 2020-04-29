@@ -8,11 +8,12 @@ print('__file__={0:<35} | __name__={1:<20} | __package__={2:<20}'.format(__file_
 
 from evengsdk.client import EvengClient
 from evengsdk.exceptions import EvengLoginError, EvengApiError
+from requests.exceptions import HTTPError
 
 
-LAB_PATH = '/enablement labs/a_leaf_spine.unl'
+LAB_PATH = '/datacenter/leaf_spine_lab.unl'
 DEVICE_UNDER_TEST = {
-    'host': '10.246.49.23',
+    'host': '10.246.48.76',
     'username': 'admin',
     'password': 'eve'
 }
@@ -21,7 +22,7 @@ USERS = {
     'non_existing': 'fake_user99'
 }
 TEST_NETWORK = 'ATC-vCloud'
-TEST_NODE = 'vEOS4'
+TEST_NODE = 'leaf04'
 TEST_CONFIG = """
 !
 hostname vEOS4
@@ -110,7 +111,7 @@ class TestEvengApi:
         an exception
         """
         for username, password in (user for user in USERS['to_create']):
-            with pytest.raises(EvengApiError):
+            with pytest.raises(HTTPError):
                 result = client.api.add_user(username, password)
 
     def test_edit_existing_user(self, client):
@@ -138,8 +139,8 @@ class TestEvengApi:
             'name': 'John Doe'
         }
         username = USERS['non_existing']
-        with pytest.raises(EvengApiError):
-            result = client.api.edit_user(username, data=new_data)
+        r = client.api.edit_user(username, data=new_data)
+        assert r == {}
 
     def test_delete_user(self, client):
         """
@@ -187,7 +188,8 @@ class TestEvengApi:
         Verify that we can retrieve a specific lab by name
         """
         network_details = client.api.get_lab_network_by_name(LAB_PATH, TEST_NETWORK)
-        assert network_details['type'] is not None
+        print(network_details)
+        assert network_details is not None
 
     def test_list_lab_links(self, client):
         """
