@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import click
-from pprint import PrettyPrinter
+from evengsdk.cli.helpers import to_human_readable
 
 
 @click.command()
@@ -11,8 +11,11 @@ def status(ctx):
     """
     client = ctx.obj['CLIENT']
     status = client.api.get_server_status()
-    pp = PrettyPrinter(indent=2)
-    pp.pprint(status)
+
+    click.secho('System', fg='blue')
+
+    for output in to_human_readable(status):
+        click.echo(output)
 
 
 @click.group()

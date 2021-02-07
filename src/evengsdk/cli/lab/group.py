@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import click
 from tabulate import tabulate
+from evengsdk.cli.helpers import to_human_readable
 from evengsdk.cli.lab.generate import generate
 from evengsdk.inventory import build_inventory
 
@@ -53,7 +54,16 @@ def ls(ctx):
     for folder in root_folders:
         folder_labs = client.api.get_folder(folder['name']).get('labs')
         labs.extend(folder_labs)
-    click.echo(tabulate(labs, headers="keys", tablefmt="grid"))
+
+    click.secho('Labs', fg='blue')
+
+    keys_to_display = "file path".split()
+    for lab in labs:
+        lab_name = lab['file'].rsplit('.', 1)[0]
+        click.secho(lab_name.upper(), fg='yellow', dim=True)
+        for output in to_human_readable(lab, keys=keys_to_display):
+            click.echo(output)
+        click.echo()
 
 
 @click.command()
