@@ -1,9 +1,34 @@
 # -*- coding: utf-8 -*-
+from itertools import chain
+import threading
+
 import click
 from tabulate import tabulate
-from evengsdk.cli.helpers import to_human_readable
+from evengsdk.cli.helpers import to_human_readable, thread_executor
 from evengsdk.cli.lab.generate import generate
 from evengsdk.inventory import build_inventory
+
+
+client = None
+thread_local = threading.local()
+
+
+def _get_client_session():
+    if not hasattr(thread_local, "client"):
+        thread_local.client = client
+    return thread_local.client
+
+
+def _get_lab_folder(name):
+    session = _get_client_session()
+    r = session.api.get_folder(name)
+    return r.get('labs')
+
+
+def _get_lab_details(lab_path):
+    session = _get_client_session()
+    r = session.api.get_lab(lab_path)
+    return r
 
 
 @click.command()
@@ -45,23 +70,31 @@ def ls(ctx):
     """
     List the available labs in EVE-NG host
     """
+    global client
     client = ctx.obj['CLIENT']
     resp = client.api.list_folders()
 
     root_folders = resp['folders']
-    labs = resp.get('labs')
+    labs_in_root_folder = resp.get('labs')
 
-    for folder in root_folders:
-        folder_labs = client.api.get_folder(folder['name']).get('labs')
-        labs.extend(folder_labs)
+    # Get the lab information from all other folders (non-root)
+    labs_in_nested_folders = thread_executor(
+        _get_lab_folder, (x['name'] for x in root_folders)
+    )
+    # flatten the results to single iterable
+    # (labs from root folder + labs from nested)
+    all_lab_info = chain(*labs_in_root_folder, *labs_in_nested_folders)
 
+    # Get the actual details for Each lab using the lab paths
+    lab_details = thread_executor(
+        _get_lab_details, (x['path'] for x in all_lab_info)
+    )
+
+    # Display output
     click.secho('Labs', fg='blue')
-
-    keys_to_display = "file path".split()
-    for lab in labs:
-        lab_name = lab['file'].rsplit('.', 1)[0]
-        click.secho(lab_name.upper(), fg='yellow', dim=True)
-        for output in to_human_readable(lab, keys=keys_to_display):
+    for lab in lab_details:
+        click.secho(lab['name'].upper(), fg='yellow', dim=True)
+        for output in to_human_readable(lab):
             click.echo(output)
         click.echo()
 
