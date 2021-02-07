@@ -2,17 +2,11 @@
 import os
 
 import click
-from dotenv import load_dotenv, find_dotenv
-
 
 from evengsdk.client import EvengClient
 from evengsdk.cli.lab.group import lab
 from evengsdk.cli.node.group import node
 from evengsdk.cli.system.group import system
-
-
-# load virtual environments from .env
-load_dotenv(find_dotenv())
 
 
 @click.group()
