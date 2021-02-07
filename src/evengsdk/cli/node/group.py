@@ -3,8 +3,11 @@ from pathlib import Path
 import os
 import click
 
-from evengsdk.cli.helpers import to_human_readable
+from evengsdk.cli.helpers import to_human_readable, display_status
 from evengsdk.cli.node import NODE_STATUS_CODES, NODE_STATUS_COLOR
+
+
+client = None
 
 
 def get_configs(src):
@@ -30,7 +33,7 @@ def get_config(src):
 
 
 @click.command()
-@click.option('--lab-path', required=True)
+@click.argument('lab-path')
 @click.option('--node-id', required=True)
 @click.option('--src', required=True, type=click.Path(exists=True))
 @click.pass_context
@@ -38,7 +41,7 @@ def upload_config(ctx, node_id, lab_path, src):
     """
     Upload device configuration
     """
-    client = ctx.obj['CLIENT']
+    client.login(username=ctx.obj.username, password=ctx.obj.password)
     config = get_config(src)
     client.api.upload_node_config(
         lab_path, node_id,
@@ -47,43 +50,42 @@ def upload_config(ctx, node_id, lab_path, src):
 
 
 @click.command()
-@click.option('--lab-path', required=True)
-@click.option('--node-id')
+@click.argument('lab-path')
+@click.option('--node-id', required=True)
 @click.pass_context
 def start(ctx, lab_path, node_id):
     """
     start node in lab.
     """
-    client = ctx.obj['CLIENT']
+    client.login(username=ctx.obj.username, password=ctx.obj.password)
     resp = client.api.start_node(lab_path, node_id)
-    click.echo(resp)
+    display_status(resp)
 
 
 @click.command()
-@click.option('--lab-path', required=True)
-@click.option('--node-id')
+@click.argument('lab-path')
+@click.option('--node-id', required=True)
 @click.pass_context
 def stop(ctx, lab_path, node_id):
     """
     stop node in lab.
     """
-    client = ctx.obj['CLIENT']
+    client.login(username=ctx.obj.username, password=ctx.obj.password)
     resp = client.api.stop_node(lab_path, node_id)
     if resp.get('status') and resp['status'] == 'success':
         close_resp = client.delete('/labs/close')
-        click.echo(close_resp)
+        display_status(close_resp)
 
 
 @click.command()
-@click.option('--lab-path', required=True)
+@click.argument('lab-path')
 @click.pass_context
 def ls(ctx, lab_path):
     """
     list lab nodes
     """
 
-    client = ctx.obj['CLIENT']
-
+    client.login(username=ctx.obj.username, password=ctx.obj.password)
     resp = client.api.list_nodes(lab_path)
     if resp:
         node_indexes = resp.keys()
@@ -120,6 +122,8 @@ def node(ctx):
     """
     EVE-NG lab commands
     """
+    global client
+    client = ctx.obj.client
 
 
 node.add_command(ls)
