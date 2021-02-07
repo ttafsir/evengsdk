@@ -22,12 +22,24 @@ def _get_client_session():
 def _get_lab_folder(name):
     session = _get_client_session()
     r = session.api.get_folder(name)
-    return r.get('labs')
+    labs_from_folder = list()
+    labs_from_folder.append(r.get('labs'))
+    while len(nested_folders := r.get('folders')) > 1:
+        for folder in nested_folders:
+            if folder["name"] == "..":
+                continue
+            else:
+                r = session.api.get_folder(f'{folder["path"]}')
+                labs_from_folder.append(r.get('labs'))
+    return labs_from_folder
 
 
-def _get_lab_details(lab_path):
+def _get_lab_details(lab_path: str):
     session = _get_client_session()
     r = session.api.get_lab(lab_path)
+    if r:
+        path = lab_path.lstrip('/')
+        r.update({'path': '/' + path})
     return r
 
 
@@ -78,9 +90,9 @@ def ls(ctx):
     labs_in_root_folder = resp.get('labs')
 
     # Get the lab information from all other folders (non-root)
-    labs_in_nested_folders = thread_executor(
+    labs_in_nested_folders = chain(*thread_executor(
         _get_lab_folder, (x['name'] for x in root_folders)
-    )
+    ))
     # flatten the results to single iterable
     # (labs from root folder + labs from nested)
     all_lab_info = chain(*labs_in_root_folder, *labs_in_nested_folders)
