@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from concurrent.futures import ThreadPoolExecutor
+import html
 from typing import Dict, List
 
 
@@ -21,6 +23,15 @@ def to_human_readable(
 
     for key, val in obj.items():
         if isinstance(val, str):
-            yield f'  {key}: {val:>4s}'
+            escaped_val = html.unescape(val)
+            yield f'  {key}: {escaped_val}'
         elif isinstance(val, int):
-            yield f'  {key}: {val:>4d}'
+            yield f'  {key}: {val}'
+
+
+def thread_executor(func, items):
+    futures = list()
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        for future in executor.map(func, items):
+            futures.append(future)
+    return futures
