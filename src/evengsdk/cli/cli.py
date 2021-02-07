@@ -9,6 +9,16 @@ from evengsdk.cli.node.group import node
 from evengsdk.cli.system.group import system
 
 
+class Context:
+
+    def __init__(self):
+        self.verbose = False
+        self.logger = None
+
+
+PASS_CTX = click.make_pass_decorator(Context, ensure=True)
+
+
 @click.group()
 @click.option('--host', envvar='EVE_NG_HOST', required=True)
 @click.option('--username', prompt=True,
@@ -19,17 +29,17 @@ from evengsdk.cli.system.group import system
               envvar='EVE_NG_PASSWORD', required=True)
 @click.option('--port', default=80,
               help='HTTP port to connect to. Default is 80')
-@click.pass_context
+@PASS_CTX
 def main(ctx, host, port, username, password):
-
-    # ensure that ctx.obj exists and is a dict
-    ctx.ensure_object(dict)
+    """
+    EVE-NG CLI commands
+    """
 
     client = EvengClient(host, log_file='cli.log')
-    client.login(username=username, password=password)
-
-    ctx.obj['CLIENT'] = client
-    ctx.obj['HOST'] = host
+    ctx.client = client
+    ctx.host = host
+    ctx.username = username
+    ctx.password = password
 
 
 main.add_command(lab)
