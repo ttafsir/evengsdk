@@ -1,12 +1,10 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 import logging
-import os
 import pytest
-import sys
 
 from evengsdk.client import EvengClient
-from evengsdk.exceptions import EvengClientError, EvengLoginError, EvengHTTPError
+from evengsdk.exceptions import EvengClientError, EvengLoginError
 
 
 DEVICE_UNDER_TEST = {

@@ -3,8 +3,6 @@ from pathlib import Path
 import os
 import click
 
-from tabulate import tabulate
-
 from evengsdk.cli.helpers import to_human_readable
 from evengsdk.cli.node import NODE_STATUS_CODES, NODE_STATUS_COLOR
 

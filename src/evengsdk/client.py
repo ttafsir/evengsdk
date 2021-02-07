@@ -163,7 +163,6 @@ class EvengClient:
         )
 
         # parse response data
-        self.log.debug('retrieving response data'.format(method))
         r_json = r.json()
         data = r_json.get('data')
         parsed_data = data if data is not None else r_json

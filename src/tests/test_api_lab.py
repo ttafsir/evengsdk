@@ -1,12 +1,6 @@
-import json
-import os
 import pytest
-import sys
-
-print('__file__={0:<35} | __name__={1:<20} | __package__={2:<20}'.format(__file__,__name__,str(__package__)))
 
 from evengsdk.client import EvengClient
-from evengsdk.exceptions import EvengLoginError, EvengApiError
 from requests.exceptions import HTTPError
 
 
@@ -20,9 +14,14 @@ DEVICE_UNDER_TEST = {
     'password': 'eve'
 }
 
+
 @pytest.fixture()
 def client():
-    client = EvengClient(DEVICE_UNDER_TEST['host'], log_level='DEBUG', log_file='api.log')
+    client = EvengClient(
+        DEVICE_UNDER_TEST['host'],
+        log_level='DEBUG',
+        log_file='api.log'
+    )
     username = DEVICE_UNDER_TEST['username']
     passwd = DEVICE_UNDER_TEST['password']
     client.login(username=username, password=passwd)
@@ -54,6 +53,5 @@ class TestEvengApiLab:
         Verify that retrieving a non existing lab
         raises an error.
         """
-        fullpath = LAB_PATH + LAB_NAME
         with pytest.raises(HTTPError):
-            lab = client.api.get_lab('FAKE_LAB_PATH')
+            client.api.get_lab('FAKE_LAB_PATH')
