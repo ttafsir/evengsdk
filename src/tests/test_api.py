@@ -1,13 +1,7 @@
-import logging
-import json
-import os
 import pytest
-import sys
-
-print('__file__={0:<35} | __name__={1:<20} | __package__={2:<20}'.format(__file__,__name__,str(__package__)))
 
 from evengsdk.client import EvengClient
-from evengsdk.exceptions import EvengLoginError, EvengApiError
+from evengsdk.exceptions import EvengApiError
 from requests.exceptions import HTTPError
 
 
@@ -32,12 +26,17 @@ hostname vEOS4
 
 @pytest.fixture()
 def client():
-    client = EvengClient(DEVICE_UNDER_TEST['host'], log_level='DEBUG', log_file='api.log')
+    client = EvengClient(
+        DEVICE_UNDER_TEST['host'],
+        log_level='DEBUG',
+        log_file='api.log'
+    )
     username = DEVICE_UNDER_TEST['username']
     passwd = DEVICE_UNDER_TEST['password']
     client.login(username=username, password=passwd)
     yield client
     client.logout()
+
 
 class TestEvengApi:
     ''' Test cases '''
@@ -112,7 +111,7 @@ class TestEvengApi:
         """
         for username, password in (user for user in USERS['to_create']):
             with pytest.raises(HTTPError):
-                result = client.api.add_user(username, password)
+                client.api.add_user(username, password)
 
     def test_edit_existing_user(self, client):
         """
@@ -168,7 +167,6 @@ class TestEvengApi:
         networks = client.api.list_networks()
         assert networks['bridge'] is not None
 
-
     def test_list_lab_networks(self, client):
         """
         Verify that we can list lab networks.
@@ -187,8 +185,10 @@ class TestEvengApi:
         """
         Verify that we can retrieve a specific lab by name
         """
-        network_details = client.api.get_lab_network_by_name(LAB_PATH, TEST_NETWORK)
-        print(network_details)
+        network_details = client.api.get_lab_network_by_name(
+            LAB_PATH,
+            TEST_NETWORK
+        )
         assert network_details is not None
 
     def test_list_lab_links(self, client):
@@ -198,7 +198,7 @@ class TestEvengApi:
         of existing links or empty dictionary.
         """
         links = client.api.list_lab_links(LAB_PATH)
-        assert 'links' is not None
+        assert links is not None
 
     def test_list_nodes(self, client):
         """
@@ -253,7 +253,11 @@ class TestEvengApi:
         """
         config = client.api.get_node_config_by_name(LAB_PATH, TEST_NODE)
         node_id = config.get('id')
-        resp = client.api.upload_node_config(LAB_PATH, node_id, config=TEST_CONFIG)
+        resp = client.api.upload_node_config(
+            LAB_PATH,
+            node_id,
+            config=TEST_CONFIG
+        )
         assert resp['status'] == 'success'
 
     def test_stop_all_nodes(self, client):

@@ -1,5 +1,6 @@
 from jinja2 import Environment, PackageLoader
 
+
 def build_inventory(eve_host, lab_path, nodes):
     for node in nodes:
         node['console_port'] = node['url'].split(':')[2]

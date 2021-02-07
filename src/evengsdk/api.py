@@ -217,7 +217,7 @@ class EvengApi:
         """
         List all folders and include labs
         """
-        folders = self.clnt.get(f"/folders/")
+        folders = self.clnt.get("/folders/")
         return folders
 
     def get_folder(self, folder):
@@ -275,7 +275,7 @@ class EvengApi:
         Returns:
             file: zip file with exported lab
         """
-        url = f"/export"
+        url = "/export"
         lab_filepath = Path(path)
 
         payload = {
@@ -355,7 +355,7 @@ class EvengApi:
         Returns:
             dict: dictionary with lab links
         """
-        url = f"/labs" + self.normalize_path(path) + "/links"
+        url = "/labs" + self.normalize_path(path) + "/links"
         links = self.clnt.get(url)
         return links
 
@@ -410,7 +410,7 @@ class EvengApi:
             except StopIteration:
                 self.clnt.log.warning(f'node {name} not found')
         else:
-            self.clnt.log.warning(f'no nodes found in lab')
+            self.clnt.log.warning('no nodes found in lab')
         return found
 
     def get_node_configs(self, path):
@@ -423,7 +423,7 @@ class EvengApi:
         Returns:
             dict:
         """
-        url = "/labs" + self.normalize_path(path) + f"/configs"
+        url = "/labs" + self.normalize_path(path) + "/configs"
         configs = self.clnt.get(url)
         return configs
 
@@ -591,7 +591,7 @@ class EvengApi:
         elif net:
             raise ValueError(f"node {node_name} not found or invalid")
         else:
-            raise ValueError(f"invalid network and/or network")
+            raise ValueError("invalid network and/or network")
         return
 
     def connect_node_to_node(self,
@@ -661,7 +661,7 @@ class EvengApi:
         Returns:
             dict: dictionary with operation results
         """
-        url = "/labs" + self.normalize_path(path) + f"/nodes/start"
+        url = "/labs" + self.normalize_path(path) + "/nodes/start"
         return self.clnt.get(url)
 
     def stop_all_nodes(self, path):
@@ -681,7 +681,7 @@ class EvengApi:
                 "status": "success"
             }
         """
-        url = f"/labs" + self.normalize_path(path) + "/nodes/stop"
+        url = f"/labs{self.normalize_path(path)}/nodes/stop"
         return self.clnt.get(url)
 
     def start_node(self, path, node_id):
@@ -895,7 +895,7 @@ class EvengApi:
                 "status": "success"
             }
         """
-        url = "/labs" + self.normalize_path(path) + f"/pictures"
+        url = "/labs" + self.normalize_path(path) + "/pictures"
         return self.clnt.get(url)
 
     def get_lab_picture_details(self, path, picture_id):

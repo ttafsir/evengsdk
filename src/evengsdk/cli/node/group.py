@@ -3,8 +3,7 @@ from pathlib import Path
 import os
 import click
 
-from tabulate import tabulate
-
+from evengsdk.cli.helpers import to_human_readable
 from evengsdk.cli.node import NODE_STATUS_CODES, NODE_STATUS_COLOR
 
 
@@ -104,8 +103,15 @@ def ls(ctx, lab_path):
                                       fg=NODE_STATUS_COLOR[status_code])
             }
             node_table.append(table_row)
-        click.echo(tabulate(node_table, headers="keys",
-                            tablefmt="fancy_grid"))
+
+        click.secho(f'Nodes @ {lab_path}', fg='blue')
+
+        keys_to_display = "id name url image uuid template status".split()
+        for node in node_table:
+            click.secho(node['name'].upper(), fg='yellow', dim=True)
+            for output in to_human_readable(node, keys=keys_to_display):
+                click.echo(output)
+            click.echo()
 
 
 @click.group()
