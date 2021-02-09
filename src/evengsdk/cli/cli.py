@@ -7,6 +7,7 @@ from evengsdk.client import EvengClient
 from evengsdk.cli.lab.group import lab
 from evengsdk.cli.node.group import node
 from evengsdk.cli.system.group import system
+from evengsdk.cli.version import __version__
 
 
 class Context:
@@ -17,6 +18,12 @@ class Context:
 
 
 PASS_CTX = click.make_pass_decorator(Context, ensure=True)
+
+
+@click.command()
+def version():
+    """Get the library version."""
+    click.echo(click.style(f"{__version__}", bold=True))
 
 
 @click.group()
@@ -42,6 +49,7 @@ def main(ctx, host, port, username, password):
     ctx.password = password
 
 
+main.add_command(version)
 main.add_command(lab)
 main.add_command(node)
 main.add_command(system)
