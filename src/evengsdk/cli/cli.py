@@ -30,6 +30,16 @@ def version():
     click.echo(click.style(f"{__version__}", bold=True))
 
 
+class Context:
+
+    def __init__(self):
+        self.verbose = False
+        self.logger = None
+
+
+PASS_CTX = click.make_pass_decorator(Context, ensure=True)
+
+
 @click.group()
 @click.option('--host', envvar='EVE_NG_HOST', required=True)
 @click.option('--username', prompt=True,
