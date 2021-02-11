@@ -3,75 +3,66 @@ import click
 from evengsdk.cli.helpers import to_human_readable
 
 
-client = None
+@click.command(name='list')
+@click.pass_context
+def ls(ctx):
+    """
+    list EVE-NG users
+    """
+    client.login(username=ctx.obj.username, password=ctx.obj.password)
 
 
 @click.command()
 @click.pass_context
-def list_templates(ctx):
+def create(ctx):
     """
-    list EVE-NG node templates
+    Create EVE-NG user
     """
     client.login(username=ctx.obj.username, password=ctx.obj.password)
-    pass
 
 
 @click.command()
+@click.option('--user-id', help='user ID to delete')
 @click.pass_context
-def read_template(ctx):
+def read(ctx, user_id):
     """
-    get EVE-NG node template details
+    Retrieve EVE-NG user details
     """
     client.login(username=ctx.obj.username, password=ctx.obj.password)
-    pass
 
 
 @click.command()
+@click.option('--user-id', help='user ID to delete')
 @click.pass_context
-def list_network_types(ctx):
+def edit(ctx, user_id):
     """
-    list EVE-NG network types
+    Update EVE-NG user
     """
     client.login(username=ctx.obj.username, password=ctx.obj.password)
-    pass
 
 
 @click.command()
+@click.option('--user-id', help='user ID to delete')
 @click.pass_context
-def list_user_roles(ctx):
+def delete(ctx, user_id):
     """
-    list EVE-NG user roles
+    Delete EVE-NG user
     """
     client.login(username=ctx.obj.username, password=ctx.obj.password)
-    pass
-
-
-@click.command()
-@click.pass_context
-def status(ctx):
-    """
-    EVE-NG server status and details
-    """
-    client.login(username=ctx.obj.username, password=ctx.obj.password)
-    status = client.api.get_server_status()
-
-    click.secho('System', fg='blue')
-    for output in to_human_readable(status):
-        click.echo(output)
 
 
 @click.group()
 @click.pass_context
-def system(ctx):
+def user(ctx):
     """
-    EVE-NG system commands
+    Manage EVE-NG users
     """
     global client
     client = ctx.obj.client
 
 
-system.add_command(status)
-system.add_command(list_templates)
-system.add_command(read_template)
-system.add_command(list_network_types)
-system.add_command(list_user_roles)
+user.add_command(ls)
+user.add_command(create)
+user.add_command(read)
+user.add_command(edit)
+user.add_command(delete)

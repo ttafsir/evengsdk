@@ -4,9 +4,40 @@ import os
 import click
 
 from evengsdk.client import EvengClient
+from evengsdk.cli.folders.group import folder
 from evengsdk.cli.lab.group import lab
-from evengsdk.cli.node.group import node
+from evengsdk.cli.links.group import link
+from evengsdk.cli.networks.group import network
+from evengsdk.cli.nodes.group import node
+from evengsdk.cli.users.group import user
 from evengsdk.cli.system.group import system
+from evengsdk.cli.version import __version__
+
+
+class Context:
+
+    def __init__(self):
+        self.verbose = False
+        self.logger = None
+
+
+PASS_CTX = click.make_pass_decorator(Context, ensure=True)
+
+
+@click.command()
+def version():
+    """Get the library version."""
+    click.echo(click.style(f"{__version__}", bold=True))
+
+
+class Context:
+
+    def __init__(self):
+        self.verbose = False
+        self.logger = None
+
+
+PASS_CTX = click.make_pass_decorator(Context, ensure=True)
 
 
 @click.group()
@@ -19,19 +50,24 @@ from evengsdk.cli.system.group import system
               envvar='EVE_NG_PASSWORD', required=True)
 @click.option('--port', default=80,
               help='HTTP port to connect to. Default is 80')
-@click.pass_context
+@PASS_CTX
 def main(ctx, host, port, username, password):
-
-    # ensure that ctx.obj exists and is a dict
-    ctx.ensure_object(dict)
+    """
+    EVE-NG CLI commands
+    """
 
     client = EvengClient(host, log_file='cli.log')
-    client.login(username=username, password=password)
+    ctx.client = client
+    ctx.host = host
+    ctx.username = username
+    ctx.password = password
 
-    ctx.obj['CLIENT'] = client
-    ctx.obj['HOST'] = host
 
-
+main.add_command(folder)
+main.add_command(version)
 main.add_command(lab)
+main.add_command(link)
 main.add_command(node)
+main.add_command(user)
 main.add_command(system)
+main.add_command(network)

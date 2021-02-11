@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 from itertools import chain
 import threading
+import sys
 
 import click
-from tabulate import tabulate
-from evengsdk.cli.helpers import to_human_readable, thread_executor
+from evengsdk.cli.helpers import (
+    to_human_readable,
+    thread_executor,
+    display_status
+)
 from evengsdk.cli.lab.generate import generate
 from evengsdk.inventory import build_inventory
 
@@ -22,10 +26,15 @@ def _get_client_session():
 def _get_lab_folder(name):
     session = _get_client_session()
     r = session.api.get_folder(name)
+
+    # get the labs from the folder
     labs_from_folder = list()
     labs_from_folder.append(r.get('labs'))
+
+    # let's get labs from nested folders too
     while len(nested_folders := r.get('folders')) > 1:
         for folder in nested_folders:
+            # skip the '..' folder as it refers to the parent
             if folder["name"] == "..":
                 continue
             else:
@@ -36,54 +45,56 @@ def _get_lab_folder(name):
 
 def _get_lab_details(lab_path: str):
     session = _get_client_session()
-    r = session.api.get_lab(lab_path)
-    if r:
+    response = session.api.get_lab(lab_path)
+    if response:
         path = lab_path.lstrip('/')
-        r.update({'path': '/' + path})
-    return r
+        response.update({'path': '/' + path})
+    return response
 
 
 @click.command()
-@click.option('--lab-path', required=True,
-              help='Path to the lab in EVE-NG host. ex: /MYLAB.unl')
+@click.argument('lab-path')
 @click.pass_context
-def info(ctx, lab_path):
+def read(ctx, lab_path):
     """
     Get EVE-NG lab details
     """
-    client = ctx.obj['CLIENT']
-    details = client.api.get_lab(lab_path)
-    click.echo(tabulate([details], headers="keys", tablefmt="grid"))
+    client.login(username=ctx.obj.username, password=ctx.obj.password)
+    lab = client.api.get_lab(lab_path)
+
+    # Display output
+    click.secho(f'Lab {lab_path}', fg='blue')
+    click.secho(lab['name'].upper(), fg='yellow', dim=True)
+    for output in to_human_readable(lab):
+        click.echo(output)
 
 
 @click.command()
-@click.option('--lab-path', required=True,
-              help='Path to the lab in EVE-NG host. ex: /MYLAB.unl')
+@click.argument('lab-path')
 def upload(ctx):
     pass
 
 
 @click.command()
-@click.option('--lab-path', required=True,
-              help='Path to the lab in EVE-NG host. ex: /MYLAB.unl')
+@click.option('--dest', help='destination path')
+@click.argument('lab-path')
 @click.pass_context
-def export(ctx, lab_path):
+def export(ctx, lab_path, dest):
     """
-    Export and download lab file as .zip archive
+    Export and download lab file as ZIP archive
     """
-    client = ctx.obj['CLIENT']
-    resp = client.api.export_lab(lab_path)
-    click.echo(resp)
+    client.login(username=ctx.obj.username, password=ctx.obj.password)
+    response = client.api.export_lab(lab_path)
+    display_status(response)
 
 
-@click.command()
+@click.command(name='list')
 @click.pass_context
 def ls(ctx):
     """
     List the available labs in EVE-NG host
     """
-    global client
-    client = ctx.obj['CLIENT']
+    client.login(username=ctx.obj.username, password=ctx.obj.password)
     resp = client.api.list_folders()
 
     root_folders = resp['folders']
@@ -109,74 +120,82 @@ def ls(ctx):
         for output in to_human_readable(lab):
             click.echo(output)
         click.echo()
+    sys.exit()
 
 
 @click.command()
-@click.option('--lab-path', required=True,
-              help='Path to the lab in EVE-NG host. ex: /MYLAB.unl')
+@click.argument('lab-path')
 @click.pass_context
 def links(ctx, lab_path):
     """
     Get EVE-NG lab topology
     """
-    client = ctx.obj['CLIENT']
+    client.login(username=ctx.obj.username, password=ctx.obj.password)
+    resp = client.api.get_lab_topology(lab_path)
 
-    links = client.api.get_lab_topology(lab_path)
-    click.echo(tabulate(links, headers="keys", tablefmt="fancy_grid"))
+    # Display output
+    click.secho('Links', fg='blue')
+    for link in resp:
+        click.secho(f"{link['source']} <> {link['destination']}", fg='yellow', dim=True)
+        for output in to_human_readable(link):
+            click.echo(output)
+        click.echo()
 
 
 @click.command()
-@click.option('--lab-path', required=True,
-              help='Path to the lab in EVE-NG host. ex: /MYLAB.unl')
+@click.argument('lab-path')
 @click.pass_context
 def networks(ctx, lab_path):
     """
     Get EVE-NG lab topology
     """
-    client = ctx.obj['CLIENT']
-
+    client.login(username=ctx.obj.username, password=ctx.obj.password)
     resp = client.api.list_lab_networks(lab_path)
     networks = [_dict for key, _dict in resp.items()]
-    click.echo(tabulate(networks, headers="keys", tablefmt="fancy_grid"))
+
+    # Display output
+    click.secho('Networks', fg='blue')
+    for net in networks:
+        click.secho(f"{net['name']}", fg='yellow', dim=True)
+        for output in to_human_readable(net):
+            click.echo(output)
+        click.echo()
 
 
 @click.command()
-@click.option('--lab-path', default="/",
-              help='Path to the lab in EVE-NG host. ex: /MYLAB.unl')
+@click.argument('lab-path')
 @click.pass_context
 def start(ctx, lab_path):
     """
     Start all nodes in lab
     """
-    client = ctx.obj['CLIENT']
-    status = client.api.start_all_nodes(lab_path)
-    click.echo(status)
+    client.login(username=ctx.obj.username, password=ctx.obj.password)
+    response = client.api.start_all_nodes(lab_path)
+    display_status(response)
 
 
 @click.command()
-@click.option('--lab-path', default="/",
-              help='Path to the lab in EVE-NG host. ex: /MYLAB.unl')
+@click.argument('lab-path')
 @click.pass_context
 def stop(ctx, lab_path):
     """
     Stop all nodes in lab
     """
-    client = ctx.obj['CLIENT']
-    status = client.api.stop_all_nodes(lab_path)
-    click.echo(status)
+    client.login(username=ctx.obj.username, password=ctx.obj.password)
+    response = client.api.stop_all_nodes(lab_path)
+    display_status(response)
 
 
 @click.command()
-@click.option('--lab-path', default="/",
-              help='Path to the lab in EVE-NG host. ex: /MYLAB.unl')
+@click.argument('lab-path')
 @click.option('-o', '--output', help="Output filename.")
 @click.pass_context
 def inventory(ctx, lab_path, output):
     """
     generate inventory file (INI).
     """
-    eve_host = ctx.obj['HOST']
-    client = ctx.obj['CLIENT']
+    eve_host = ctx.obj.host
+    client.login(username=ctx.obj.username, password=ctx.obj.password)
     resp = client.api.list_nodes(lab_path)
     node_indexes = resp.keys()
     nodes_list = [resp[idx] for idx in node_indexes]
@@ -185,6 +204,7 @@ def inventory(ctx, lab_path, output):
     if output:
         with open(output, 'w') as handle:
             handle.write(inventory)
+    sys.exit()
 
 
 @click.group()
@@ -193,14 +213,16 @@ def lab(ctx):
     """
     EVE-NG lab commands
     """
+    global client
+    client = ctx.obj.client
 
 
-lab.add_command(info)
+lab.add_command(read)
 lab.add_command(ls)
 lab.add_command(start)
 lab.add_command(stop)
-lab.add_command(inventory)
-lab.add_command(links)
-lab.add_command(networks)
-lab.add_command(export)
-lab.add_command(generate)
+# lab.add_command(inventory)
+lab.add_command(topology)
+lab.add_command(import_lab)
+lab.add_command(export_lab)
+# lab.add_command(generate)
