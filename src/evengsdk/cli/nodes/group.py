@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 from pathlib import Path
 import os
+
 import click
+from dotenv import load_dotenv
 
 from evengsdk.cli.helpers import to_human_readable, display_status
-from evengsdk.cli.node import NODE_STATUS_CODES, NODE_STATUS_COLOR
+from evengsdk.cli.nodes import NODE_STATUS_CODES, NODE_STATUS_COLOR
 
 
+load_dotenv()
 client = None
 
 
@@ -68,7 +71,7 @@ def start(ctx, lab_path, node_id):
 @click.pass_context
 def stop(ctx, lab_path, node_id):
     """
-    stop node in lab.
+    stop node in lab
     """
     client.login(username=ctx.obj.username, password=ctx.obj.password)
     resp = client.api.stop_node(lab_path, node_id)
@@ -78,6 +81,27 @@ def stop(ctx, lab_path, node_id):
 
 
 @click.command()
+@click.argument('lab-path')
+@click.pass_context
+def create(ctx, lab_path):
+    """
+    Create lab node
+    """
+    pass
+
+
+@click.command()
+@click.argument('lab-path')
+@click.option('--node-id', required=True)
+@click.pass_context
+def read(ctx, lab_path, node_id):
+    """
+    Retrieve lab node details
+    """
+    pass
+
+
+@click.command(name='list')
 @click.argument('lab-path')
 @click.pass_context
 def ls(ctx, lab_path):
@@ -120,13 +144,15 @@ def ls(ctx, lab_path):
 @click.pass_context
 def node(ctx):
     """
-    EVE-NG lab commands
+    Manage EVE-NG lab nodes
     """
     global client
     client = ctx.obj.client
 
 
 node.add_command(ls)
+node.add_command(create)
+node.add_command(read)
 node.add_command(start)
 node.add_command(stop)
 node.add_command(upload_config)

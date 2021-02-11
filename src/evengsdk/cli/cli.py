@@ -4,8 +4,12 @@ import os
 import click
 
 from evengsdk.client import EvengClient
+from evengsdk.cli.folders.group import folder
 from evengsdk.cli.lab.group import lab
-from evengsdk.cli.node.group import node
+from evengsdk.cli.links.group import link
+from evengsdk.cli.networks.group import network
+from evengsdk.cli.nodes.group import node
+from evengsdk.cli.users.group import user
 from evengsdk.cli.system.group import system
 from evengsdk.cli.version import __version__
 
@@ -49,7 +53,11 @@ def main(ctx, host, port, username, password):
     ctx.password = password
 
 
+main.add_command(folder)
 main.add_command(version)
 main.add_command(lab)
+main.add_command(link)
 main.add_command(node)
+main.add_command(user)
 main.add_command(system)
+main.add_command(network)

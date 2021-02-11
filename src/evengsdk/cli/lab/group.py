@@ -55,7 +55,7 @@ def _get_lab_details(lab_path: str):
 @click.command()
 @click.argument('lab-path')
 @click.pass_context
-def info(ctx, lab_path):
+def read(ctx, lab_path):
     """
     Get EVE-NG lab details
     """
@@ -67,28 +67,55 @@ def info(ctx, lab_path):
     click.secho(lab['name'].upper(), fg='yellow', dim=True)
     for output in to_human_readable(lab):
         click.echo(output)
+    sys.exit()
 
 
 @click.command()
-@click.argument('lab-path')
-def upload(ctx):
-    pass
-
-
-@click.command()
-@click.option('--dest', help='destination path')
 @click.argument('lab-path')
 @click.pass_context
-def export(ctx, lab_path, dest):
+def topology(ctx, lab_path):
     """
-    Export and download lab file as .zip archive
+    Get EVE-NG lab topology
+    """
+    client.login(username=ctx.obj.username, password=ctx.obj.password)
+    resp = client.api.get_lab_topology(lab_path)
+
+    # Display output
+    click.secho(f'Lab {lab_path} Topology', fg='blue')
+    for net in resp:
+        click.secho(
+            f"{net['source']} <> {net['destination']}",
+            fg='yellow',
+            dim=True
+        )
+        for output in to_human_readable(net):
+            click.echo(output)
+        click.echo()
+    sys.exit()
+
+
+@click.command(name='import')
+@click.argument('lab-path', envvar='EVE_NG_LAB_PATH')
+def import_lab(ctx):
+    """
+    Import lab file from ZIP archive
+    """
+
+
+@click.command(name='export')
+@click.option('--dest', help='destination path')
+@click.argument('lab-path', envvar='EVE_NG_LAB_PATH')
+@click.pass_context
+def export_lab(ctx, lab_path, dest):
+    """
+    Export and download lab file as ZIP archive
     """
     client.login(username=ctx.obj.username, password=ctx.obj.password)
     response = client.api.export_lab(lab_path)
     display_status(response)
 
 
-@click.command()
+@click.command(name='list')
 @click.pass_context
 def ls(ctx):
     """
@@ -120,45 +147,7 @@ def ls(ctx):
         for output in to_human_readable(lab):
             click.echo(output)
         click.echo()
-
-
-@click.command()
-@click.argument('lab-path')
-@click.pass_context
-def links(ctx, lab_path):
-    """
-    Get EVE-NG lab topology
-    """
-    client.login(username=ctx.obj.username, password=ctx.obj.password)
-    resp = client.api.get_lab_topology(lab_path)
-
-    # Display output
-    click.secho('Links', fg='blue')
-    for link in resp:
-        click.secho(f"{link['source']} <> {link['destination']}", fg='yellow', dim=True)
-        for output in to_human_readable(link):
-            click.echo(output)
-        click.echo()
-
-
-@click.command()
-@click.argument('lab-path')
-@click.pass_context
-def networks(ctx, lab_path):
-    """
-    Get EVE-NG lab topology
-    """
-    client.login(username=ctx.obj.username, password=ctx.obj.password)
-    resp = client.api.list_lab_networks(lab_path)
-    networks = [_dict for key, _dict in resp.items()]
-
-    # Display output
-    click.secho('Networks', fg='blue')
-    for net in networks:
-        click.secho(f"{net['name']}", fg='yellow', dim=True)
-        for output in to_human_readable(net):
-            click.echo(output)
-        click.echo()
+    sys.exit()
 
 
 @click.command()
@@ -203,6 +192,7 @@ def inventory(ctx, lab_path, output):
     if output:
         with open(output, 'w') as handle:
             handle.write(inventory)
+    sys.exit()
 
 
 @click.group()
@@ -215,12 +205,12 @@ def lab(ctx):
     client = ctx.obj.client
 
 
-lab.add_command(info)
+lab.add_command(read)
 lab.add_command(ls)
 lab.add_command(start)
 lab.add_command(stop)
-lab.add_command(inventory)
-lab.add_command(links)
-lab.add_command(networks)
-lab.add_command(export)
-lab.add_command(generate)
+# lab.add_command(inventory)
+lab.add_command(topology)
+lab.add_command(import_lab)
+lab.add_command(export_lab)
+# lab.add_command(generate)
