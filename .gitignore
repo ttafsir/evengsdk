@@ -132,3 +132,4 @@ dmypy.json
 *.local*
 .vscode
 *.old
+.eve-ng/
