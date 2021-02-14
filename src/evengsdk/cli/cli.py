@@ -86,9 +86,9 @@ def main(ctx, host, port, username, password):
     """
     EVE-NG CLI commands
     """
+<<<<<<< HEAD
 
     client = EvengClient(host)
-
     logging_level = (
         LOGGING_LEVELS[ctx.verbosity]
         if ctx.verbosity in LOGGING_LEVELS
@@ -107,9 +107,9 @@ def main(ctx, host, port, username, password):
             )
         )
 
-    ctx.client = client
-    ctx.host = host
-    ctx.username = username
+=======
+
+    client = EvengClient(host, log_file='cli.log')
     ctx.password = password
 
 
