@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from concurrent.futures import ThreadPoolExecutor
 import html
+import os
+from pathlib import Path
 from typing import Dict, List
 import sys
 
@@ -48,3 +50,24 @@ def display_status(resp: Dict):
         sys.exit(0)
     err = click.style('Unknown Error: no status received', fg='red')
     sys.exit(err)
+
+
+def get_active_lab(eveng_directory: str):
+    """get active lab from eve-ng directory
+
+    Args:
+        eveng_directory (str): path to eve-ng directory
+
+    Returns:
+        [str]: return lab path or None
+    """
+    # ensure directory exists
+    Path(eveng_directory).mkdir(exist_ok=True)
+
+    # path to active lab file
+    active_lab_filepath = Path(eveng_directory) / 'active'
+
+    if active_lab_filepath.exists():
+        active_lab = active_lab_filepath.read_text()
+        return active_lab
+    return os.environ.get('EVE_NG_LAB_PATH')

@@ -13,7 +13,7 @@ def exit_with_error(msg=""):
 
 
 @click.command(name='list')
-@click.argument('lab-path')
+@click.argument('lab-path', envvar='EVE_NG_LAB_PATH')
 @click.pass_context
 def ls(ctx, lab_path):
     """

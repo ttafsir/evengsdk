@@ -7,7 +7,7 @@ from requests.exceptions import HTTPError
 
 LAB_PATH = '/datacenter/leaf_spine_lab.unl'
 DEVICE_UNDER_TEST = {
-    'host': '10.246.48.76',
+    'host': '10.246.32.119',
     'username': 'admin',
     'password': 'eve'
 }
