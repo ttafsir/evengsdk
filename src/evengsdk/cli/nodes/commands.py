@@ -3,13 +3,11 @@ from pathlib import Path
 import os
 
 import click
-from dotenv import load_dotenv
 
 from evengsdk.cli.helpers import to_human_readable, display_status
 from evengsdk.cli.nodes import NODE_STATUS_CODES, NODE_STATUS_COLOR
 
 
-load_dotenv()
 client = None
 
 
@@ -36,7 +34,7 @@ def get_config(src):
 
 
 @click.command()
-@click.argument('lab-path')
+@click.argument('lab-path', envvar='EVE_NG_LAB_PATH')
 @click.option('--node-id', required=True)
 @click.option('--src', required=True, type=click.Path(exists=True))
 @click.pass_context
@@ -53,7 +51,7 @@ def upload_config(ctx, node_id, lab_path, src):
 
 
 @click.command()
-@click.argument('lab-path')
+@click.argument('lab-path', envvar='EVE_NG_LAB_PATH')
 @click.option('--node-id', required=True)
 @click.pass_context
 def start(ctx, lab_path, node_id):
@@ -66,7 +64,7 @@ def start(ctx, lab_path, node_id):
 
 
 @click.command()
-@click.argument('lab-path')
+@click.argument('lab-path', envvar='EVE_NG_LAB_PATH')
 @click.option('--node-id', required=True)
 @click.pass_context
 def stop(ctx, lab_path, node_id):
@@ -81,7 +79,7 @@ def stop(ctx, lab_path, node_id):
 
 
 @click.command()
-@click.argument('lab-path')
+@click.argument('lab-path', envvar='EVE_NG_LAB_PATH')
 @click.pass_context
 def create(ctx, lab_path):
     """
@@ -91,7 +89,7 @@ def create(ctx, lab_path):
 
 
 @click.command()
-@click.argument('lab-path')
+@click.argument('lab-path', envvar='EVE_NG_LAB_PATH')
 @click.option('--node-id', required=True)
 @click.pass_context
 def read(ctx, lab_path, node_id):
@@ -102,7 +100,7 @@ def read(ctx, lab_path, node_id):
 
 
 @click.command(name='list')
-@click.argument('lab-path')
+@click.argument('lab-path', envvar='EVE_NG_LAB_PATH')
 @click.pass_context
 def ls(ctx, lab_path):
     """
