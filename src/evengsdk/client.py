@@ -5,7 +5,7 @@ import requests
 
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 
-from evengsdk.exceptions import EvengLoginError
+from evengsdk.exceptions import EvengLoginError, EvengHTTPError
 from evengsdk.api import EvengApi
 
 
@@ -27,8 +27,7 @@ class EvengClient:
         self.html5 = -1
         self.headers = {
             'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'Cookie': '',
+            'Content-Type': 'application/json'
         }
 
         if DISABLE_INSECURE_WARNINGS:
@@ -105,25 +104,16 @@ class EvengClient:
         self.session = requests.Session()
         url = self.url_prefix + "/auth/login"
 
-        error = ''
-        try:
-            r = self.session.post(
-                url,
-                data=json.dumps(self.authdata),
-                verify=self.verify
-            )
-            r_json = r.json()
-            # The response is None for unsuccessful login attempt
-            if not r_json.get('status') == 'success':
-                error += 'invalid login'
-                self.session = {}
-            else:
-                msg = 'logged in as: {}'.format(self.authdata.get('username'))
-                self.log.debug(msg)
-        except Exception as e:
-            self.log.error(str(e))
+        r = self.session.post(
+            url,
+            data=json.dumps(self.authdata),
+            verify=self.verify
+        )
+        if not r.ok:
             self.session = {}
-            return
+            raise EvengLoginError('Could Not login @ {url}')
+        else:
+            self.log.debug(r.json())
 
     def logout(self):
         """
@@ -134,49 +124,56 @@ class EvengClient:
             self.get(logout_endpoint)
             self.session = {}
 
-    def post(self, url, data=None, **kwargs):
-        return self._make_request('POST', url, data=data, **kwargs)
+    def post(self, url, **kwargs):
+        return self._make_request('POST', url, **kwargs)
 
-    def get(self, url):
-        return self._make_request('GET', url)
+    def get(self, url, **kwargs):
+        return self._make_request('GET', url, **kwargs)
 
-    def put(self, url, data=None, **kwargs):
-        return self._make_request('PUT', url, data=data, **kwargs)
+    def put(self, url, **kwargs):
+        return self._make_request('PUT', url, **kwargs)
 
-    def delete(self, url):
-        return self._make_request('DELETE', url)
+    def patch(self, url, **kwargs):
+        return self._make_request('PATCH', url, **kwargs)
 
-    def _make_request(self, method, url, data=None, **kwargs):
+    def delete(self, url, **kwargs):
+        return self._make_request('DELETE', url, **kwargs)
+
+    def _make_request(self, method, url, **kwargs):
         if not self.session:
             raise ValueError('No valid session exist')
 
-        self.log.debug('making {} request'.format(method))
         if self.url_prefix not in url:
             url = self.url_prefix + url
 
         # craft and send the request
-        r = self._send_request(
-            method,
-            url, data=data,
-            verify=self.verify,
-            **kwargs
-        )
+        self.log.debug('making {} - {}'.format(method, url))
+        r = self._send_request(method, url, verify=self.verify, **kwargs)
 
         # parse response data
-        r_json = r.json()
-        data = r_json.get('data')
-        parsed_data = data if data is not None else r_json
-        return parsed_data
+        if r.ok:
+            try:
+                return r.json()['data']
+            except json.JSONDecodeError:
+                raise ValueError("Invalid JSON data")
+            except KeyError:
+                return r.json()
+        else:
+            err = f"[{r.status_code}] - {r.reason}, {r.text}"
+            raise EvengHTTPError(err)
+        r.raise_for_status()
 
-    def _send_request(self, method, url, data=None, **kwargs):
-        self.log.debug(f'Request: {method} {url}')
+    def _send_request(self, method, url, **kwargs):
+        headers = kwargs.get("headers") or self.headers
+        self.log.debug(headers)
         if method == 'DELETE':
-            resp = self.session.delete(url, **kwargs)
+            resp = self.session.delete(url, headers=headers, **kwargs)
         elif method == 'GET':
-            resp = self.session.get(url)
+            resp = self.session.get(url, headers=headers, **kwargs)
         elif method == 'PUT':
-            resp = self.session.put(url, data=data, **kwargs)
+            resp = self.session.put(url, headers=headers, **kwargs)
+        elif method == 'PATCH':
+            resp = self.session.patch(url, headers=headers, **kwargs)
         elif method == 'POST':
-            resp = self.session.post(url, data=data, **kwargs)
-        resp.raise_for_status()
+            resp = self.session.post(url, headers=headers, **kwargs)
         return resp
