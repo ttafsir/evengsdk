@@ -846,7 +846,7 @@ class EvengApi:
         url = "/labs" + self.normalize_path(lab_path) + "/topology"
         return self.clnt.get(url)
 
-    def get_lab_pictures(self, lab_path:str):
+    def get_lab_pictures(self, lab_path: str):
         """Re
 
         Args:
@@ -855,7 +855,7 @@ class EvengApi:
         Returns:
             [type]: [description]
         """
-        url = "/labs" + self.normalize_path(path) + "/pictures"
+        url = "/labs" + self.normalize_path(lab_path) + "/pictures"
         return self.clnt.get(url)
 
     def get_lab_picture_details(self, path, picture_id):

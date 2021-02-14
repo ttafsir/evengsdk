@@ -15,7 +15,7 @@ LAB_TO_CREATE = {"name": "test lab1", "path": "/test lab1.unl"}
 class TestCli:
 
     def test_entrypoint(self):
-    """
+        """
         Is entrypoint script installed? (setup.py)
         """
         runner: CliRunner = CliRunner()
@@ -24,14 +24,14 @@ class TestCli:
 
     def test_version_displays_library_version(self):
         """
-    Arrange/Act: Run the `version` subcommand.
-    Assert: The output matches the library version.
-    """
-    runner: CliRunner = CliRunner()
-    result: Result = runner.invoke(cli, ["version"])
-    assert (
-        __version__ in result.output.strip()
-    ), "Version number should match library version."
+        Arrange/Act: Run the `version` subcommand.
+        Assert: The output matches the library version.
+        """
+        runner: CliRunner = CliRunner()
+        result: Result = runner.invoke(cli, ["version"])
+        assert (
+            __version__ in result.output.strip()
+        ), "Version number should match library version."
 
 
 class TestLabCommands:
@@ -164,7 +164,8 @@ class TestLabCommands:
     def test_list_lab_topology(self):
         """
         Arrange/Act: Run the `lab` command with the 'topology' subcommand.
-        Assert: The output indicates that lab topology is retrieved successfully.
+        Assert: The output indicates that lab topology is retrieved
+            successfully.
         """
         runner: CliRunner = CliRunner()
         result: Result = runner.invoke(cli, ["lab", "topology"])
@@ -187,4 +188,3 @@ class TestLabCommands:
         runner: CliRunner = CliRunner()
         result: Result = runner.invoke(cli, ["lab", "import"])
         assert result.exit_code == 0, result.output
-

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 import click
-from evengsdk.cli.helpers import to_human_readable
 
 
 @click.command(name='list')
