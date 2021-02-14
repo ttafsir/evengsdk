@@ -4,13 +4,7 @@ import os
 import click
 
 from evengsdk.client import EvengClient
-from evengsdk.cli.folders.group import folder
-from evengsdk.cli.lab.group import lab
-from evengsdk.cli.links.group import link
-from evengsdk.cli.networks.group import network
-from evengsdk.cli.nodes.group import node
-from evengsdk.cli.users.group import user
-from evengsdk.cli.system.group import system
+from evengsdk.cli.lab.commands import lab
 from evengsdk.cli.version import __version__
 
 
@@ -19,6 +13,7 @@ class Context:
     def __init__(self):
         self.verbose = False
         self.logger = None
+        self.active_lab_dir = os.environ.get('EVE_NG_LAB_DIR', '.eve-ng')
 
 
 PASS_CTX = click.make_pass_decorator(Context, ensure=True)
