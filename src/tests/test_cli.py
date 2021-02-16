@@ -330,8 +330,10 @@ class TestLabCommands:
         Assert: The output indicates that lab exported successfully.
         """
         runner: CliRunner = CliRunner()
-        result: Result = runner.invoke(cli, ["lab", "export"])
-        assert result.exit_code == 0, result.output
+        with runner.isolated_filesystem():
+            result: Result = runner.invoke(cli, ["lab", "export"])
+            assert result.exit_code == 0, result.output
+            assert "Success" in result.output
 
     def test_lab_import(self):
         """
@@ -377,8 +379,9 @@ class TestLabNodeCommands:
         Arrange/Act: Run the `node` command with the 'start' subcommand.
         Assert: The output indicates that lab started successfully.
         """
+        cli_commands = ["node", "start", "--node-id", "1"]
         runner: CliRunner = CliRunner()
-        result: Result = runner.invoke(cli, ["node", "start", "--node-id", "1"])
+        result: Result = runner.invoke(cli, cli_commands)
         assert result.exit_code == 0, result.output
 
     def test_lab_node_stop_command(self):
@@ -392,13 +395,13 @@ class TestLabNodeCommands:
 
     def test_lab_node_upload_config_command(self):
         """
-        Arrange/Act: Run the `node` command with the 'upload-config' subcommand.
+        Arrange/Act: Run the `node` command with the 'upload-config'
+            subcommand.
         Assert: The output indicates that lab started successfully.
         """
+        cli_commands = ["node", "upload-config", "--node-id", "1"]
         runner: CliRunner = CliRunner()
-        result: Result = runner.invoke(cli,
-            ["node", "upload-config", "--node-id", "1"]
-        )
+        result: Result = runner.invoke(cli, cli_commands)
         assert result.exit_code == 0, result.output
 
 

@@ -91,7 +91,7 @@ def _get_all_labs(client: EvengClient) -> List:
 
 @click.command()
 @click.option('--path', default=None,
-              callback=lambda c, p, v: v if v else c.obj.active_lab)
+              callback=lambda ctx, params, v: v if v else ctx.obj.active_lab)
 @click.option(
     '-f', '--output-format',
     default="pretty",
@@ -125,7 +125,7 @@ def read(ctx, path, output_format):
 
 @click.command()
 @click.option('--path', default=None,
-              callback=lambda c, p, v: v if v else c.obj.active_lab)
+              callback=lambda ctx, params, v: v if v else ctx.obj.active_lab)
 @click.option(
     '-f', '--output-format',
     default="pretty",
@@ -157,22 +157,31 @@ def topology(ctx, path, output_format):
 
 
 @click.command(name='export')
-@click.option('--dest', help='destination path')
+@click.option('--dest',
+              help='destination path',
+              type=click.Path(),
+              default='.')
 @click.option('--path', default=None,
-              callback=lambda c, p, v: v if v else c.obj.active_lab)
+              callback=lambda ctx, params, v: v if v else ctx.obj.active_lab)
 @click.pass_context
 def export_lab(ctx, path, dest):
     """
     Export and download lab file as ZIP archive
     """
     client.login(username=ctx.obj.username, password=ctx.obj.password)
-    response = client.api.export_lab(path)
-    display_status(response)
+    resp = client.api.export_lab(path)
+    if resp:
+        name, content = resp
+        full_filepath = dest / Path(name)
+        full_filepath.write_bytes(content)
+        click.secho(f"Success: {str(full_filepath.resolve())}", fg="green")
+    else:
+        sys.exit("Error: Could not download lab")
 
 
 @click.command(name='import')
 @click.option('--path', default=None,
-              callback=lambda c, p, v: v if v else c.obj.active_lab)
+              callback=lambda ctx, params, v: v if v else ctx.obj.active_lab)
 def import_lab(ctx):
     """
     Export lab into EVE-NG from ZIP archive
@@ -211,7 +220,7 @@ def ls(ctx, output_format):
 
 @click.command()
 @click.option('--path', default=None,
-              callback=lambda c, p, v: v if v else c.obj.active_lab)
+              callback=lambda ctx, params, v: v if v else ctx.obj.active_lab)
 @click.pass_context
 def links(ctx, path):
     """
@@ -223,7 +232,11 @@ def links(ctx, path):
     # Display output
     click.secho('Links', fg='blue')
     for link in resp:
-        click.secho(f"{link['source']} <> {link['destination']}", fg='yellow', dim=True)
+        click.secho(
+            f"{link['source']} <> {link['destination']}",
+            fg='yellow',
+            dim=True
+        )
         for output in to_human_readable(link):
             click.echo(output)
         click.echo()
@@ -231,7 +244,7 @@ def links(ctx, path):
 
 @click.command()
 @click.option('--path', default=None,
-              callback=lambda c, p, v: v if v else c.obj.active_lab)
+              callback=lambda ctx, params, v: v if v else ctx.obj.active_lab)
 @click.pass_context
 def networks(ctx, path):
     """
@@ -323,7 +336,7 @@ def delete(ctx, path, name):
 
 @click.command()
 @click.option('--path', default=None,
-              callback=lambda c, p, v: v if v else c.obj.active_lab)
+              callback=lambda ctx, params, v: v if v else ctx.obj.active_lab)
 @click.pass_context
 def start(ctx, path):
     """
@@ -336,7 +349,7 @@ def start(ctx, path):
 
 @click.command()
 @click.option('--path', default=None,
-              callback=lambda c, p, v: v if v else c.obj.active_lab)
+              callback=lambda ctx, params, v: v if v else ctx.obj.active_lab)
 @click.pass_context
 def stop(ctx, path):
     """
@@ -349,7 +362,7 @@ def stop(ctx, path):
 
 @click.command()
 @click.option('--path', default=None,
-              callback=lambda c, p, v: v if v else c.obj.active_lab)
+              callback=lambda ctx, params, v: v if v else ctx.obj.active_lab)
 @click.option('-o', '--output', help="Output filename.")
 @click.pass_context
 def inventory(ctx, path, output):

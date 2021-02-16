@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 evegnsdk.api
 ~~~~~~~~~~~~~~~
@@ -11,11 +10,11 @@ import json
 from pathlib import Path
 from typing import Dict
 
-
 from urllib.parse import quote_plus
 from requests.exceptions import HTTPError
 
 from evengsdk.exceptions import EvengApiError, EvengHTTPError
+
 
 NETWORK_TYPES = ["bridge", "ovs"]
 VIRTUAL_CLOUD_COUNT = 9
@@ -263,32 +262,42 @@ class EvengApi:
         url = "/labs" + self.normalize_path(path)
         return self.clnt.get(url)
 
-    def export_lab(self, path, filename='lab_export.zip'):
-        """
-        Export a lab as a .unl file
-
-        Args:
-            path (str): the path of the lab
-
-        Returns:
-            file: zip file with exported lab
-        """
-        url = "/export"
-        lab_filepath = Path(path)
-
+    def get_lab_download_link(self, labpath: str) -> Dict:
+        endpoint = "/export"
+        lab_filepath = Path(labpath)
         payload = {
             '0': str(lab_filepath),
             'path': str(lab_filepath.parent)
         }
+        headers = {
+            'Accept': 'application/json, text/plain, */*',
+            'Content-Type': 'application/json;charset=UTF-8',
+        }
+        return self.clnt.post(
+            endpoint,
+            data=json.dumps(payload),
+            headers=headers
+        )
 
-        resp = self.clnt.post(url, data=json.dumps(payload))
-        if resp:
-            client = self.clnt
-            download_url = f"http://{client.host}:{client.port}{resp}"
-            _, r = self.clnt.get(download_url)
+    def export_lab(self, path: str) -> bool:
+        """Export a lab as an archive file
 
-            with open(filename, 'wb') as handle:
-                handle.write(r.content)
+        Args:
+            path (str): path to lab on EVE-NG
+
+        Returns:
+            content (bytes): file content bytes
+        """
+        # request download link
+        if download_ep := self.get_lab_download_link(path):
+            url = (
+                f"http://{self.clnt.host}{download_ep}"
+            )
+            # download archive
+            if resp := self.clnt.session.get(url):
+                filename = download_ep.split('/')[-1]
+                return (filename, resp.content)
+        return
 
     def list_lab_networks(self, path):
         """

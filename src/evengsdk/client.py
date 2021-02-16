@@ -164,16 +164,20 @@ class EvengClient:
         r.raise_for_status()
 
     def _send_request(self, method, url, **kwargs):
-        headers = kwargs.get("headers") or self.headers
+        try:
+            headers = kwargs.pop("headers")
+        except KeyError:
+            headers = self.headers
+
         self.log.debug(headers)
         if method == 'DELETE':
-            resp = self.session.delete(url, headers=headers, **kwargs)
+            resp = self.session.delete(url, **kwargs)
         elif method == 'GET':
-            resp = self.session.get(url, headers=headers, **kwargs)
+            resp = self.session.get(url, **kwargs)
         elif method == 'PUT':
-            resp = self.session.put(url, headers=headers, **kwargs)
+            resp = self.session.put(url, **kwargs)
         elif method == 'PATCH':
-            resp = self.session.patch(url, headers=headers, **kwargs)
+            resp = self.session.patch(url, **kwargs)
         elif method == 'POST':
-            resp = self.session.post(url, headers=headers, **kwargs)
+            resp = self.session.post(url, **kwargs)
         return resp
