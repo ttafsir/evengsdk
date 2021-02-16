@@ -7,7 +7,7 @@ Python SDK and command line utilities to work with the [EVE-NG](https://www.eve-
 
 ## Requirements
 
-* Python 3.7+
+* Python 3.8+
 * An EVE-NG instance
 
 ## :rocket:Getting Started
