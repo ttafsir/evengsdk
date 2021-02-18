@@ -299,6 +299,26 @@ class EvengApi:
                 return (filename, resp.content)
         return
 
+    def import_lab(self, filepath: Path, folder: str = "/"):
+        """Import lab into EVE-NG from ZIP archive
+
+        Args:
+            filepath (Path): Path object for ZIP archive
+            folder (str, optional): folder to import lab to. Defaults to "/".
+
+        Returns:
+            dict: response object from API
+        """
+        ep = '/import'
+        with filepath.open(mode='rb') as f:
+            headers = {'content-type': 'multipart/form-data'}
+            r = self.clnt.post(
+                ep,
+                headers=headers,
+                data={"path": folder},
+                files={'file': f})
+            return r
+
     def list_lab_networks(self, path):
         """
         Get one or all networks configured in a lab

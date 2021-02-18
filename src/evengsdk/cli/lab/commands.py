@@ -180,13 +180,20 @@ def export_lab(ctx, path, dest):
 
 
 @click.command(name='import')
-@click.option('--path', default=None,
-              callback=lambda ctx, params, v: v if v else ctx.obj.active_lab)
-def import_lab(ctx):
+@click.option('--src',
+              help='source path to ZIP lab file',
+              type=click.Path(exists=True))
+@click.option('--folder',
+              default='/',
+              help="folder on EVE-NG to import lab to")
+@click.pass_context
+def import_lab(ctx, folder, src):
     """
-    Export lab into EVE-NG from ZIP archive
+    Import lab into EVE-NG from ZIP archive
     """
-    pass
+    client.login(username=ctx.obj.username, password=ctx.obj.password)
+    resp = client.api.import_lab(Path(src), folder)
+    display_status(resp)
 
 
 @click.command(name='list')

@@ -341,7 +341,8 @@ class TestLabCommands:
         Assert: The output indicates that lab imported successfully.
         """
         runner: CliRunner = CliRunner()
-        result: Result = runner.invoke(cli, ["lab", "import"])
+        cli_commands = ["lab", "import", "--src", "test.zip"]
+        result: Result = runner.invoke(cli, cli_commands)
         assert result.exit_code == 0, result.output
 
 
