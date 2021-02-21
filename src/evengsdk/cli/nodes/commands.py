@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import json
 from pathlib import Path
 import os
 import sys
@@ -140,7 +141,7 @@ def create(
     }
     resp = client.api.add_node(path, **node)
     if resp.get('id'):
-        click.secho(resp, fg='green')
+        click.secho(json.dumps(resp), fg='green')
         sys.exit()
     sys.exit(click.style(resp, fg='red'))
 
