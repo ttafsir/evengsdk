@@ -364,6 +364,9 @@ def stop(ctx, path):
     """
     client.login(username=ctx.obj.username, password=ctx.obj.password)
     response = client.api.stop_all_nodes(path)
+    if response.get('status') and response['status'] == 'success':
+        close_resp = client.delete('/labs/close')
+        display_status(close_resp)
     display_status(response)
 
 
