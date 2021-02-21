@@ -10,6 +10,16 @@ from evengsdk.cli.version import __version__
 
 LAB_TO_EDIT = {"name": "lab_to_edit", "path": "/"}
 LAB_TO_CREATE = {"name": "test lab1", "path": "/test lab1.unl"}
+NODE_TO_CREATE = {
+    'node_type': 'qemu',
+    'template': 'csr1000v',
+    'image': 'csr1000v-universalk9-16.06.06',
+    'name': "CSR1",
+    'ethernet': 4,
+    'cpu': 2,
+    'serial': 2,
+    'delay': 0
+}
 
 
 class TestCli:
@@ -353,8 +363,15 @@ class TestLabNodeCommands:
         Arrange/Act: Run the `node` command with the 'create' subcommand.
         Assert: The output indicates that lab imported successfully.
         """
+        cli_commands = [
+            "node", "create",
+            "--node-type", "qemu",
+            "--name", "TEST_CSR",
+            "--template", "csr1000v",
+            "--ethernet", "4"
+        ]
         runner: CliRunner = CliRunner()
-        result: Result = runner.invoke(cli, ["node", "create"])
+        result: Result = runner.invoke(cli, cli_commands)
         assert result.exit_code == 0, result.output
 
     def test_lab_node_list(self):
@@ -384,6 +401,7 @@ class TestLabNodeCommands:
         runner: CliRunner = CliRunner()
         result: Result = runner.invoke(cli, cli_commands)
         assert result.exit_code == 0, result.output
+        assert "started" in result.output
 
     def test_lab_node_stop_command(self):
         """
@@ -393,6 +411,7 @@ class TestLabNodeCommands:
         runner: CliRunner = CliRunner()
         result: Result = runner.invoke(cli, ["node", "stop", "--node-id", "1"])
         assert result.exit_code == 0, result.output
+        assert "stopped" in result.output
 
     def test_lab_node_upload_config_command(self):
         """
