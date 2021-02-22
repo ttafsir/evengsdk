@@ -35,7 +35,38 @@ python3 setup.py install
 
 ## Developing with the `evengsdk` package
 
-:construction: COMING SOON
+### The `EvengClient` REST client
+
+```python
+>>> from evengsdk.client import EvengClient
+>>> client = EvengClient('10.246.32.119')
+>>>
+>>> client.login(username='admin', password='eve')
+>>> client.get('/status')
+{'version': '2.0.3-112', 'qemu_version': '2.4.0', 'uksm': 'enabled', 'ksm': 'unsupported', 'cpulimit': 'enabled', 'cpu': 0, 'disk'
+: 16, 'cached': 96, 'mem': 6, 'swap': 0, 'iol': 0, 'dynamips': 0, 'qemu': 1, 'docker': 0, 'vpcs': 0}
+>>>
+```
+### Using the client's API wrapper
+
+```python
+>>> # using the API wrapper on the client
+>>> client.api.get_server_status()
+{'version': '2.0.3-112', 'qemu_version': '2.4.0', 'uksm': 'enabled', 'ksm': 'unsupported', 'cpulimit': 'enabled', 'cpu': 1, 'di
+sk': 16, 'cached': 96, 'mem': 6, 'swap': 0, 'iol': 0, 'dynamips': 0, 'qemu': 1, 'docker': 0, 'vpcs': 0}
+>>>
+>>> # create lab using the API wrapper object
+>>> lab = {
+...     'name': 'TestLab',
+...     'path': '/',
+...     'description': 'short description',
+...     'version': '1',
+...     'body': 'longer description'
+... }
+>>> client.api.create_lab(**lab)
+{'code': 200, 'status': 'success', 'message': 'Lab has been created (60019).'}
+```
+
 
 ## Using `evengcli` CLI application
 
@@ -77,13 +108,17 @@ Commands:
 
 ```sh
 Commands:
-  export    Export and download lab file as ZIP archive
-  import    Import lab file from ZIP archive
-  list      List the available labs in EVE-NG host
-  read      Get EVE-NG lab details
-  start     Start all nodes in lab
-  stop      Stop all nodes in lab
-  topology  Get EVE-NG lab topology
+  active     show/set active lab path
+  create     create a new lab
+  delete     edit a lab on EVE-NG host
+  edit       edit a lab on EVE-NG host
+  export     Export and download lab file as ZIP archive
+  import     Import lab into EVE-NG from ZIP archive
+  list       List the available labs in EVE-NG host
+  read       Get EVE-NG lab details
+  start      Start all nodes in lab
+  stop       Stop all nodes in lab
+  topology   Retrieve lab topology
 ```
 
 #### Lab Nodes
@@ -91,11 +126,14 @@ Commands:
 ```sh
 Commands:
   create         Create lab node
+  delete         Retrieve lab node details
+  export         Create export node configuration (save)
   list           list lab nodes
   read           Retrieve lab node details
   start          start node in lab.
   stop           stop node in lab
   upload-config  Upload device configuration
+  wipe           Create lab node
 ```
 
 
