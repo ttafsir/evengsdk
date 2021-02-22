@@ -518,13 +518,6 @@ class EvengApi:
         interfaces = list(intf_list)
         return next(((idx, i) for idx, i in enumerate(interfaces)
                     if i['name'] == name), None)
-        # try:
-        #     found = next((idx, i)
-        #                  for idx, i in enumerate(interfaces)
-        #                  if i['name'] == name)
-        #     return found
-        # except StopIteration:
-        #     return None
 
     def connect_node(
         self,
