@@ -122,7 +122,6 @@ def main(ctx, host, port, username, password):
 main.add_command(folder)
 main.add_command(version)
 main.add_command(lab)
-main.add_command(link)
 main.add_command(node)
 main.add_command(user)
 main.add_command(status)
