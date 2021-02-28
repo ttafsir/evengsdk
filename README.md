@@ -2,8 +2,8 @@
 
 Python SDK and command line utilities to work with the [EVE-NG](https://www.eve-ng.net/)  [REST API](https://www.eve-ng.net/index.php/documentation/howtos/how-to-eve-ng-api/) .
 
-* [Rest API Client ](#EvengClient) -  Python client  library for managing Eve-NG Server
-* [EVE-NG CLI application](#eve-ng) - `Click` based CLI application to interact with the EVE-NG [REST API](https://www.eve-ng.net/index.php/documentation/howtos/how-to-eve-ng-api/) via the command-line
+* [Rest API Client ](#developing-with-the-evengclient) -  Python client  library for managing Eve-NG Server
+* [EVE-NG CLI application](#using-eve-ng-cli-application) - `Click` based CLI application to interact with the EVE-NG [REST API](https://www.eve-ng.net/index.php/documentation/howtos/how-to-eve-ng-api/) via the command-line
 
 ## Requirements
 
@@ -33,7 +33,7 @@ pip install -r requirements.txt
 python3 setup.py install
 ```
 
-## Developing with the `evengsdk` package
+## Developing with the `EvengClient`
 
 ### The `EvengClient` REST client
 
