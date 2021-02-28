@@ -1,77 +1,141 @@
 # -*- coding: utf-8 -*-
+import sys
+
 import click
-from evengsdk.cli.helpers import to_human_readable
+
+from evengsdk.cli.helpers import get_client
+from evengsdk.plugins.display import display
+from evengsdk.exceptions import EvengHTTPError, EvengApiError
 
 
 client = None
+ERROR = click.style('ERROR: ', fg='red')
+UNKNOWN_ERROR = click.style('UNKNOWN ERROR: ', fg='red')
 
 
 @click.command()
+@click.option('--include-missing', is_flag=True, default=False)
+@click.option('--output',
+              type=click.Choice(['json', 'text', 'table']),
+              default='text')
 @click.pass_context
-def list_templates(ctx):
+def templates(ctx, output, include_missing):
     """
     list EVE-NG node templates
     """
-    client.login(username=ctx.obj.username, password=ctx.obj.password)
-    pass
+    try:
+        client = get_client(ctx)
+        resp = client.api.list_node_templates(include_missing=include_missing)
+        click.secho('Node Templates', fg='blue')
+        table_header = ['Template', 'Description']
+        click.echo(display(output, resp, header=table_header))
+    except (EvengHTTPError, EvengApiError) as e:
+        msg = click.style(str(e), fg='bright_white')
+        sys.exit(f'{ERROR}{msg}')
+    except Exception as e:
+        sys.exit(f'{UNKNOWN_ERROR}{str(e)}')
 
 
 @click.command()
+@click.option('--output',
+              type=click.Choice(['json', 'text']),
+              default='text')
+@click.argument('template_name')
 @click.pass_context
-def read_template(ctx):
+def read_template(ctx, template_name, output):
     """
     get EVE-NG node template details
     """
-    client.login(username=ctx.obj.username, password=ctx.obj.password)
-    pass
+    try:
+        client = get_client(ctx)
+        resp = client.api.node_template_detail(template_name)
+        click.secho(f'Node Template: {template_name}', fg='blue')
+        click.echo(display(output, resp))
+    except (EvengHTTPError, EvengApiError) as e:
+        msg = click.style(str(e), fg='bright_white')
+        sys.exit(f'{ERROR}{msg}')
+    except Exception as e:
+        sys.exit(f'{UNKNOWN_ERROR}{str(e)}')
 
 
 @click.command()
+@click.option('--output',
+              type=click.Choice(['json', 'text', 'table']),
+              default='text')
 @click.pass_context
-def list_network_types(ctx):
+def network_types(ctx, output):
     """
     list EVE-NG network types
     """
-    client.login(username=ctx.obj.username, password=ctx.obj.password)
-    pass
+    try:
+        client = get_client(ctx)
+        resp = client.api.list_networks()
+        click.secho('Network Types', fg='blue')
+        table_header = ['Network Type', 'Name']
+        click.echo(display(output, resp, header=table_header))
+    except (EvengHTTPError, EvengApiError) as e:
+        msg = click.style(str(e), fg='bright_white')
+        sys.exit(f'{ERROR}{msg}')
+    except Exception as e:
+        sys.exit(f'{UNKNOWN_ERROR}{str(e)}')
 
 
 @click.command()
+@click.option('--output',
+              type=click.Choice(['json', 'text', 'table']),
+              default='text')
 @click.pass_context
-def list_user_roles(ctx):
+def user_roles(ctx, output):
     """
     list EVE-NG user roles
     """
-    client.login(username=ctx.obj.username, password=ctx.obj.password)
-    pass
+    try:
+        client = get_client(ctx)
+        resp = client.api.list_user_roles()
+        click.secho('User Roles', fg='blue')
+        table_header = ['Role Name', 'Description']
+        click.echo(display(output, resp, header=table_header))
+    except (EvengHTTPError, EvengApiError) as e:
+        msg = click.style(str(e), fg='bright_white')
+        sys.exit(f'{ERROR}{msg}')
+    except Exception as e:
+        sys.exit(f'{UNKNOWN_ERROR}{str(e)}')
 
 
 @click.command()
+@click.option('--output',
+              type=click.Choice(['json', 'text', 'table']),
+              default='text')
 @click.pass_context
-def status(ctx):
+def status(ctx, output):
     """
     EVE-NG server status and details
     """
-    client.login(username=ctx.obj.username, password=ctx.obj.password)
-    status = client.api.get_server_status()
-
-    click.secho('System', fg='blue')
-    for output in to_human_readable(status):
-        click.echo(output)
-
-
-@click.group()
-@click.pass_context
-def system(ctx):
-    """
-    EVE-NG system commands
-    """
-    global client
-    client = ctx.obj.client
+    try:
+        client = get_client(ctx)
+        status = client.api.get_server_status()
+        click.secho('System', fg='blue')
+        table_header = ['Component', 'Status']
+        click.echo(display(output, status, header=table_header))
+    except (EvengHTTPError, EvengApiError) as e:
+        msg = click.style(str(e), fg='bright_white')
+        sys.exit(f'{ERROR}{msg}')
+    except Exception as e:
+        sys.exit(f'{UNKNOWN_ERROR}{str(e)}')
 
 
-system.add_command(status)
-system.add_command(list_templates)
-system.add_command(read_template)
-system.add_command(list_network_types)
-system.add_command(list_user_roles)
+# @click.group()
+# @click.pass_context
+# def system(ctx):
+#     """
+#     EVE-NG system commands
+#     """
+#     global client
+#     client = ctx.obj.client
+
+
+# system.add_command(status)
+# system.add_command(templates)
+# system.add_command(read_template)
+# system.add_command(network_types)
+# system.add_command(user_roles)
