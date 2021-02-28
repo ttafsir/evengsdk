@@ -26,7 +26,8 @@ setup(
     install_requires=REQUIRES,
     entry_points={
         'console_scripts': [
-            'evengcli=evengsdk.cli.cli:main'
+            'eve-ng=evengsdk.cli.cli:main',
+            'eveng=evengsdk.cli.cli:main'
         ],
     }
 )

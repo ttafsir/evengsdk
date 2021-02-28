@@ -2,8 +2,8 @@
 
 Python SDK and command line utilities to work with the [EVE-NG](https://www.eve-ng.net/)  [REST API](https://www.eve-ng.net/index.php/documentation/howtos/how-to-eve-ng-api/) .
 
-* [Rest API Client ](#EvengClient) -  Python client  library for managing Eve-NG Server
-* [EVE-NG CLI application](#evengcli) - `Click` based CLI application to interact with the EVE-NG [REST API](https://www.eve-ng.net/index.php/documentation/howtos/how-to-eve-ng-api/) via the command-line
+* [Rest API Client ](#developing-with-the-evengclient) -  Python client  library for managing Eve-NG Server
+* [EVE-NG CLI application](#using-eve-ng-cli-application) - `Click` based CLI application to interact with the EVE-NG [REST API](https://www.eve-ng.net/index.php/documentation/howtos/how-to-eve-ng-api/) via the command-line
 
 ## Requirements
 
@@ -33,7 +33,7 @@ pip install -r requirements.txt
 python3 setup.py install
 ```
 
-## Developing with the `evengsdk` package
+## Developing with the `EvengClient`
 
 ### The `EvengClient` REST client
 
@@ -68,7 +68,7 @@ sk': 16, 'cached': 96, 'mem': 6, 'swap': 0, 'iol': 0, 'dynamips': 0, 'qemu': 1, 
 ```
 
 
-## Using `evengcli` CLI application
+## Using `eve-ng` CLI application
 
 The CLI application provides an interface to manage EVE-NG objects including:
 
@@ -152,7 +152,7 @@ Commands:
 #### Lab Topology
 
 ```sh
-evengcli lab topology <LAB_PATH>
+eve-ng lab topology <LAB_PATH>
 ```
 
 ### Folders
@@ -170,7 +170,7 @@ Commands:
 
 ## :gear: Configuration
 
-It is simple enough to pass the proper flags to `evengcli` specify details for your EVE-NG host. However, you may also pass the connection details as environment variables. You can set the following `evengsdk` environment variables:
+It is simple enough to pass the proper flags to `eve-ng` specify details for your EVE-NG host. However, you may also pass the connection details as environment variables. You can set the following `evengsdk` environment variables:
 
 * `EVE_NG_HOST`
 * `EVE_NG_USERNAME`
