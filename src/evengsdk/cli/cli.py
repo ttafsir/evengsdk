@@ -11,7 +11,13 @@ from evengsdk.cli.links.commands import link
 from evengsdk.cli.networks.commands import network
 from evengsdk.cli.nodes.commands import node
 from evengsdk.cli.users.commands import user
-from evengsdk.cli.system.commands import system
+from evengsdk.cli.system.commands import (
+    status,
+    templates,
+    read_template,
+    user_roles,
+    network_types
+)
 from evengsdk.cli.version import __version__
 
 
@@ -119,5 +125,9 @@ main.add_command(lab)
 main.add_command(link)
 main.add_command(node)
 main.add_command(user)
-main.add_command(system)
+main.add_command(status)
+main.add_command(templates)
+main.add_command(read_template)
+main.add_command(user_roles)
+main.add_command(network_types)
 main.add_command(network)

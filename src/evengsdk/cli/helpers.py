@@ -9,6 +9,14 @@ import sys
 import click
 
 
+def get_client(ctx):
+    client = ctx.obj.client
+    if client:
+        client.login(ctx.obj.username, ctx.obj.password)
+        return client
+    return
+
+
 def to_human_readable(
     obj: Dict,
     keys: List[str] = []
