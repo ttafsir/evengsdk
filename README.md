@@ -149,13 +149,6 @@ Commands:
 ```
 
 
-#### Lab Links
-
-```sh
-evengcli link list <LAB_PATH>
-```
-
-
 #### Lab Topology
 
 ```sh
