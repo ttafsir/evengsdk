@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from itertools import chain
-import json
 import os
 from pathlib import Path
 import threading
