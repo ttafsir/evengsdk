@@ -50,7 +50,7 @@ def table(data, *args, **kwargs):
     elif isinstance(data, list):
         for item in data:
             # trim dict keys to match header passed in
-            keys_to_drop = set(data) - set(header) if header else set()
+            keys_to_drop = set(item) - set(header) if header else set()
             for key in keys_to_drop:
                 if isinstance(item, dict):
                     del item[key]
@@ -71,20 +71,24 @@ def _dict_to_string(obj: dict) -> str:
 def text(
     data: Dict,
     header: List[str] = [],
-    *args,
-    **kwargs
+    fg_color: str = "bright_white",
+    record_header: str = "",
+    record_header_fg_color: str = "yellow"
 ) -> str:
     """Generate human readable output for passed object
 
     Args:
-        data (dict): Object to format
-        keys (list[str]): list of keys to print output for
+        data (Dict): dict or list of dicts to format as output
+        header (List[str], optional): list of keys to output. Defaults to [].
+        fg_color (str, optional): fg color for output. Defaults to
+            "bright_white".
+        record_header (str, optional): Header to display for each record in a
+            list. Defaults to "".
 
     Returns:
-        str: formatted string output
+        str: formatted output string
     """
-    fg_color = kwargs.get('fg_color', 'bright_white')
-    string_output = ""
+    string_output = '\n'
 
     if isinstance(data, dict):
         for ln in _dict_to_string(data):
@@ -92,9 +96,16 @@ def text(
 
     elif isinstance(data, list):
         for obj in data:
+            if record_header:
+                string_output += click.style(
+                    obj[record_header].upper(),
+                    fg=record_header_fg_color)
+                string_output += '\n'
+
             if isinstance(obj, dict):
-                for ln in _dict_to_string(data):
+                for ln in _dict_to_string(obj):
                     string_output += ln
+                string_output += '\n'
     else:
         string_output += str(data)
     return click.style(string_output, fg=fg_color)

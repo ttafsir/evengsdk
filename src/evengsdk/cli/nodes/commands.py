@@ -1,17 +1,16 @@
 # -*- coding: utf-8 -*-
-import json
 from pathlib import Path
 import os
 import sys
 
 import click
 
-from evengsdk.exceptions import EvengHTTPError
+from evengsdk.exceptions import EvengHTTPError, EvengApiError
 from evengsdk.cli.helpers import (
-    to_human_readable,
-    display_status,
+    get_client,
     get_active_lab
 )
+from evengsdk.plugins.display import display
 from evengsdk.cli.nodes import NODE_STATUS_CODES, NODE_STATUS_COLOR
 
 
@@ -43,47 +42,67 @@ def get_config(src):
 @click.command()
 @click.option('--path', default=None,
               callback=lambda ctx, params, v: v if v else ctx.obj.active_lab)
-@click.option('--node-id', required=True)
-@click.option('--src', required=True, type=click.Path(exists=True))
+@click.option('-n', '--node-id', required=True)
+@click.option('-s', '--src', required=True, type=click.Path(exists=True))
 @click.pass_context
 def upload_config(ctx, node_id, path, src):
     """
     Upload device configuration
     """
-    client.login(username=ctx.obj.username, password=ctx.obj.password)
-    config = get_config(src)
-    client.api.upload_node_config(
-        path, node_id,
-        config=config,
-        enable=True)
+    try:
+        client = get_client(ctx)
+        config = get_config(src)
+        resp = client.api.upload_node_config(
+            path,
+            node_id,
+            config=config,
+            enable=True)
+        click.echo(display('text', resp))
+    except (EvengHTTPError, EvengApiError) as e:
+        msg = click.style(str(e), fg='bright_white')
+        sys.exit(f'{ctx.obj.error_fmt}{msg}')
+    except Exception as e:
+        sys.exit(f'{ctx.obj.unknown_error_fmt}{str(e)}')
 
 
 @click.command()
 @click.option('--path', default=None,
               callback=lambda ctx, params, v: v if v else ctx.obj.active_lab)
-@click.option('--node-id', required=True)
+@click.option('-n', '--node-id', required=True)
 @click.pass_context
 def start(ctx, path, node_id):
     """
-    start node in lab.
+    start node in lab
     """
-    client.login(username=ctx.obj.username, password=ctx.obj.password)
-    resp = client.api.start_node(path, node_id)
-    display_status(resp)
+    try:
+        client = get_client(ctx)
+        resp = client.api.start_node(path, node_id)
+        click.echo(display('text', resp))
+    except (EvengHTTPError, EvengApiError) as e:
+        msg = click.style(str(e), fg='bright_white')
+        sys.exit(f'{ctx.obj.error_fmt}{msg}')
+    except Exception as e:
+        sys.exit(f'{ctx.obj.unknown_error_fmt}{str(e)}')
 
 
 @click.command()
 @click.option('--path', default=None,
               callback=lambda ctx, params, v: v if v else ctx.obj.active_lab)
-@click.option('--node-id', required=True)
+@click.option('-n', '--node-id', required=True)
 @click.pass_context
 def stop(ctx, path, node_id):
     """
     stop node in lab
     """
-    client.login(username=ctx.obj.username, password=ctx.obj.password)
-    resp = client.api.stop_node(path, node_id)
-    display_status(resp)
+    try:
+        client = get_client(ctx)
+        resp = client.api.stop_node(path, node_id)
+        click.echo(display('text', resp))
+    except (EvengHTTPError, EvengApiError) as e:
+        msg = click.style(str(e), fg='bright_white')
+        sys.exit(f'{ctx.obj.error_fmt}{msg}')
+    except Exception as e:
+        sys.exit(f'{ctx.obj.unknown_error_fmt}{str(e)}')
 
 
 @click.command()
@@ -127,116 +146,123 @@ def create(
     """
     Create lab node
     """
-    client.login(username=ctx.obj.username, password=ctx.obj.password)
-    node = {
-        'name': name,
-        'node_type': node_type,
-        'template': template,
-        'image': image,
-        'ethernet': ethernet,
-        'serial': serial,
-        'console': console,
-        'cpu': cpu,
-        'ram': ram
-    }
-    resp = client.api.add_node(path, **node)
-    if resp.get('id'):
-        click.secho(json.dumps(resp), fg='green')
-        sys.exit()
-    sys.exit(click.style(resp, fg='red'))
+    try:
+        client = get_client(ctx)
+        node = {
+            'name': name,
+            'node_type': node_type,
+            'template': template,
+            'image': image,
+            'ethernet': ethernet,
+            'serial': serial,
+            'console': console,
+            'cpu': cpu,
+            'ram': ram
+        }
+        resp = client.api.add_node(path, **node)
+        click.echo(display('text', resp))
+    except (EvengHTTPError, EvengApiError) as e:
+        msg = click.style(str(e), fg='bright_white')
+        sys.exit(f'{ctx.obj.error_fmt}{msg}')
+    except Exception as e:
+        sys.exit(f'{ctx.obj.unknown_error_fmt}{str(e)}')
 
 
 @click.command()
 @click.option('--path', default=None,
               callback=lambda ctx, params, v: v if v else ctx.obj.active_lab)
-@click.option('--node-id', required=True)
+@click.option('-n', '--node-id', required=True)
 @click.pass_context
 def wipe(ctx, path, node_id):
     """
     Create lab node
     """
-    client.login(username=ctx.obj.username, password=ctx.obj.password)
     try:
+        client = get_client(ctx)
         client.api.get_node(path, node_id)
         resp = client.api.wipe_node(path, node_id)
-        display_status(resp)
-        sys.exit()
+        click.echo(display('text', resp))
     except EvengHTTPError as e:
         if 'Cannot find node' in str(e):
             sys.exit(click.style(
                 'could not find specified node in lab', fg='red'))
         else:
-            sys.exit(click.style(str(e), fg='red'))
+            sys.exit(f'{ctx.obj.unknown_error_fmt}{str(e)}')
     except Exception as e:
-        sys.exit(click.style(str(e), fg='red'))
+        sys.exit(f'{ctx.obj.unknown_error_fmt}{str(e)}')
 
 
 @click.command(name='export')
 @click.option('--path', default=None,
               callback=lambda ctx, params, v: v if v else ctx.obj.active_lab)
-@click.option('--node-id', required=True)
+@click.option('-n', '--node-id', required=True)
 @click.pass_context
 def export_node(ctx, path, node_id):
     """
     Create export node configuration (save)
     """
-    client.login(username=ctx.obj.username, password=ctx.obj.password)
     try:
+        client = get_client(ctx)
         client.api.get_node(path, node_id)
         resp = client.api.export_node(path, node_id)
-        display_status(resp)
-        sys.exit()
+        click.echo(display('text', resp))
     except EvengHTTPError as e:
         if 'Cannot find node' in str(e):
             sys.exit(click.style(
                 'could not find specified node in lab', fg='red'))
         else:
-            sys.exit(click.style(str(e), fg='red'))
+            sys.exit(f'{ctx.obj.unknown_error_fmt}{str(e)}')
     except Exception as e:
-        sys.exit(click.style(str(e), fg='red'))
+        sys.exit(f'{ctx.obj.unknown_error_fmt}{str(e)}')
 
 
 @click.command()
 @click.option('--path', default=None,
               callback=lambda ctx, params, v: v if v else ctx.obj.active_lab)
-@click.option('--node-id', required=True)
+@click.option('-n', '--node-id', required=True)
+@click.option('--output',
+              type=click.Choice(['json', 'text']),
+              default='text')
 @click.pass_context
-def read(ctx, path, node_id):
+def read(ctx, path, node_id, output):
     """
     Retrieve lab node details
     """
-    client.login(username=ctx.obj.username, password=ctx.obj.password)
-    node = client.api.get_node(path, node_id)
+    try:
+        client = get_client(ctx)
+        node = client.api.get_node(path, node_id)
 
-    click.secho(node['name'].upper(), fg='yellow', dim=True)
-    for output in to_human_readable(node):
-        click.echo(output)
-    click.echo()
+        click.secho(node['name'].upper(), fg='yellow', dim=True)
+        click.echo(display(output, node))
+    except (EvengHTTPError, EvengApiError) as e:
+        msg = click.style(str(e), fg='bright_white')
+        sys.exit(f'{ctx.obj.error_fmt}{msg}')
+    except Exception as e:
+        sys.exit(f'{ctx.obj.unknown_error_fmt}{str(e)}')
 
 
 @click.command()
 @click.option('--path', default=None,
               callback=lambda ctx, params, v: v if v else ctx.obj.active_lab)
-@click.option('--node-id', required=True)
+@click.option('-n', '--node-id', required=True)
 @click.pass_context
 def delete(ctx, path, node_id):
     """
     Retrieve lab node details
     """
-    client.login(username=ctx.obj.username, password=ctx.obj.password)
     try:
+        client = get_client(ctx)
         client.api.get_node(path, node_id)
         resp = client.api.delete_node(path, node_id)
-        display_status(resp)
-        sys.exit()
+        click.echo(display('text', resp))
     except EvengHTTPError as e:
         if 'Cannot find node' in str(e):
             sys.exit(click.style(
                 'could not find specified node in lab', fg='red'))
         else:
-            sys.exit(click.style(str(e), fg='red'))
+            sys.exit(f'{ctx.obj.unknown_error_fmt}{str(e)}')
     except Exception as e:
-        sys.exit(click.style(str(e), fg='red'))
+        sys.exit(f'{ctx.obj.unknown_error_fmt}{str(e)}')
 
 
 @click.command(name='list')
@@ -247,10 +273,9 @@ def ls(ctx, path):
     """
     list lab nodes
     """
-
-    client.login(username=ctx.obj.username, password=ctx.obj.password)
-    resp = client.api.list_nodes(path)
-    if resp:
+    try:
+        client = get_client(ctx)
+        resp = client.api.list_nodes(path)
         node_indexes = resp.keys()
         nodes_list = [(idx, resp[idx]) for idx in node_indexes]
 
@@ -272,11 +297,12 @@ def ls(ctx, path):
         click.secho(f'Nodes @ {path}', fg='blue')
 
         keys_to_display = "id name url image uuid template status".split()
-        for node in node_table:
-            click.secho(node['name'].upper(), fg='yellow', dim=True)
-            for output in to_human_readable(node, keys=keys_to_display):
-                click.echo(output)
-            click.echo()
+        click.echo(display(node_table, node_table, header=keys_to_display))
+    except (EvengHTTPError, EvengApiError) as e:
+        msg = click.style(str(e), fg='bright_white')
+        sys.exit(f'{ctx.obj.error_fmt}{msg}')
+    except Exception as e:
+        sys.exit(f'{ctx.obj.unknown_error_fmt}{str(e)}')
 
 
 @click.group()
