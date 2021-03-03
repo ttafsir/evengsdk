@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import json
-
 from click.testing import CliRunner, Result
 import pytest
 
