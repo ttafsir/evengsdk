@@ -268,8 +268,11 @@ def delete(ctx, path, node_id):
 @click.command(name='list')
 @click.option('--path', default=None,
               callback=lambda ctx, params, v: v if v else ctx.obj.active_lab)
+@click.option('--output',
+              type=click.Choice(['json', 'text']),
+              default='text')
 @click.pass_context
-def ls(ctx, path):
+def ls(ctx, path, output):
     """
     list lab nodes
     """
@@ -297,7 +300,7 @@ def ls(ctx, path):
         click.secho(f'Nodes @ {path}', fg='blue')
 
         keys_to_display = "id name url image uuid template status".split()
-        click.echo(display(node_table, node_table, header=keys_to_display))
+        click.echo(display(output, node_table, header=keys_to_display))
     except (EvengHTTPError, EvengApiError) as e:
         msg = click.style(str(e), fg='bright_white')
         sys.exit(f'{ctx.obj.error_fmt}{msg}')

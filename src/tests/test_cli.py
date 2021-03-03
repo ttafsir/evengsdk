@@ -20,6 +20,11 @@ NODE_TO_CREATE = {
     'serial': 2,
     'delay': 0
 }
+TEST_CONFIG = """
+!
+hostname vEOS4
+!
+"""
 
 
 class TestCli:
@@ -51,42 +56,42 @@ class TestSystemCommands:
         Assert: The output indicates that a status is successfully returned.
         """
         runner: CliRunner = CliRunner()
-        result: Result = runner.invoke(cli, ["system", "status"])
+        result: Result = runner.invoke(cli, ["status"])
 
         assert result.exit_code == 0, result.output
         assert 'System' in result.output
 
     def test_system_list_network_types_text_output(self):
         """
-        Arrange/Act: Run the `system` command with the 'list-network-types'
+        Arrange/Act: Run the `system` command with the 'network-types'
             subcommand.
         Assert: The output indicates that network types are successfully
             returned.
         """
         runner: CliRunner = CliRunner()
-        result: Result = runner.invoke(cli, ["system", "list-network-types"])
+        result: Result = runner.invoke(cli, ["network-types"])
         assert result.exit_code == 0, result.output
 
     def test_system_list_node_templates_text_output(self):
         """
-        Arrange/Act: Run the `system` command with the 'list-templates'
+        Arrange/Act: Run the `system` command with the 'templates'
             subcommand.
         Assert: The output indicates that node templates are successfully
             returned.
         """
         runner: CliRunner = CliRunner()
-        result: Result = runner.invoke(cli, ["system", "list-templates"])
+        result: Result = runner.invoke(cli, ["templates"])
         assert result.exit_code == 0, result.output
 
     def test_system_list_user_roles_text_output(self):
         """
-        Arrange/Act: Run the `system` command with the 'list-user-roles'
+        Arrange/Act: Run the `system` command with the 'user-roles'
             subcommand.
         Assert: The output indicates that node templates are successfully
             returned.
         """
         runner: CliRunner = CliRunner()
-        result: Result = runner.invoke(cli, ["system", "list-user-roles"])
+        result: Result = runner.invoke(cli, ["user-roles"])
         assert result.exit_code == 0, result.output
 
     def test_system_read_template(self):
@@ -97,7 +102,7 @@ class TestSystemCommands:
             returned.
         """
         runner: CliRunner = CliRunner()
-        result: Result = runner.invoke(cli, ["system", "read-template"])
+        result: Result = runner.invoke(cli, ["read-template", "asa"])
         assert result.exit_code == 0, result.output
 
 
@@ -235,7 +240,8 @@ class TestLabCommands:
             "--version", "1"
         ]
         result: Result = runner.invoke(cli, cli_args)
-        assert isinstance(result.exception, ValueError)
+        assert result.exit_code > 0
+        assert '`name` is required' in result.output
 
     def test_lab_edit(self):
         """
@@ -274,13 +280,10 @@ class TestLabCommands:
         Assert: The output indicates that lab is retrieved successfully.
         """
         runner: CliRunner = CliRunner()
-        result: Result = runner.invoke(cli, ["lab", "read"])
+        result: Result = runner.invoke(cli, [
+            "lab", "read", "--path", LAB_TO_EDIT['path']
+        ])
         assert result.exit_code == 0, result.output
-
-        runner: CliRunner = CliRunner()
-        result: Result = runner.invoke(cli, ["lab", "read", "-f", "json"])
-        json_resp = json.loads(result.output)
-        assert json_resp.get('id')
 
     @pytest.mark.parametrize("lab", [LAB_TO_EDIT, LAB_TO_CREATE])
     def test_lab_delete(self, lab):
@@ -345,15 +348,15 @@ class TestLabCommands:
             assert result.exit_code == 0, result.output
             assert "Success" in result.output
 
-    def test_lab_import(self):
-        """
-        Arrange/Act: Run the `lab` command with the 'export' subcommand.
-        Assert: The output indicates that lab imported successfully.
-        """
-        runner: CliRunner = CliRunner()
-        cli_commands = ["lab", "import", "--src", "test.zip"]
-        result: Result = runner.invoke(cli, cli_commands)
-        assert result.exit_code == 0, result.output
+    # def test_lab_import(self):
+    #     """
+    #     Arrange/Act: Run the `lab` command with the 'export' subcommand.
+    #     Assert: The output indicates that lab imported successfully.
+    #     """
+    #     runner: CliRunner = CliRunner()
+    #     cli_commands = ["lab", "import", "--src", "test.zip"]
+    #     result: Result = runner.invoke(cli, cli_commands)
+    #     assert result.exit_code == 0, result.output
 
 
 class TestLabNodeCommands:
@@ -419,55 +422,17 @@ class TestLabNodeCommands:
             subcommand.
         Assert: The output indicates that lab started successfully.
         """
-        cli_commands = ["node", "upload-config", "--node-id", "1"]
+        cli_commands = [
+            "node",
+            "upload-config",
+            "-n", "1",
+            "--src",
+            "config.txt"
+        ]
         runner: CliRunner = CliRunner()
-        result: Result = runner.invoke(cli, cli_commands)
-        assert result.exit_code == 0, result.output
-
-
-class TestLabNetworkCommands:
-
-    def test_lab_network_create_command(self):
-        """
-        Arrange/Act: Run the `network` command with the 'create' subcommand.
-        Assert: The output indicates that lab started successfully.
-        """
-        runner: CliRunner = CliRunner()
-        result: Result = runner.invoke(cli, ["network", "create"])
-        assert result.exit_code == 0, result.output
-
-    def test_lab_network_delete(self):
-        """
-        Arrange/Act: Run the `network` command with the 'delete' subcommand.
-        Assert: The output indicates that lab started successfully.
-        """
-        runner: CliRunner = CliRunner()
-        result: Result = runner.invoke(cli, ["network", "delete"])
-        assert result.exit_code == 0, result.output
-
-    def test_lab_network_edit(self):
-        """
-        Arrange/Act: Run the `network` command with the 'edit' subcommand.
-        Assert: The output indicates that lab started successfully.
-        """
-        runner: CliRunner = CliRunner()
-        result: Result = runner.invoke(cli, ["network", "edit"])
-        assert result.exit_code == 0, result.output
-
-    def test_lab_network_list(self):
-        """
-        Arrange/Act: Run the `network` command with the 'list' subcommand.
-        Assert: The output indicates that lab started successfully.
-        """
-        runner: CliRunner = CliRunner()
-        result: Result = runner.invoke(cli, ["network", "list"])
-        assert result.exit_code == 0, result.output
-
-    def test_lab_network_read(self):
-        """
-        Arrange/Act: Run the `network` command with the 'read' subcommand.
-        Assert: The output indicates that lab started successfully.
-        """
-        runner: CliRunner = CliRunner()
-        result: Result = runner.invoke(cli, ["network", "read"])
-        assert result.exit_code == 0, result.output
+        with runner.isolated_filesystem():
+            with open("config.txt", "w") as f:
+                f.write(TEST_CONFIG)
+            result: Result = runner.invoke(cli, cli_commands)
+            assert result.exit_code == 0, result.output
+            assert "Lab has been saved" in result.output
