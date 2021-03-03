@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from itertools import chain
-import json
 import os
 from pathlib import Path
 import threading
@@ -10,12 +9,13 @@ import sys
 import click
 from evengsdk.client import EvengClient
 from evengsdk.cli.helpers import (
-    to_human_readable,
+    get_client,
     thread_executor,
-    display_status,
     get_active_lab
 )
+from evengsdk.exceptions import EvengApiError, EvengHTTPError
 from evengsdk.inventory import build_inventory
+from evengsdk.plugins.display import display
 
 
 client = None
@@ -92,68 +92,57 @@ def _get_all_labs(client: EvengClient) -> List:
 @click.command()
 @click.option('--path', default=None,
               callback=lambda ctx, params, v: v if v else ctx.obj.active_lab)
-@click.option(
-    '-f', '--output-format',
-    default="pretty",
-    help="output display format. [pretty, json]"
-)
+@click.option('--output',
+              type=click.Choice(['json', 'text']),
+              default='text')
 @click.pass_context
-def read(ctx, path, output_format):
+def read(ctx, path, output):
     """
     Get EVE-NG lab details
     """
-    client.login(username=ctx.obj.username, password=ctx.obj.password)
     try:
+        client = get_client(ctx)
         lab = client.api.get_lab(path)
-
-        # Display output - JSON
-        if output_format == "json":
-            click.secho(json.dumps(lab, indent=2))
-            sys.exit()
-
-        # Display output
-        click.secho(f'Lab {path}', fg='blue')
-        click.secho(lab['name'].upper(), fg='yellow', dim=True)
-        for output in to_human_readable(lab):
-            click.echo(output)
-        sys.exit()
-
+        click.secho(lab['name'].upper(), fg='yellow')
+        click.echo(display(output, lab))
+    except (EvengHTTPError, EvengApiError) as e:
+        msg = click.style(str(e), fg='bright_white')
+        sys.exit(f'{ctx.obj.error_fmt}{msg}')
     except Exception as e:
-        click.secho(e, fg='red')
-        sys.exit(e)
+        sys.exit(f'{ctx.obj.unknown_error_fmt}{str(e)}')
 
 
 @click.command()
 @click.option('--path', default=None,
               callback=lambda ctx, params, v: v if v else ctx.obj.active_lab)
-@click.option(
-    '-f', '--output-format',
-    default="pretty",
-    help="output display format. [pretty, json]"
-)
+@click.option('--output',
+              type=click.Choice(['json', 'text', 'table']),
+              default='text')
 @click.pass_context
-def topology(ctx, path, output_format):
+def topology(ctx, path, output):
     """
     Retrieve lab topology
     """
-    client.login(username=ctx.obj.username, password=ctx.obj.password)
     try:
-        response = client.api.get_lab_topology(path)
+        client = get_client(ctx)
+        resp = client.api.get_lab_topology(path)
 
-        # Display output - JSON
-        if output_format == "json":
-            click.secho(json.dumps(response, indent=2))
-            sys.exit()
-
-        click.secho(f'Lab Topology @ {path}', fg='blue')
-        if response:
-            for link in response:
-                for output in to_human_readable(link):
-                    click.echo(output)
-                click.echo()
-        sys.exit()
+        click.secho(f'Lab Topology @ {path}', fg='bright_blue')
+        header = [
+            'type',
+            'source',
+            'source_type',
+            'source_label',
+            'destination',
+            'destination_type',
+            'destination_label'
+        ]
+        click.echo(display(output, resp, header=header))
+    except (EvengHTTPError, EvengApiError) as e:
+        msg = click.style(str(e), fg='bright_white')
+        sys.exit(f'{ctx.obj.error_fmt}{msg}')
     except Exception as e:
-        sys.exit(str(e))
+        sys.exit(f'{ctx.obj.unknown_error_fmt}{str(e)}')
 
 
 @click.command(name='export')
@@ -168,15 +157,25 @@ def export_lab(ctx, path, dest):
     """
     Export and download lab file as ZIP archive
     """
-    client.login(username=ctx.obj.username, password=ctx.obj.password)
-    resp = client.api.export_lab(path)
-    if resp:
+    try:
+        client = get_client(ctx)
+        resp = client.api.export_lab(path)
+
+        # get name and content from response
         name, content = resp
         full_filepath = dest / Path(name)
+
+        # save file
         full_filepath.write_bytes(content)
-        click.secho(f"Success: {str(full_filepath.resolve())}", fg="green")
-    else:
-        sys.exit("Error: Could not download lab")
+
+        success_message = f"Success: {str(full_filepath.resolve())}"
+        click.secho(display('text', success_message))
+
+    except (EvengHTTPError, EvengApiError) as e:
+        msg = click.style(str(e), fg='bright_white')
+        sys.exit(f'{ctx.obj.error_fmt}{msg}')
+    except Exception as e:
+        sys.exit(f'{ctx.obj.unknown_error_fmt}{str(e)}')
 
 
 @click.command(name='import')
@@ -191,83 +190,44 @@ def import_lab(ctx, folder, src):
     """
     Import lab into EVE-NG from ZIP archive
     """
-    client.login(username=ctx.obj.username, password=ctx.obj.password)
-    resp = client.api.import_lab(Path(src), folder)
-    display_status(resp)
+    try:
+        client = get_client(ctx)
+        resp = client.api.import_lab(Path(src), folder)
+        click.echo(display('text', resp))
+    except (EvengHTTPError, EvengApiError) as e:
+        msg = click.style(str(e), fg='bright_white')
+        sys.exit(f'{ctx.obj.error_fmt}{msg}')
+    except Exception as e:
+        sys.exit(f'{ctx.obj.unknown_error_fmt}{str(e)}')
 
 
 @click.command(name='list')
-@click.option(
-    '-f', '--output-format',
-    default="pretty",
-    help="output display format. [pretty, json]"
-)
+@click.option('--output',
+              type=click.Choice(['json', 'text']),
+              default='text')
 @click.pass_context
-def ls(ctx, output_format):
+def ls(ctx, output):
     """
     List the available labs in EVE-NG host
     """
-    client.login(username=ctx.obj.username, password=ctx.obj.password)
-    lab_details = _get_all_labs(client)
+    try:
+        client = get_client(ctx)
+        lab_details = _get_all_labs(client)
 
-    # Display output - JSON
-    if output_format == "json":
-        click.secho(json.dumps(lab_details, indent=2))
-        sys.exit()
+        # Display output - Human readable
+        click.secho('Labs', fg='bright_blue')
 
-    # Display output - Human readable
-    click.secho('Labs', fg='blue')
-    for lab in lab_details:
-        click.secho(lab['name'].upper(), fg='yellow', dim=True)
-        for output in to_human_readable(lab):
-            click.echo(output)
-        click.echo()
-    sys.exit()
+        # header for table output
+        header = ['author', 'filename', 'id', 'version', 'path']
 
-
-@click.command()
-@click.option('--path', default=None,
-              callback=lambda ctx, params, v: v if v else ctx.obj.active_lab)
-@click.pass_context
-def links(ctx, path):
-    """
-    Get EVE-NG lab topology
-    """
-    client.login(username=ctx.obj.username, password=ctx.obj.password)
-    resp = client.api.get_lab_topology(path)
-
-    # Display output
-    click.secho('Links', fg='blue')
-    for link in resp:
-        click.secho(
-            f"{link['source']} <> {link['destination']}",
-            fg='yellow',
-            dim=True
+        click.echo(
+            display(output, lab_details, header=header, record_header='name')
         )
-        for output in to_human_readable(link):
-            click.echo(output)
-        click.echo()
-
-
-@click.command()
-@click.option('--path', default=None,
-              callback=lambda ctx, params, v: v if v else ctx.obj.active_lab)
-@click.pass_context
-def networks(ctx, path):
-    """
-    Get EVE-NG lab topology
-    """
-    client.login(username=ctx.obj.username, password=ctx.obj.password)
-    resp = client.api.list_lab_networks(path)
-    networks = [_dict for key, _dict in resp.items()]
-
-    # Display output
-    click.secho('Networks', fg='blue')
-    for net in networks:
-        click.secho(f"{net['name']}", fg='yellow', dim=True)
-        for output in to_human_readable(net):
-            click.echo(output)
-        click.echo()
+    except (EvengHTTPError, EvengApiError) as e:
+        msg = click.style(str(e), fg='bright_white')
+        sys.exit(f'{ctx.obj.error_fmt}{msg}')
+    except Exception as e:
+        sys.exit(f'{ctx.obj.unknown_error_fmt}{str(e)}')
 
 
 @click.command()
@@ -286,17 +246,23 @@ def create(
     name: str
 ):
     """
-    create a new lab
+    Create a new lab
     """
-    client.login(username=ctx.obj.username, password=ctx.obj.password)
-    response = client.api.create_lab(
-        name=name,
-        author=author,
-        path=path,
-        description=description,
-        version=version
-    )
-    display_status(response)
+    try:
+        client = get_client(ctx)
+        response = client.api.create_lab(
+            name=name,
+            author=author,
+            path=path,
+            description=description,
+            version=version
+        )
+        click.echo(display('text', response))
+    except (EvengHTTPError, EvengApiError) as e:
+        msg = click.style(str(e), fg='bright_white')
+        sys.exit(f'{ctx.obj.error_fmt}{msg}')
+    except Exception as e:
+        sys.exit(f'{ctx.obj.unknown_error_fmt}{str(e)}')
 
 
 @click.command()
@@ -315,17 +281,23 @@ def edit(
     name: str
 ):
     """
-    edit a lab on EVE-NG host
+    Edit a lab on EVE-NG host
     """
-    client.login(username=ctx.obj.username, password=ctx.obj.password)
-    response = client.api.edit_lab(
-        name=name,
-        author=author,
-        full_path=path,
-        description=description,
-        version=version
-    )
-    display_status(response)
+    try:
+        client = get_client(ctx)
+        response = client.api.edit_lab(
+            name=name,
+            author=author,
+            full_path=path,
+            description=description,
+            version=version
+        )
+        click.echo(display('text', response))
+    except (EvengHTTPError, EvengApiError) as e:
+        msg = click.style(str(e), fg='bright_white')
+        sys.exit(f'{ctx.obj.error_fmt}{msg}')
+    except Exception as e:
+        sys.exit(f'{ctx.obj.unknown_error_fmt}{str(e)}')
 
 
 @click.command()
@@ -334,11 +306,17 @@ def edit(
 @click.pass_context
 def delete(ctx, path, name):
     """
-    edit a lab on EVE-NG host
+    Delete a lab on EVE-NG host
     """
-    client.login(username=ctx.obj.username, password=ctx.obj.password)
-    response = client.api.delete_lab(name=name, path=path)
-    display_status(response)
+    try:
+        client = get_client(ctx)
+        response = client.api.delete_lab(name=name, path=path)
+        click.echo(display('text', response))
+    except (EvengHTTPError, EvengApiError) as e:
+        msg = click.style(str(e), fg='bright_white')
+        sys.exit(f'{ctx.obj.error_fmt}{msg}')
+    except Exception as e:
+        sys.exit(f'{ctx.obj.unknown_error_fmt}{str(e)}')
 
 
 @click.command()
@@ -349,9 +327,15 @@ def start(ctx, path):
     """
     Start all nodes in lab
     """
-    client.login(username=ctx.obj.username, password=ctx.obj.password)
-    response = client.api.start_all_nodes(path)
-    display_status(response)
+    try:
+        client = get_client(ctx)
+        response = client.api.start_all_nodes(path)
+        click.echo(display('text', response))
+    except (EvengHTTPError, EvengApiError) as e:
+        msg = click.style(str(e), fg='bright_white')
+        sys.exit(f'{ctx.obj.error_fmt}{msg}')
+    except Exception as e:
+        sys.exit(f'{ctx.obj.unknown_error_fmt}{str(e)}')
 
 
 @click.command()
@@ -362,20 +346,27 @@ def stop(ctx, path):
     """
     Stop all nodes in lab
     """
-    client.login(username=ctx.obj.username, password=ctx.obj.password)
-    response = client.api.stop_all_nodes(path)
-    if response.get('status') and response['status'] == 'success':
-        close_resp = client.delete('/labs/close')
-        display_status(close_resp)
-    display_status(response)
+    try:
+        client = get_client(ctx)
+        response = client.api.stop_all_nodes(path)
+        if response.get('status') and response['status'] == 'success':
+            close_resp = client.delete('/labs/close')
+            click.echo(display('text', close_resp))
+        else:
+            click.echo(display('text', response))
+    except (EvengHTTPError, EvengApiError) as e:
+        msg = click.style(str(e), fg='bright_white')
+        sys.exit(f'{ctx.obj.error_fmt}{msg}')
+    except Exception as e:
+        sys.exit(f'{ctx.obj.unknown_error_fmt}{str(e)}')
 
 
 @click.command()
 @click.option('--path', default=None,
               callback=lambda ctx, params, v: v if v else ctx.obj.active_lab)
-@click.option('-o', '--output', help="Output filename.")
+@click.option('-w', '--write', help="Output filename.")
 @click.pass_context
-def inventory(ctx, path, output):
+def inventory(ctx, path, write):
     """
     generate inventory file (INI).
     """
@@ -386,18 +377,29 @@ def inventory(ctx, path, output):
     nodes_list = [resp[idx] for idx in node_indexes]
 
     inventory = build_inventory(eve_host, path, nodes_list)
-    if output:
-        with open(output, 'w') as handle:
+    if write:
+        with open(write, 'w') as handle:
             handle.write(inventory)
     sys.exit()
 
 
-@click.command(name="active")
-@click.option('--path', help='path to active lab')
+@click.command(name="show-active")
+@click.pass_context
+def show_active(ctx):
+    """
+    Show active lab
+    """
+    title = click.style('Active Lab: ', fg='bright_blue')
+    active_lab = ctx.obj.active_lab or os.environ.get('EVE_NG_PATH')
+    click.echo(f'{title}{active_lab}')
+
+
+@click.command(name="set-active")
+@click.option('--path', help='path to lab to activate')
 @click.pass_context
 def active(ctx, path):
     """
-    show current lab path
+    Set current lab path
     """
     active_lab_dir = ctx.obj.active_lab_dir
     active_lab_filepath = Path(active_lab_dir) / 'active'
@@ -407,8 +409,8 @@ def active(ctx, path):
         if active_lab_filepath.exists():
             active_lab = active_lab_filepath.read_text()
         else:
-            active_lab = os.environ.get('EVE_NG_path')
-        click.secho('Active Lab', fg='blue')
+            active_lab = os.environ.get('EVE_NG_PATH')
+        click.secho('Active Lab', fg='bright_blue')
         click.echo(active_lab)
 
     # set path option as active lab
@@ -458,6 +460,7 @@ lab.add_command(edit)
 lab.add_command(delete)
 lab.add_command(inventory)
 lab.add_command(active)
+lab.add_command(show_active)
 lab.add_command(topology)
 lab.add_command(import_lab)
 lab.add_command(export_lab)

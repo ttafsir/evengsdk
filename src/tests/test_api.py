@@ -1,8 +1,7 @@
 import pytest
 
 from evengsdk.client import EvengClient
-from evengsdk.exceptions import EvengApiError, EvengHTTPError
-from requests.exceptions import HTTPError
+from evengsdk.exceptions import EvengHTTPError
 
 
 LAB_PATH = '/datacenter/leaf_spine_lab.unl'

@@ -7,8 +7,6 @@ import click
 from evengsdk.client import EvengClient
 from evengsdk.cli.folders.commands import folder
 from evengsdk.cli.lab.commands import lab
-from evengsdk.cli.links.commands import link
-from evengsdk.cli.networks.commands import network
 from evengsdk.cli.nodes.commands import node
 from evengsdk.cli.users.commands import user
 from evengsdk.cli.system.commands import (
@@ -21,6 +19,8 @@ from evengsdk.cli.system.commands import (
 from evengsdk.cli.version import __version__
 
 
+ERROR = click.style('ERROR: ', fg='red')
+UNKNOWN_ERROR = click.style('UNKNOWN ERROR: ', fg='red')
 LOGGING_LEVELS = {
     0: logging.NOTSET,
     1: logging.ERROR,
@@ -37,6 +37,8 @@ class Context:
         self.logger = None
         self.debug = None
         self.active_lab_dir = os.environ.get('EVE_NG_LAB_DIR', '.eve-ng')
+        self.error_fmt = ERROR
+        self.unknown_error_fmt = UNKNOWN_ERROR
 
 
 PASS_CTX = click.make_pass_decorator(Context, ensure=True)
@@ -129,4 +131,3 @@ main.add_command(templates)
 main.add_command(read_template)
 main.add_command(user_roles)
 main.add_command(network_types)
-main.add_command(network)
