@@ -8,7 +8,7 @@ import sys
 
 import click
 from evengsdk.client import EvengClient
-from evengsdk.cli.helpers import (
+from evengsdk.cli.utils import (
     get_client,
     thread_executor,
     get_active_lab

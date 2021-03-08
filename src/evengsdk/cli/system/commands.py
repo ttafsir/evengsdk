@@ -3,7 +3,7 @@ import sys
 
 import click
 
-from evengsdk.cli.helpers import get_client
+from evengsdk.cli.utils import get_client
 from evengsdk.plugins.display import display
 from evengsdk.exceptions import EvengHTTPError, EvengApiError
 
