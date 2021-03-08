@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
+import sys
+
 import click
+
+from evengsdk.cli.utils import get_client
+from evengsdk.exceptions import EvengHTTPError, EvengApiError
+from evengsdk.plugins.display import display
 
 
 @click.command(name='list')
@@ -8,12 +14,21 @@ def ls(ctx):
     """
     List folders on EVE-NG host
     """
-    pass
+    try:
+        client = get_client(ctx)
+        folders = client.api.list_folders()
+        click.echo(display('json', folders))
+    except (EvengHTTPError, EvengApiError) as e:
+        msg = click.style(str(e), fg='bright_white')
+        sys.exit(f'{ctx.obj.error_fmt}{msg}')
+    except Exception as e:
+        sys.exit(f'{ctx.obj.unknown_error_fmt}{str(e)}')
 
 
 @click.command()
 @click.pass_context
-def create(ctx):
+@click.argument('path')
+def create(ctx, path):
     """
     Create folder on EVE-NG host
     """
@@ -21,12 +36,21 @@ def create(ctx):
 
 
 @click.command()
+@click.argument('folder')
 @click.pass_context
-def read(ctx):
+def read(ctx, folder):
     """
     Get folder details EVE-NG host
     """
-    pass
+    try:
+        client = get_client(ctx)
+        folder = client.api.get_folder(folder)
+        click.echo(display('json', folder))
+    except (EvengHTTPError, EvengApiError) as e:
+        msg = click.style(str(e), fg='bright_white')
+        sys.exit(f'{ctx.obj.error_fmt}{msg}')
+    except Exception as e:
+        sys.exit(f'{ctx.obj.unknown_error_fmt}{str(e)}')
 
 
 @click.command()
@@ -59,7 +83,7 @@ def folder(ctx):
 
 
 folder.add_command(ls)
-folder.add_command(create)
+# folder.add_command(create)
 folder.add_command(read)
-folder.add_command(edit)
-folder.add_command(delete)
+# folder.add_command(edit)
+# folder.add_command(delete)
