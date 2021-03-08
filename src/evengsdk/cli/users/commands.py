@@ -53,7 +53,8 @@ def delete(ctx, user_id):
 @click.group()
 @click.pass_context
 def user(ctx):
-    """
+    """user sub commands
+
     Manage EVE-NG users
     """
     global client

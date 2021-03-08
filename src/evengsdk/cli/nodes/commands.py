@@ -311,7 +311,8 @@ def ls(ctx, path, output):
 @click.group()
 @click.pass_context
 def node(ctx):
-    """
+    """node sub commands
+
     Manage EVE-NG lab nodes
     """
     global client

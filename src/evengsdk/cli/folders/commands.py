@@ -50,7 +50,8 @@ def delete(ctx):
 @click.group()
 @click.pass_context
 def folder(ctx):
-    """
+    """folder sub commands
+
     Manage EVE-NG folders
     """
     global client
