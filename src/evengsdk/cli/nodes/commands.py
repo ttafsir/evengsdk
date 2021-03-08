@@ -6,7 +6,7 @@ import sys
 import click
 
 from evengsdk.exceptions import EvengHTTPError, EvengApiError
-from evengsdk.cli.helpers import (
+from evengsdk.cli.utils import (
     get_client,
     get_active_lab
 )
