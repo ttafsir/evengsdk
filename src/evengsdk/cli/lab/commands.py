@@ -441,7 +441,9 @@ def active(ctx, path):
 @click.pass_context
 def lab(ctx):
     """
-    EVE-NG lab commands
+    lab sub commands
+
+    Manage EVE-NG labs
     """
     global client
 

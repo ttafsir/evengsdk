@@ -74,7 +74,7 @@ def common_options(f):
 
 @click.command()
 def version():
-    """Get the library version."""
+    """display library version"""
     click.echo(click.style(f"{__version__}", bold=True))
 
 
@@ -91,8 +91,7 @@ def version():
 @common_options
 @PASS_CTX
 def main(ctx, host, port, username, password):
-    """
-    EVE-NG CLI commands
+    """CLI application to manage EVE-NG objects
     """
 
     client = EvengClient(host)

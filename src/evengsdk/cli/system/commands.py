@@ -13,7 +13,7 @@ ERROR = click.style('ERROR: ', fg='red')
 UNKNOWN_ERROR = click.style('UNKNOWN ERROR: ', fg='red')
 
 
-@click.command()
+@click.command(name='list-node-templates')
 @click.option('--include-missing', is_flag=True, default=False)
 @click.option('--output',
               type=click.Choice(['json', 'text', 'table']),
@@ -36,7 +36,7 @@ def templates(ctx, output, include_missing):
         sys.exit(f'{UNKNOWN_ERROR}{str(e)}')
 
 
-@click.command()
+@click.command(name='show-template')
 @click.option('--output',
               type=click.Choice(['json', 'text']),
               default='text')
@@ -58,7 +58,7 @@ def read_template(ctx, template_name, output):
         sys.exit(f'{UNKNOWN_ERROR}{str(e)}')
 
 
-@click.command()
+@click.command(name='list-network-types')
 @click.option('--output',
               type=click.Choice(['json', 'text', 'table']),
               default='text')
@@ -80,7 +80,7 @@ def network_types(ctx, output):
         sys.exit(f'{UNKNOWN_ERROR}{str(e)}')
 
 
-@click.command()
+@click.command(name='list-user-roles')
 @click.option('--output',
               type=click.Choice(['json', 'text', 'table']),
               default='text')
@@ -102,14 +102,13 @@ def user_roles(ctx, output):
         sys.exit(f'{UNKNOWN_ERROR}{str(e)}')
 
 
-@click.command()
+@click.command(name='show-status')
 @click.option('--output',
               type=click.Choice(['json', 'text', 'table']),
               default='text')
 @click.pass_context
 def status(ctx, output):
-    """
-    EVE-NG server status and details
+    """View EVE-NG server status
     """
     try:
         client = get_client(ctx)
