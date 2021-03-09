@@ -1,20 +1,21 @@
 # -*- coding: utf-8 -*-
+
 """
 evegnsdk.api
 ~~~~~~~~~~~~~~~
 This module contains the primary object for
 the EVE-NG API wrapper
 """
+
 import copy
 import json
 from pathlib import Path
-from typing import Dict
+
 
 from urllib.parse import quote_plus
 from requests.exceptions import HTTPError
 
-from evengsdk.exceptions import EvengApiError, EvengHTTPError
-
+from evengsdk.exceptions import EvengApiError
 
 NETWORK_TYPES = ["bridge", "ovs"]
 VIRTUAL_CLOUD_COUNT = 9
@@ -61,7 +62,7 @@ class EvengApi:
             }
         return templates
 
-    def node_template_detail(self, node_type: str):
+    def node_template_detail(self, node_type):
         """
         List details for single node template
         All available images for the selected template will be included in the
@@ -99,7 +100,11 @@ class EvengApi:
         Returns:
             dict: user details
         """
-        return self.clnt.get(f"/users/{username}")
+        try:
+            r = self.clnt.get(f"/users/{username}")
+            return r
+        except HTTPError:
+            return {}
 
     def add_user(self,
                  username,
@@ -212,7 +217,7 @@ class EvengApi:
         """
         List all folders and include labs
         """
-        folders = self.clnt.get("/folders/")
+        folders = self.clnt.get(f"/folders/")
         return folders
 
     def get_folder(self, folder):
@@ -230,9 +235,7 @@ class EvengApi:
 
     @staticmethod
     def normalize_path(path):
-        if path == "/":
-            return path
-        elif path:
+        if path:
             if not path.startswith('/'):
                 path = '/' + path
             path = Path(path).resolve()
@@ -262,62 +265,32 @@ class EvengApi:
         url = "/labs" + self.normalize_path(path)
         return self.clnt.get(url)
 
-    def get_lab_download_link(self, labpath: str) -> Dict:
-        endpoint = "/export"
-        lab_filepath = Path(labpath)
+    def export_lab(self, path, filename='lab_export.zip'):
+        """
+        Export a lab as a .unl file
+
+        Args:
+            path (str): the path of the lab
+
+        Returns:
+            file: zip file with exported lab
+        """
+        url = f"/export"
+        lab_filepath = Path(path)
+
         payload = {
             '0': str(lab_filepath),
             'path': str(lab_filepath.parent)
         }
-        headers = {
-            'Accept': 'application/json, text/plain, */*',
-            'Content-Type': 'application/json;charset=UTF-8',
-        }
-        return self.clnt.post(
-            endpoint,
-            data=json.dumps(payload),
-            headers=headers
-        )
 
-    def export_lab(self, path: str) -> bool:
-        """Export a lab as an archive file
+        resp = self.clnt.post(url, data=json.dumps(payload))
+        if resp:
+            client = self.clnt
+            download_url = f"http://{client.host}:{client.port}{resp}"
+            _, r = self.clnt.get(download_url)
 
-        Args:
-            path (str): path to lab on EVE-NG
-
-        Returns:
-            content (bytes): file content bytes
-        """
-        # request download link
-        if download_ep := self.get_lab_download_link(path):
-            url = (
-                f"http://{self.clnt.host}{download_ep}"
-            )
-            # download archive
-            if resp := self.clnt.session.get(url):
-                filename = download_ep.split('/')[-1]
-                return (filename, resp.content)
-        return
-
-    def import_lab(self, filepath: Path, folder: str = "/"):
-        """Import lab into EVE-NG from ZIP archive
-
-        Args:
-            filepath (Path): Path object for ZIP archive
-            folder (str, optional): folder to import lab to. Defaults to "/".
-
-        Returns:
-            dict: response object from API
-        """
-        ep = '/import'
-        with filepath.open(mode='rb') as f:
-            headers = {'content-type': 'multipart/form-data'}
-            r = self.clnt.post(
-                ep,
-                headers=headers,
-                data={"path": folder},
-                files={'file': f})
-            return r
+            with open(filename, 'wb') as handle:
+                handle.write(r.content)
 
     def list_lab_networks(self, path):
         """
@@ -382,11 +355,11 @@ class EvengApi:
         Returns:
             dict: dictionary with lab links
         """
-        url = "/labs" + self.normalize_path(path) + "/links"
+        url = f"/labs" + self.normalize_path(path) + "/links"
         links = self.clnt.get(url)
         return links
 
-    def list_nodes(self, path: str) -> Dict:
+    def list_nodes(self, path):
         """
         List all nodes in the lab
 
@@ -396,10 +369,12 @@ class EvengApi:
         Returns:
             dict: dictionary with all lab node details
         """
-        url = "/labs" + self.normalize_path(path) + "/nodes"
-        return self.clnt.get(url)
+        uri = "/nodes"
+        url = "/labs" + self.normalize_path(path) + uri
+        nodes = self.clnt.get(url)
+        return nodes
 
-    def get_node(self, path: str, node_id: str) -> Dict:
+    def get_node(self, path, node_id):
         """
         Retrieve single node from lab by ID
 
@@ -409,12 +384,13 @@ class EvengApi:
 
         Returns:
             dict: dictionary with single lab node details
+
         """
-        uri = f"/nodes/{str(node_id)}"
+        uri = f"/nodes/{node_id}"
         url = "/labs" + self.normalize_path(path) + uri
         return self.clnt.get(url)
 
-    def get_node_by_name(self, path: str, name: str) -> Dict:
+    def get_node_by_name(self, path, name):
         """
         Retrieve single node from lab by name
 
@@ -427,12 +403,19 @@ class EvengApi:
 
         """
         nodes = self.list_nodes(path)
-        node = next((v for k, v in nodes.items() if v['name'] == name), {})
-        return node
+        found = None
+        if nodes:
+            try:
+                found = next(v for k, v in nodes.items() if v['name'] == name)
+            except StopIteration:
+                self.clnt.log.warning(f'node {name} not found')
+        else:
+            self.clnt.log.warning(f'no nodes found in lab')
+        return found
 
-    def get_node_configs(self, path: str) -> Dict:
+    def get_node_configs(self, path):
         """
-        Return information about node start-up configs
+        Return information about node configs
 
         Args:
             path (str): the path to the lab
@@ -440,11 +423,11 @@ class EvengApi:
         Returns:
             dict:
         """
-        url = "/labs" + self.normalize_path(path) + "/configs"
+        url = "/labs" + self.normalize_path(path) + f"/configs"
         configs = self.clnt.get(url)
         return configs
 
-    def get_node_config_by_id(self, path: str, config_id: int) -> Dict:
+    def get_node_config_by_id(self, path, config_id):
         """
         Return information about a specific node given
         the configuration ID
@@ -460,37 +443,31 @@ class EvengApi:
         url = "/labs" + self.normalize_path(path) + uri
         return self.clnt.get(url)
 
-    def get_node_config_by_name(self, path: str, node: str) -> Dict:
+    def get_node_config_by_name(self, path, node_name):
         """
         Return information about a specific node given
         the configuration ID
 
         Args:
             path (str): the path to the lab
-            node (str): node name to retrieve configuration for
+            node_name (str): node name to retrieve configuration for
 
         Returns:
             dict: configuration data
         """
         configs = self.get_node_configs(path)
+        data = {}
+        try:
+            found_id = next(k for k, v in configs.items()
+                            if v['name'] == node_name)
+            if found_id:
+                data = self.get_node_config_by_id(path, found_id)
+            return data
+        except StopIteration:
+            self.clnt.log.warning(f'no configuration for {node_name} found')
+        return data
 
-        # find node id using the name
-        n_id = next((k for k, v in configs.items() if v['name'] == node), {})
-
-        # get node config if we have ID
-        if n_id:
-            config = self.get_node_config_by_id(path, n_id)
-            return config
-
-        raise EvengApiError(f'could not find ID for {node}')
-
-    def upload_node_config(
-        self,
-        path: str,
-        node_id: int,
-        config: str = "",
-        enable: bool = False
-    ):
+    def upload_node_config(self, path, node_id, config=None, enable=False):
         """
         Upload node's startup config.
 
@@ -498,10 +475,14 @@ class EvengApi:
             path (str): the path to the lab
             node_id (str): node name to upload configuration for
             config (str): the configuration to upload
-            enable (bool): enable the uploaded config
 
         Returns:
-            dict: operation result response
+            dict: operation result
+                sample: {
+                'code': 201,
+                'message': 'Lab has been saved (60023).',
+                'status': 'success'
+                }
         """
         # current_cfg = self.get_node_config_by_id(path, node_id)
         if node_id:
@@ -516,37 +497,22 @@ class EvengApi:
     @staticmethod
     def find_node_interface(name, intf_list):
         interfaces = list(intf_list)
-        return next(((idx, i) for idx, i in enumerate(interfaces)
-                    if i['name'] == name), None)
+        try:
+            found = next((idx, i)
+                         for idx, i in enumerate(interfaces)
+                         if i['name'] == name)
+            return found
+        except StopIteration:
+            return None
 
-    def connect_node(
-        self,
-        path: str,
-        src: str = "",
-        src_port: str = "",
-        dst: str = "",
-        dst_port: str = "",
-        dst_type="network",
-        media=""
-    ) -> Dict:
-        """Connect node to network or other node
-
-        Args:
-            path (str): lab path
-            src (str, optional): source node name. Defaults to "".
-            src_port (str, optional): source node port. Defaults to "".
-            dst (str, optional): destination. Defaults to "".
-            dst_port (str, optional): destination port. Defaults to "".
-            dst_type (str, optional): destination type (node/network).
-                Defaults to "network".
-            media (str, optional): port media type. Defaults to "".
-
-        Raises:
-            ValueError: [description]
-
-        Returns:
-            Dict: [description]
-        """
+    def connect_node(self,
+                     lab,
+                     src="",
+                     src_port="",
+                     dst="",
+                     dst_port="",
+                     dst_type="network",
+                     media=""):
         r = None
         dest_types = ["network", "node"]
 
@@ -555,17 +521,17 @@ class EvengApi:
             raise ValueError(msg)
 
         # normalize lab path
-        normpath = self.normalize_path(path)
+        normpath = self.normalize_path(lab)
 
         # Connect node to either cloud (network) or node
         if dst_type == "network":
-            self.log.debug(f'{path}: Connecting node {src} to cloud {dst}')
+            self.log.debug(f'{lab}: Connecting node {src} to cloud {dst}')
             r = self.connect_node_to_cloud(
                 normpath,
                 src, src_port, dst,
                 media=media)
         else:
-            self.log.debug(f'{path}: Connecting node {src} to node {dst}')
+            self.log.debug(f'{lab}: Connecting node {src} to node {dst}')
             r = self.connect_node_to_node(
                 normpath,
                 src, src_port,
@@ -625,7 +591,7 @@ class EvengApi:
         elif net:
             raise ValueError(f"node {node_name} not found or invalid")
         else:
-            raise ValueError("invalid network and/or network")
+            raise ValueError(f"invalid network and/or network")
         return
 
     def connect_node_to_node(self,
@@ -695,10 +661,10 @@ class EvengApi:
         Returns:
             dict: dictionary with operation results
         """
-        url = "/labs" + self.normalize_path(path) + "/nodes/start"
+        url = "/labs" + self.normalize_path(path) + f"/nodes/start"
         return self.clnt.get(url)
 
-    def stop_all_nodes(self, path: str) -> Dict:
+    def stop_all_nodes(self, path):
         """
         Stop one or all nodes configured in a lab
 
@@ -715,10 +681,10 @@ class EvengApi:
                 "status": "success"
             }
         """
-        url = f"/labs{self.normalize_path(path)}/nodes/stop"
+        url = f"/labs" + self.normalize_path(path) + "/nodes/stop"
         return self.clnt.get(url)
 
-    def start_node(self, path: str, node_id: int) -> Dict:
+    def start_node(self, path, node_id):
         """
         start single node in a lab
 
@@ -734,11 +700,11 @@ class EvengApi:
                         "status": "success"
                     }
         """
-        uri = f"/nodes/{str(node_id)}/start"
+        uri = f"/nodes/{node_id}/start"
         url = "/labs" + self.normalize_path(path) + uri
         return self.clnt.get(url)
 
-    def stop_node(self, path: str, node_id: int) -> Dict:
+    def stop_node(self, path, node_id):
         """
         Stop single node in a lab
 
@@ -754,7 +720,7 @@ class EvengApi:
                     "status": "success"
                 }
         """
-        uri = f"/nodes/{str(node_id)}/stop"
+        uri = f"/nodes/{node_id}/stop"
         url = "/labs" + self.normalize_path(path) + uri
         return self.clnt.get(url)
 
@@ -778,7 +744,7 @@ class EvengApi:
         url = "/labs" + self.normalize_path(path) + "/nodes/wipe"
         return self.clnt.get(url)
 
-    def wipe_node(self, path: str, node_id: int) -> Dict:
+    def wipe_node(self, path, node_id):
         """
         Wipe single node configured in a lab. Wiping deletes
         all user config, included startup-config, VLANs, and so on. The
@@ -789,13 +755,17 @@ class EvengApi:
             node_id (str): ID for node to wipe
 
         Returns:
-            dict: response dict
+            dict: {
+                    "code": 200,
+                    "message": "Node cleared (80053).",
+                    "status": "success"
+                }
         """
         uri = f"/nodes/{node_id}/wipe"
         url = "/labs" + self.normalize_path(path) + uri
         return self.clnt.get(url)
 
-    def export_all_nodes(self, path: str) -> Dict:
+    def export_all_nodes(self, path):
         """
         Export one or all nodes configured in a lab.
         Exporting means saving the startup-config into
@@ -805,12 +775,16 @@ class EvengApi:
             path (str): the path to the lab
 
         Returns:
-            dict: response dict
+            dict: {
+                    "code": 200,
+                    "message": "Nodes exported (80057).",
+                    "status": "success"
+                }
         """
         url = "/labs" + self.normalize_path(path) + "/nodes/export"
         return self.clnt.get(url)
 
-    def export_node(self, path: str, node_id: int) -> Dict:
+    def export_node(self, path, node_id):
         """
         Export node configuration. Exporting means
         saving the startup-config into the lab file.
@@ -820,46 +794,108 @@ class EvengApi:
             node_id (str): ID for node to export
 
         Returns:
-            dict: response dict
+            dict: {
+                "code": 200,
+                "message": "Node exported (80058).",
+                "status": "success"
+            }
         """
         uri = f"/nodes/{node_id}/export"
         url = "/labs" + self.normalize_path(path) + uri
-        return self.clnt.put(url)
+        return self.clnt.get(url)
 
-    def get_node_interfaces(self, path: str, node_id: int):
+    def get_node_interfaces(self, path, node_id):
         """
         Get configured interfaces from a node.
 
         Args:
             path (str): the path to the lab
             node_id (str): ID for node to export
+
+        Returns:
+            dict: {
+                    "code": 200,
+                    "data": {
+                        "ethernet": [
+                            {
+                                "name": "Gi0/0",
+                                "network_id": 1
+                            },
+                            {
+                                "name": "Gi0/3",
+                                "network_id": 0
+                            }
+                        ],
+                        "serial": []
+                    },
+                    "message": "Successfully listed node interfaces (60030).",
+                    "status": "success"
+            }
         """
         uri = f"/nodes/{node_id}/interfaces"
         url = "/labs" + self.normalize_path(path) + uri
         return self.clnt.get(url)
 
-    def get_lab_topology(self, lab_path: str) -> Dict:
-        """Retrieve lab topology
+    def get_lab_topology(self, path):
+        """
+        Get the lab topology
 
         Args:
-            lab_path (str): full path to lab. ex /my_lab.unl
+            path (str): the path to the lab
+            node_id (str): ID for node to export
 
         Returns:
-            Dict: Response dictionary
+            dict: {
+                "code": "200",
+                "data": [
+                    {
+                        "destination": "network1",
+                        "destination_label": "",
+                        "destination_type": "network",
+                        "source": "node1",
+                        "source_label": "Gi0/0",
+                        "source_type": "node",
+                        "type": "ethernet"
+                    },
+                    {
+                        "destination": "network1",
+                        "destination_label": "",
+                        "destination_type": "network",
+                        "source": "node2",
+                        "source_label": "Gi0/0",
+                        "source_type": "node",
+                        "type": "ethernet"
+                    }
+                ],
+                "message": "Topology loaded",
+                "status": "success"
+            }
         """
-        url = "/labs" + self.normalize_path(lab_path) + "/topology"
-        return self.clnt.get(url)
+        url = "/labs" + self.normalize_path(path) + "/topology"
+        r = self.clnt.get(url)
+        return r
 
-    def get_lab_pictures(self, lab_path: str):
-        """Re
-
-        Args:
-            lab_path (str): [description]
-
-        Returns:
-            [type]: [description]
+    def get_lab_pictures(self, path):
         """
-        url = "/labs" + self.normalize_path(lab_path) + "/pictures"
+        Get one or all pictures configured in a lab
+
+        sample output:
+            {
+                "code": 200,
+                "data": {
+                    "1": {
+                        "height": 201,
+                        "id": 1,
+                        "name": "RR Logo",
+                        "type": "image/png",
+                        "width": 410
+                    }
+                },
+                "message": "Successfully listed pictures (60028).",
+                "status": "success"
+            }
+        """
+        url = "/labs" + self.normalize_path(path) + f"/pictures"
         return self.clnt.get(url)
 
     def get_lab_picture_details(self, path, picture_id):
@@ -870,29 +906,13 @@ class EvengApi:
         url = "/labs" + self.normalize_path(path) + uri
         return self.clnt.get(url)
 
-    def get_lab_path(self, path, name):
-        fullpath = None
-        if name and path:
-            fullpath = (
-                f"{path}/{name}.unl"
-                if not name.endswith("unl")
-                else f"{path}/{name}"
-            )
-        elif path:
-            if not len(path.split('/')) > 1:
-                raise ValueError(
-                        "Invalid name or path. Please pass either"
-                        "the name and folder path for the lab or pass"
-                        "The full path to the lab"
-                )
-            fullpath = path
-        return fullpath
-
-    def lab_exists(self, lab_path):
-        try:
-            return self.get_lab(lab_path)
-        except EvengHTTPError:
-            return False
+    def lab_exists(self, path, name):
+        exists = False
+        fullpath = path + name.lower() + '.unl'
+        lab = self.get_lab(fullpath)
+        if lab is not None:
+            exists = lab.get('name') == name.lower()
+        return exists
 
     def node_exists(self, path, nodename):
         exists = False
@@ -908,98 +928,106 @@ class EvengApi:
             exists = net.get('name') == name
         return exists
 
-    def create_lab(
-        self,
-        name: str,
-        author: str = "",
-        path: str = "/",
-        version: int = 1,
-        description: str = "",
-        body: str = "",
-    ) -> Dict:
-        """Creates New lab on EVE-NG host
+    def create_lab(self,
+                   username,
+                   path="/",
+                   name="",
+                   version=1,
+                   description="",
+                   body="",
+                   **kwargs):
+        """Create a new lab
 
         Args:
-            author (str, optional): lab author . Defaults to "".
-            path (str, optional): parent folder(s). Defaults to "/".
-            name (str, optional): lab name. Defaults to "".
-            version (int, optional): lab version. Defaults to 1.
-            description (str, optional): lab description. Defaults to "".
-            body (str, optional): [description]. Defaults to "".
-
-        Raises:
-            EvengApiError: [description]
-            EvengApiError: [description]
+            username (str):
+            path (str):
+            name (str):
+            version (int):
+            description (str):
+            body (str):
 
         Returns:
-            Dict: Response object
-        """
-        if not name:
-            raise ValueError('`name` is required')
-        data = {
-            "path": self.normalize_path(path),
-            "name": name,
-            "version": version,
-            "author": author,
-            "description": description,
-            "body": body,
-        }
-        labpath = self.get_lab_path(path, name)
-        if self.lab_exists(labpath):
-            raise EvengApiError('Lab already exists')
-        else:
-            return self.clnt.post('/labs', data=json.dumps(data))
 
-    def edit_lab(
-        self,
-        full_path: str,
-        name: str = "",
-        author: str = "",
-        version: int = None,
-        description: str = "",
-        body: str = "",
-    ) -> Dict:
         """
-        Edit an existing lab. The request can set only a single
+        user = self.get_user(username)
+        if user:
+            author = user.get('name')
+            path = kwargs.get('path') or path
+            name = kwargs.get('name') or name
+
+            normpath = self.normalize_path(path)
+            data = {
+                "path": normpath,
+                "name":
+                    self.slugify(name)
+                    if not name.endswith('unl')
+                    else self.slugify(name.split('.')[0]),
+                "version": kwargs.get('version') or version,
+                "author": author,
+                "description": kwargs.get('version') or description,
+                "body": kwargs.get('body') or body,
+            }
+
+            if self.lab_exists(path, name):
+                raise EvengApiError('Lab already exists')
+            else:
+                resp = self.clnt.post('/labs', data=json.dumps(data))
+                return resp
+        else:
+            raise EvengApiError(f"user {username} not found")
+
+    def edit_lab(self,
+                 path,
+                 name="",
+                 version="",
+                 author="",
+                 description="",
+                 **kwargs):
+        """
+        Edit an existing lab. The request can set only one single
         parameter. Optional parameter can be reverted to the default
         setting an empty string “”.
 
         Args:
-            full_path (str): full_path for lab. ex: /datacenter/lab1.unl
-            name (str, optional): [description]. Defaults to "".
-            author (str, optional): [description]. Defaults to "".
-            version (int, optional): [description]. Defaults to None.
-            description (str, optional): [description]. Defaults to "".
-            body (str, optional): [description]. Defaults to "".
+            path (str): path to lab on EVE-NG host. ex /MYLABS/lab1.unl
+            version (int): version of the lab
+            author (str): name of the author
+            descritpion (str): a description for the lab
 
         Returns:
-            Dict: [description]
+            dict: {
+                "code": 200,
+                "message": "Lab has been saved (60023).",
+                "status": "success"
+            }
         """
-        params = ('name', 'author', 'version', 'description', 'body')
+        normpath = self.normalize_path(path)
+        name = kwargs.get("name") or name
         data = {
-            k: v for k, v in locals().items() if k in params and v
+            "name": self.slugify(name),
+            "version": kwargs.get("version") or version,
+            "author": kwargs.get("author") or author,
+            "description": kwargs.get("description") or description,
         }
-        url = "/labs" + full_path
+        url = "/labs" + normpath
         return self.clnt.put(url, data=json.dumps(data))
 
-    def delete_lab(self, name: str = "", path: str = "/"):
-        """Delete lab from EVE-NG host
-
-        Args:
-            name (str, optional): [description]. Defaults to "".
-            path (str, optional): [description]. Defaults to "/".
-
-        Raises:
-            EvengApiError: [description]
-
-        Returns:
-            [type]: [description]
+    def delete_lab(self, name="", path="/"):
         """
-        labpath = self.get_lab_path(path, name)
-        normpath = self.normalize_path(labpath)
-        if self.lab_exists(labpath):
-            url = '/labs' + normpath
-            return self.clnt.delete(url)
+        Delete an existent lab
+
+            sample output:
+                {
+                    "code": 200,
+                    "message": "Lab has been deleted (60022).",
+                    "status": "success"
+                }
+        """
+        normpath = self.normalize_path(path)
+        if self.lab_exists(path, name.lower()):
+            url = '/labs' + normpath + name.lower() + '.unl'
+            resp = self.clnt.delete(url)
+            return resp
         else:
             raise EvengApiError('Lab does not exists')
 
@@ -1106,35 +1134,18 @@ class EvengApi:
                 return ValueError(f"network with name/id '{name}' not found")
         return self.clnt.delete(url)
 
-    def add_node(
-        self,
-        path: str,
-        name: str = "",
-        delay: int = 0,
-        node_type: str = "qemu",
-        template: str = "",
-        icon: str = "",
-        image: str = "",
-        top: int = 0,
-        left: int = 0,
-        ethernet: int = 2,
-        serial: int = 2,
-        config: str = "Unconfigured",
-        ram: int = 1024,
-        nvram: int = 1024,
-        console: str = "telnet",
-        cpu: int = 1,
-        uuid: str = "",
-        idlepc: str = "",
-        slot: str = ""
-    ) -> Dict:
+    def add_node(self, path, delay=0, name="", node_type="", template="",
+                 top="", left="", console="telnet", config="Unconfigured",
+                 image="", **kwargs):
         """ Add a new node to a lab
-
         Args:
-            path (str): lab path
-            name (str): node name (ex: “Core1”), default is NodeX (X = node_id)
-            config (str): can be 'Unconfigured' or 'Saved'
-            delay (int): seconds to wait before starting the node, default is 0
+
+            name (str): node name (i.e. “Core1”), default is
+                        NodeX (X = node_id);
+            config (str): can be 'Unconfigured' or 'Saved', default
+                          is Unconfigured;
+            delay (int): seconds to wait before starting the node,
+                        default is 0;
             icon (str): filename for icon used to display the node, default
                 is Router.png; (located in /opt/unetlab/html/images/icons/)
             image (str): image used to start the node, default is latest
@@ -1168,58 +1179,40 @@ class EvengApi:
         """
         url = '/labs' + self.normalize_path(path) + "/nodes"
 
-        node_data = dict(
-            name=name, type=node_type, template=template,
-            config=config, delay=delay, left=left, top=top, ram=ram,
-            nvram=nvram
-        )
-        # get template data from EVE-NG
-        if template_data := self.node_template_detail(template):
-            template_data = template_data.get('options')
+        template = kwargs.get("template") or template
+        resp = self.node_template_detail(template)
+        template_details = resp.get('options')
 
-        # set template details or insert defaults from template data
-        node_data.update({
-            'icon': icon or template_data.get('icon')['value'],
-            'image': image or template_data.get('image')['value'],
-            'ethernet': (
-                int(ethernet) or
-                template_data.get('ethernet')['value'],
-            ),
-            'serial': (
-                int(serial) or
-                template_data.get('serial')['value'],
-            ),
-            'ram': ram or template_data.get('ram')['value']
-        })
+        icon = kwargs.get("icon") \
+            or template_details.get("icon")["value"]
+        ethernet = kwargs.get("ethernet") \
+            or template_details.get("ethernet")["value"]
+        ram = kwargs.get("ram") \
+            or template_details.get("ram")["value"]
+        image = kwargs.get("image") \
+            or template_details.get("image")["value"]
+        cpu = kwargs.get("cpu") \
+            or template_details.get("cpu")["value"]
 
-        if node_type == "qemu":
-            node_data.update({
-                "console": console,
-                "cpu": cpu,
-                "uuid": uuid
-            })
-
-        if node_data == "dynamips":
-            node_data.update({
-                "idlepc": idlepc,
-                "slot": slot,
-                "nvram": nvram
-            })
-
-        return self.clnt.post(url, data=json.dumps(node_data))
-
-    def delete_node(self, path: str, node_id: int) -> Dict:
-        """Delete node from lab
-
-        Args:
-            path (str): lab path
-            node_id (int): Node ID to remove
-
-        Returns:
-            dict: response dictionary
-        """
-        url = f"/labs{self.normalize_path(path)}/nodes/{node_id}"
-        return self.clnt.delete(url)
+        data = {
+            "type": node_type,
+            "template": template,
+            "config": kwargs.get("config") or config,
+            "delay": kwargs.get("delay") or delay,
+            "icon": icon,
+            "image": image,
+            "name": kwargs.get("name") or name,
+            "left": kwargs.get("left") or left,
+            "top": kwargs.get("top") or top,
+            "ram": ram,
+            "cpu": cpu,
+            "console": kwargs.get("console") or console,
+            "ethernet": int(ethernet),
+        }
+        resp = {}
+        if not self.node_exists(path, name):
+            resp = self.clnt.post(url, data=json.dumps(data))
+        return resp
 
     @staticmethod
     def slugify(string):
