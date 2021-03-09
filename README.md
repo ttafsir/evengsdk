@@ -82,90 +82,9 @@ The CLI application provides an interface to manage EVE-NG objects including:
 * `Users` - manage system users
 * `System` - View system status and resources (node templates, network types, user roles, etc..)
 
-### System
-
-```sh
-Commands:
-  list-network-types  list EVE-NG network types
-  list-templates      list EVE-NG node templates
-  list-user-roles     list EVE-NG user roles
-  read-template       get EVE-NG node template details
-  status              EVE-NG server status and details
-```
-
-### Users
-
-```sh
-Commands:
-  create  Create EVE-NG user
-  delete  Delete EVE-NG user
-  edit    Update EVE-NG user
-  list    list EVE-NG users
-  read    Retrieve EVE-NG user details
-```
-
-### Labs
-
-```sh
-Commands:
-  active     show/set active lab path
-  create     create a new lab
-  delete     edit a lab on EVE-NG host
-  edit       edit a lab on EVE-NG host
-  export     Export and download lab file as ZIP archive
-  import     Import lab into EVE-NG from ZIP archive
-  list       List the available labs in EVE-NG host
-  read       Get EVE-NG lab details
-  start      Start all nodes in lab
-  stop       Stop all nodes in lab
-  topology   Retrieve lab topology
-```
-
-#### Lab Nodes
-
-```sh
-Commands:
-  create         Create lab node
-  delete         Retrieve lab node details
-  export         Create export node configuration (save)
-  list           list lab nodes
-  read           Retrieve lab node details
-  start          start node in lab.
-  stop           stop node in lab
-  upload-config  Upload device configuration
-  wipe           Create lab node
-```
-
-
-#### Lab Networks
-
-```sh
-Commands:
-  create  Create EVE-NG lab network
-  delete  Delete EVE-NG lab network
-  edit    Edit EVE-NG lab network
-  list    List lab networks
-  read    Retrieve EVE-NG lab network
-```
-
-
-#### Lab Topology
-
-```sh
-eve-ng lab topology <LAB_PATH>
-```
-
-### Folders
-
-```sh
-Commands:
-  create  Create folder on EVE-NG host
-  delete  Delete folder on EVE-NG host
-  edit    Edit folder on EVE-NG host
-  list    List folders on EVE-NG host
-  read    Get folder details EVE-NG host
-```
-
+<p align="center">
+  ![CLI](./docs/images/eve_cli.svg)<img src="./docs/images/eve_cli.svg">
+</p>
 
 
 ## :gear: Configuration
@@ -182,5 +101,6 @@ You may set the variables and export them to your shell environment. You can als
 export EVE_NG_HOST=192.168.2.100
 export EVE_NG_USERNAME=admin
 export EVE_NG_PASSWORD=eve
+export EVE_NG_LAB_PATH='/datacenter/leaf_spine_lab.unl'
 ```
 
