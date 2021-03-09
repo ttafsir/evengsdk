@@ -83,7 +83,7 @@ The CLI application provides an interface to manage EVE-NG objects including:
 * `System` - View system status and resources (node templates, network types, user roles, etc..)
 
 <p align="center">
-  ![CLI](./docs/images/eve_cli.svg)<img src="./docs/images/eve_cli.svg">
+  ![Alt text](./docs/images/eve_cli.svg)<img src="./docs/images/eve_cli.svg">
 </p>
 
 
