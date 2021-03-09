@@ -1,19 +1,12 @@
-import logging
-import json
-import os
 import pytest
-import sys
-
-print('__file__={0:<35} | __name__={1:<20} | __package__={2:<20}'.format(__file__,__name__,str(__package__)))
 
 from evengsdk.client import EvengClient
-from evengsdk.exceptions import EvengLoginError, EvengApiError
-from requests.exceptions import HTTPError
+from evengsdk.exceptions import EvengHTTPError
 
 
 LAB_PATH = '/datacenter/leaf_spine_lab.unl'
 DEVICE_UNDER_TEST = {
-    'host': '10.246.48.76',
+    'host': '10.246.32.119',
     'username': 'admin',
     'password': 'eve'
 }
@@ -32,12 +25,17 @@ hostname vEOS4
 
 @pytest.fixture()
 def client():
-    client = EvengClient(DEVICE_UNDER_TEST['host'], log_level='DEBUG', log_file='api.log')
+    client = EvengClient(
+        DEVICE_UNDER_TEST['host'],
+        log_level='DEBUG',
+        log_file='api.log'
+    )
     username = DEVICE_UNDER_TEST['username']
     passwd = DEVICE_UNDER_TEST['password']
     client.login(username=username, password=passwd)
     yield client
     client.logout()
+
 
 class TestEvengApi:
     ''' Test cases '''
@@ -93,8 +91,8 @@ class TestEvengApi:
         if the user does not exist
         """
         user = USERS['non_existing']
-        user_details = client.api.get_user(user)
-        assert user_details == {}
+        with pytest.raises(EvengHTTPError):
+            client.api.get_user(user)
 
     def test_add_user(self, client):
         """
@@ -102,8 +100,11 @@ class TestEvengApi:
         the username and password
         """
         for username, password in (user for user in USERS['to_create']):
-            r = client.api.add_user(username, password)
-            assert r.get('status') == 'success'
+            try:
+                r = client.api.add_user(username, password)
+                assert r.get('status') == 'success'
+            except EvengHTTPError as e:
+                assert 'check if already exists' in str(e)
 
     def test_add_existing_user(self, client):
         """
@@ -111,8 +112,8 @@ class TestEvengApi:
         an exception
         """
         for username, password in (user for user in USERS['to_create']):
-            with pytest.raises(HTTPError):
-                result = client.api.add_user(username, password)
+            with pytest.raises(EvengHTTPError):
+                client.api.add_user(username, password)
 
     def test_edit_existing_user(self, client):
         """
@@ -139,24 +140,27 @@ class TestEvengApi:
             'name': 'John Doe'
         }
         username = USERS['non_existing']
-        r = client.api.edit_user(username, data=new_data)
-        assert r == {}
+        with pytest.raises(EvengHTTPError):
+            client.api.edit_user(username, data=new_data)
 
     def test_delete_user(self, client):
         """
         Verify that we can delete users
         """
         for username, _ in (user for user in USERS['to_create']):
-            client.api.delete_user(username)
-            user = client.api.get_user(username)
-            assert user == {}
+            resp = client.api.delete_user(username)
+            assert resp.get('status') == 'success'
+
+            # make sure it was deleted
+            with pytest.raises(EvengHTTPError):
+                client.api.get_user(username)
 
     def test_delete_non_existing_user(self, client):
         """
         Verify that deleting non_existing users
         raises an exception.
         """
-        with pytest.raises(EvengApiError):
+        with pytest.raises(EvengHTTPError):
             client.api.delete_user(USERS['non_existing'])
 
     def test_list_networks(self, client):
@@ -167,7 +171,6 @@ class TestEvengApi:
         """
         networks = client.api.list_networks()
         assert networks['bridge'] is not None
-
 
     def test_list_lab_networks(self, client):
         """
@@ -187,8 +190,10 @@ class TestEvengApi:
         """
         Verify that we can retrieve a specific lab by name
         """
-        network_details = client.api.get_lab_network_by_name(LAB_PATH, TEST_NETWORK)
-        print(network_details)
+        network_details = client.api.get_lab_network_by_name(
+            LAB_PATH,
+            TEST_NETWORK
+        )
         assert network_details is not None
 
     def test_list_lab_links(self, client):
@@ -198,7 +203,7 @@ class TestEvengApi:
         of existing links or empty dictionary.
         """
         links = client.api.list_lab_links(LAB_PATH)
-        assert 'links' is not None
+        assert links is not None
 
     def test_list_nodes(self, client):
         """
@@ -214,6 +219,23 @@ class TestEvengApi:
         # get with node with ID == 1
         node = client.api.get_node(LAB_PATH, '1')
         assert node['type'] is not None
+
+    def test_add_node(self, client):
+        """
+        Verify that we can details for a single node by ID
+        """
+        node = {
+            'node_type': 'qemu',
+            'template': 'csr1000v',
+            'image': 'csr1000v-universalk9-16.06.06',
+            'name': "CSR1",
+            'ethernet': 4,
+            'cpu': 2,
+            'serial': 2,
+            'delay': 0
+        }
+        resp = client.api.add_node(LAB_PATH, **node)
+        assert resp
 
     def test_get_node_by_name(self, client):
         """
@@ -253,7 +275,11 @@ class TestEvengApi:
         """
         config = client.api.get_node_config_by_name(LAB_PATH, TEST_NODE)
         node_id = config.get('id')
-        resp = client.api.upload_node_config(LAB_PATH, node_id, config=TEST_CONFIG)
+        resp = client.api.upload_node_config(
+            LAB_PATH,
+            node_id,
+            config=TEST_CONFIG
+        )
         assert resp['status'] == 'success'
 
     def test_stop_all_nodes(self, client):

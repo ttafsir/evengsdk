@@ -1,18 +1,81 @@
 # -*- coding: utf-8 -*-
+import logging
 import os
 
 import click
-from dotenv import load_dotenv, find_dotenv
-
 
 from evengsdk.client import EvengClient
-from evengsdk.cli.lab.group import lab
-from evengsdk.cli.node.group import node
-from evengsdk.cli.system.group import system
+from evengsdk.cli.folders.commands import folder
+from evengsdk.cli.lab.commands import lab
+from evengsdk.cli.nodes.commands import node
+from evengsdk.cli.users.commands import user
+from evengsdk.cli.system.commands import (
+    status,
+    templates,
+    read_template,
+    user_roles,
+    network_types
+)
+from evengsdk.cli.version import __version__
 
 
-# load virtual environments from .env
-load_dotenv(find_dotenv())
+ERROR = click.style('ERROR: ', fg='red')
+UNKNOWN_ERROR = click.style('UNKNOWN ERROR: ', fg='red')
+LOGGING_LEVELS = {
+    0: logging.NOTSET,
+    1: logging.ERROR,
+    2: logging.WARN,
+    3: logging.INFO,
+    4: logging.DEBUG,
+}  #: a mapping of `verbose` option counts to logging levels
+
+
+class Context:
+
+    def __init__(self):
+        self.verbosity = 0
+        self.logger = None
+        self.debug = None
+        self.active_lab_dir = os.environ.get('EVE_NG_LAB_DIR', '.eve-ng')
+        self.error_fmt = ERROR
+        self.unknown_error_fmt = UNKNOWN_ERROR
+
+
+PASS_CTX = click.make_pass_decorator(Context, ensure=True)
+
+
+def verbosity_option(f):
+    def callback(ctx, param, value):
+        state = ctx.ensure_object(Context)
+        state.verbosity = value
+        return value
+    return click.option('-v', '--verbose', count=True,
+                        expose_value=False,
+                        help='Enables verbosity.',
+                        callback=callback)(f)
+
+
+def debug_option(f):
+    def callback(ctx, param, value):
+        state = ctx.ensure_object(Context)
+        state.debug = value
+        return value
+    return click.option('--debug/--no-debug',
+                        expose_value=False,
+                        help='Enables or disables debug mode.',
+                        callback=callback)(f)
+
+
+def common_options(f):
+    f = verbosity_option(f)
+    f = debug_option(f)
+    return f
+
+
+@click.command()
+def version():
+    """display library version"""
+    click.echo(click.style(f"{__version__}", bold=True))
 
 
 @click.group()
@@ -25,19 +88,45 @@ load_dotenv(find_dotenv())
               envvar='EVE_NG_PASSWORD', required=True)
 @click.option('--port', default=80,
               help='HTTP port to connect to. Default is 80')
-@click.pass_context
+@common_options
+@PASS_CTX
 def main(ctx, host, port, username, password):
+    """CLI application to manage EVE-NG objects
+    """
 
-    # ensure that ctx.obj exists and is a dict
-    ctx.ensure_object(dict)
+    client = EvengClient(host)
 
-    client = EvengClient(host, log_file='cli.log')
-    client.login(username=username, password=password)
+    logging_level = (
+        LOGGING_LEVELS[ctx.verbosity]
+        if ctx.verbosity in LOGGING_LEVELS
+        else logging.DEBUG
+    )
 
-    ctx.obj['CLIENT'] = client
-    ctx.obj['HOST'] = host
+    if ctx.verbosity > 0:
+        client.log = logging.getLogger('evengcli')
+        client.log.addHandler(logging.StreamHandler())
+        client.log.setLevel(logging_level)
+        click.echo(
+            click.style(
+                f"Verbose logging is enabled. "
+                f"(LEVEL={logging.getLogger().getEffectiveLevel()})",
+                fg="yellow",
+            )
+        )
+
+    ctx.client = client
+    ctx.host = host
+    ctx.username = username
+    ctx.password = password
 
 
+main.add_command(folder)
+main.add_command(version)
 main.add_command(lab)
 main.add_command(node)
-main.add_command(system)
+main.add_command(user)
+main.add_command(status)
+main.add_command(templates)
+main.add_command(read_template)
+main.add_command(user_roles)
+main.add_command(network_types)

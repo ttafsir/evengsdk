@@ -1,57 +1,95 @@
 # evengsdk
 
-Python SDK and utilities to work with [EVE-NG](https://www.eve-ng.net/) API.
+Python SDK and command line utilities to work with the [EVE-NG](https://www.eve-ng.net/)  [REST API](https://www.eve-ng.net/index.php/documentation/howtos/how-to-eve-ng-api/) .
 
-* [evengcli](#evengcli)
-* [API Client](#EvengClient)
+* [Rest API Client ](#developing-with-the-evengclient) -  Python client  library for managing Eve-NG Server
+* [EVE-NG CLI application](#using-eve-ng-cli-application) - `Click` based CLI application to interact with the EVE-NG [REST API](https://www.eve-ng.net/index.php/documentation/howtos/how-to-eve-ng-api/) via the command-line
 
 ## Requirements
 
-* Python 3.6+
+* Python 3.8+
+* An EVE-NG instance
 
-## Installation
+## :rocket:Getting Started
 
 1. Clone this repository
 
 ```sh
-git clone --single-branch --branch develop https://github.com/ttafsir/evengsdk
+git clone https://github.com/ttafsir/evengsdk
 ```
 
-2. Create and activate a Python virtual environment
+2. Create a Python virtual environment and install dependencies
 
 ```sh
 cd evengsdk
-python3 -m venv venv
-source venv/bin/activate
+rm -rf .venv
+python -m venv .venv
+pip install -r requirements.txt
 ```
 
-3. Install
+3. Install the CLI application (optional)
 
 ```sh
 python3 setup.py install
 ```
 
-## evengcli
+## Developing with the `EvengClient`
 
+### The `EvengClient` REST client
+
+```python
+>>> from evengsdk.client import EvengClient
+>>> client = EvengClient('10.246.32.119')
+>>>
+>>> client.login(username='admin', password='eve')
+>>> client.get('/status')
+{'version': '2.0.3-112', 'qemu_version': '2.4.0', 'uksm': 'enabled', 'ksm': 'unsupported', 'cpulimit': 'enabled', 'cpu': 0, 'disk'
+: 16, 'cached': 96, 'mem': 6, 'swap': 0, 'iol': 0, 'dynamips': 0, 'qemu': 1, 'docker': 0, 'vpcs': 0}
+>>>
 ```
-Usage: evengcli [OPTIONS] COMMAND [ARGS]...
+### Using the client's API wrapper
 
-Options:
-  --host TEXT      [required]
-  --username TEXT  [default: (current user); required]
-  --password TEXT  [required]
-  --port INTEGER   HTTP port to connect to. Default is 80
-  --help           Show this message and exit.
-
-Commands:
-  lab     EVE-NG lab commands
-  node    EVE-NG lab commands
-  system  EVE-NG system commands
+```python
+>>> # using the API wrapper on the client
+>>> client.api.get_server_status()
+{'version': '2.0.3-112', 'qemu_version': '2.4.0', 'uksm': 'enabled', 'ksm': 'unsupported', 'cpulimit': 'enabled', 'cpu': 1, 'di
+sk': 16, 'cached': 96, 'mem': 6, 'swap': 0, 'iol': 0, 'dynamips': 0, 'qemu': 1, 'docker': 0, 'vpcs': 0}
+>>>
+>>> # create lab using the API wrapper object
+>>> lab = {
+...     'name': 'TestLab',
+...     'path': '/',
+...     'description': 'short description',
+...     'version': '1',
+...     'body': 'longer description'
+... }
+>>> client.api.create_lab(**lab)
+{'code': 200, 'status': 'success', 'message': 'Lab has been created (60019).'}
 ```
 
-## Configuration
 
-It is simple enough to pass the proper flags to `evengcli` specify details for your EVE-NG host. However, you may also pass the connection details as environment variables. You can set the following `evengsdk` environment variables:
+## Using `eve-ng` CLI application
+
+The CLI application provides an interface to manage EVE-NG objects including:
+
+* `Folders` - manage the directory-like structures that contains labs
+* `Labs` - manage labs and objects inside labs (nodes, networks, links, etc)
+  * nodes
+  * networks
+  * links
+  * pictures
+  * Links
+* `Users` - manage system users
+* `System` - View system status and resources (node templates, network types, user roles, etc..)
+
+<p align="center">
+  ![CLI](./docs/images/eve_cli.svg)<img src="./docs/images/eve_cli.svg">
+</p>
+
+
+## :gear: Configuration
+
+It is simple enough to pass the proper flags to `eve-ng` specify details for your EVE-NG host. However, you may also pass the connection details as environment variables. You can set the following `evengsdk` environment variables:
 
 * `EVE_NG_HOST`
 * `EVE_NG_USERNAME`
@@ -63,26 +101,6 @@ You may set the variables and export them to your shell environment. You can als
 export EVE_NG_HOST=192.168.2.100
 export EVE_NG_USERNAME=admin
 export EVE_NG_PASSWORD=eve
+export EVE_NG_LAB_PATH='/datacenter/leaf_spine_lab.unl'
 ```
 
-
-
-## Cli examples
-
-#### List labs: 
-
-![](./docs/img/cli_lab_ls.png)
-
-
-
-#### List nodes in a lab: 
-
-```
-evengcli node ls --lab-path /dmvpn.unl
-```
-
-![](./docs/img/cli_node_ls.png)
-
-
-
-## EvengClient

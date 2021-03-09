@@ -1,16 +1,14 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 import logging
-import os
 import pytest
-import sys
 
 from evengsdk.client import EvengClient
-from evengsdk.exceptions import EvengClientError, EvengLoginError, EvengHTTPError
+from evengsdk.exceptions import EvengClientError, EvengLoginError
 
 
 DEVICE_UNDER_TEST = {
-    'host': '10.246.48.76',
+    'host': '10.246.32.119',
     'username': 'admin',
     'password': 'eve'
 }
