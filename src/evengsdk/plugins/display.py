@@ -11,11 +11,12 @@ from tabulate import tabulate
 # package imports
 
 
-_PLUGINS = dict()
+_PLUGINS = {}
 
 
 def register_plugin(func):
     _PLUGINS[func.__name__] = func
+    return func
 
 
 def display(
@@ -40,11 +41,11 @@ def json(data, *args, **kwargs):
 @register_plugin
 def table(data, *args, **kwargs):
     header = kwargs.get('header')
-    display_table = list()
+    display_table = []
     fmt = kwargs.get('tablefmt', 'grid')
 
     if isinstance(data, dict) and header:
-        display_table = (tup for tup in data.items())
+        display_table = iter(data.items())
         return tabulate(display_table, headers=header, tablefmt=fmt)
 
     elif isinstance(data, list):

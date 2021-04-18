@@ -14,7 +14,7 @@ USERS = {
     'to_create': [('tester1', 'test1_pass'), ('tester2', 'test2_pass')],
     'non_existing': 'fake_user99'
 }
-TEST_NETWORK = 'ATC-vCloud'
+TEST_NETWORK = 'vCloud'
 TEST_NODE = 'leaf04'
 TEST_CONFIG = """
 !
@@ -90,8 +90,8 @@ class TestEvengApi:
         Verify that the api returns an empty dictionary
         if the user does not exist
         """
-        user = USERS['non_existing']
         with pytest.raises(EvengHTTPError):
+            user = USERS['non_existing']
             client.api.get_user(user)
 
     def test_add_user(self, client):
@@ -99,7 +99,7 @@ class TestEvengApi:
         Verify that we can created a user with just
         the username and password
         """
-        for username, password in (user for user in USERS['to_create']):
+        for username, password in iter(USERS['to_create']):
             try:
                 r = client.api.add_user(username, password)
                 assert r.get('status') == 'success'
@@ -111,7 +111,7 @@ class TestEvengApi:
         Verify that adding an existing user raises
         an exception
         """
-        for username, password in (user for user in USERS['to_create']):
+        for username, password in iter(USERS['to_create']):
             with pytest.raises(EvengHTTPError):
                 client.api.add_user(username, password)
 
@@ -135,33 +135,25 @@ class TestEvengApi:
         Verify that editing non existing users raises
         an exception.
         """
-        new_data = {
-            'email': 'test@testing.com',
-            'name': 'John Doe'
-        }
-        username = USERS['non_existing']
         with pytest.raises(EvengHTTPError):
+            new_data = {
+                'email': 'test@testing.com',
+                'name': 'John Doe'
+            }
+            username = USERS['non_existing']
             client.api.edit_user(username, data=new_data)
 
     def test_delete_user(self, client):
         """
         Verify that we can delete users
         """
-        for username, _ in (user for user in USERS['to_create']):
+        for username, _ in iter(USERS['to_create']):
             resp = client.api.delete_user(username)
             assert resp.get('status') == 'success'
 
             # make sure it was deleted
             with pytest.raises(EvengHTTPError):
                 client.api.get_user(username)
-
-    def test_delete_non_existing_user(self, client):
-        """
-        Verify that deleting non_existing users
-        raises an exception.
-        """
-        with pytest.raises(EvengHTTPError):
-            client.api.delete_user(USERS['non_existing'])
 
     def test_list_networks(self, client):
         """

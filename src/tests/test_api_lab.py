@@ -9,11 +9,17 @@ LAB_NAME = 'leaf_spine_lab'
 EXT = '.unl'
 
 DEVICE_UNDER_TEST = {
-    'host': '10.246.48.76',
+    'host': '10.246.32.35',
     'username': 'admin',
     'password': 'eve'
 }
-
+TESTLAB = {
+  'name': 'TestLab',
+  'path': '/',
+  'description': 'short description',
+  'version': '1',
+  'body': 'longer description'
+}
 
 @pytest.fixture()
 def client():
@@ -55,3 +61,12 @@ class TestEvengApiLab:
         """
         with pytest.raises(HTTPError):
             client.api.get_lab('FAKE_LAB_PATH')
+
+    def test_create_lab(self, client):
+        resp = client.api.create_lab(**TESTLAB)
+        assert resp['status'] == 'success'
+
+    def test_get_lab_topology(self, client):
+        lab_path = TESTLAB['path'] + TESTLAB['name']
+        resp = client.api.get_lab(lab_path)
+        assert resp['status'] == 'success'
