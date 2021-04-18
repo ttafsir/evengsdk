@@ -1,9 +1,18 @@
 [tool.poetry]
 name = "evengsdk"
 version = "0.1.0"
-description = "Python SDK and utilities to work with EVE-NG"
+description = "Python SDK and command line utilities to work with the EVE-NG REST API"
 authors = ["Tafsir Thiam <ttafsir@gmail.com>"]
 license = "MIT"
+classifiers = [
+    'Development Status :: 2 - Pre-Alpha',
+    'Intended Audience :: Developers',
+    'License :: OSI Approved :: MIT License',
+    'Natural Language :: English',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.7',
+    'Programming Language :: Python :: 3.8',
+]
 
 [tool.poetry.dependencies]
 python = "^3.7"
@@ -17,6 +26,12 @@ PyYAML = "^5.4.1"
 pytest = "^6.2.2"
 flake8 = "^3.8.4"
 requests-mock = "^1.8.0"
+Sphinx = "^3.5.4"
+sphinx-click = "^2.7.1"
+sphinx-rtd-theme = "^0.5.2"
+
+[tool.poetry.scripts]
+eve-ng = "evengsdk.cli.cli:main"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
