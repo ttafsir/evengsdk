@@ -1,7 +1,27 @@
-=====
-Usage
-=====
+==========
+Quickstart
+==========
 
-To use evengsdk in a project::
+To use evengsdk client in a project::
 
-    import evengsdk
+    from evengsdk.client import EvengClient
+    client = EvengClient('10.246.32.119')
+
+    client.login(username='admin', password='eve')
+
+    # get EVE-NG server status
+    client.api.get_server_status()
+
+    # create lab
+    lab = {
+        'name': 'TestLab',
+        'path': '/',
+        'description': 'short description',
+        'version': '1',
+        'body': 'longer description'
+    }
+    client.api.create_lab(**lab)
+
+
+
+To use evengsdk api wrapper ::
