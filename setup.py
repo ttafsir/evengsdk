@@ -14,13 +14,18 @@ REQUIRES = [
 
 setup(
     name='evengsdk',
-    version='1.0',
+    keywords='evengsdk',
+    license="MIT license",
+    version='0.1.0',
     author='Tafsir Thiam',
-    author_email='tafsir.thiam@wwt.com',
-    description='EVE-NG SDK for Python',
+    author_email='ttafsir@gmail.com',
+    description=(
+        "Python SDK and command line utilities to "
+        "work with the EVE-NG REST API"
+    ),
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='',
+    url='https://github.com/ttafsir/evengsdk',
     packages=find_packages('src'),
     package_dir={'': 'src'},
     install_requires=REQUIRES,
