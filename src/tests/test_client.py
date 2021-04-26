@@ -1,5 +1,5 @@
-#! /usr/bin/env python
 # -*- coding: utf-8 -*-
+import os
 import logging
 import pytest
 
@@ -7,46 +7,33 @@ from evengsdk.client import EvengClient
 from evengsdk.exceptions import EvengClientError, EvengLoginError
 
 
-DEVICE_UNDER_TEST = {
-    'host': '10.246.32.119',
-    'username': 'admin',
-    'password': 'eve'
-}
+@pytest.fixture()
+def local_client_host():
+    return '1.1.1.1'
 
 
 @pytest.fixture()
-def client():
-    host = '1.1.1.1'
-    client = EvengClient(host)
-    return client
-
-
-@pytest.fixture()
-def dut():
-    dut = EvengClient(DEVICE_UNDER_TEST['host'])
-    return dut
+def local_client(local_client_ip):
+    return EvengClient(local_client_host)
 
 
 class TestEvengClient:
     ''' Test cases '''
 
-    def test_clnt_with_logfile(self):
+    def test_create_client_with_logfile(self, local_client_host):
         """
         Verify EvengClient is successfully created with log_file argument
         """
-        host = '1.1.1.1'
-        client = EvengClient(host, log_file='client.log')
+        client = EvengClient(local_client_host, log_file='client.log')
         assert client.log is not None
 
-    def test_clnt_init_log_level(self):
-        ''' Initialize client with log level set
-        '''
-        host = '1.1.1.1'
-        clnt = EvengClient(host, log_level='DEBUG')
-        assert clnt is not None
-        assert clnt.log.getEffectiveLevel() == logging.DEBUG
+    def test_create_client_init_log_level(self):
+        """Initialize client with log level set"""
+        client = EvengClient(local_client_host, log_level='DEBUG')
+        assert client is not None
+        assert client.log.getEffectiveLevel() == logging.DEBUG
 
-    def test_set_log_level(self, client):
+    def test_set_client_log_level(self, client):
         """
         Verify changing/setting of log level using client setter method
         """
@@ -55,114 +42,75 @@ class TestEvengClient:
         client.set_log_level('INFO')
         assert client.log.getEffectiveLevel() == logging.INFO
 
-    def test_set_log_level_invalid_value(self, client):
+    def test_set_client_log_level_invalid_value(self, client):
         """
         Verify an invalid log level value will default the log level to INFO
         """
         client.set_log_level('FAKE')
         assert client.log.getEffectiveLevel() == logging.INFO
 
-    def test_login(self, dut):
-        """
-        Verify HTTP login succeeds to Server
-        """
-        username = DEVICE_UNDER_TEST['username']
-        passwd = DEVICE_UNDER_TEST['password']
-        dut.set_log_level('DEBUG')
-        dut.login(username=username, password=passwd)
-        assert dut.session is not None
-
-    def test_logout(self, dut):
-        """
-        Verify that HTTP logout succeeds to Server
-        """
-        username = DEVICE_UNDER_TEST['username']
-        passwd = DEVICE_UNDER_TEST['password']
-        dut.login(username=username, password=passwd)
-        assert dut.session is not None
-        dut.logout()
-        assert not dut.session
-
-    def test_login_bad_username(self, dut):
+    def test_client_login_bad_username(self, client):
         """
         Verify connection attempt with a bad username
         raises an EvengLoginError
         """
-        bad_username = 'kadflks'
-        passwd = DEVICE_UNDER_TEST['password']
         with pytest.raises(EvengLoginError):
-            dut.login(username=bad_username, password=passwd)
+            bad_username = 'kadflks'
+            passwd = os.environ['EVE_NG_PASSWORD']
+            client.login(username=bad_username, password=passwd)
 
-    def test_login_bad_password(self, dut):
+    def test_client_login_bad_password(self, client):
         """
         Verify connect fails with bad password
         """
-        username = DEVICE_UNDER_TEST['username']
-        bad_passwd = 'asldflakdjf'
         with pytest.raises(EvengLoginError):
-            dut.login(username=username, password=bad_passwd)
+            username = os.environ['EVE_NG_USERNAME']
+            bad_passwd = 'asldflakdjf'
+            client.login(username=username, password=bad_passwd)
 
-    def test_login_bad_host(self):
+    def test_client_login_bad_host(self, local_client_host):
         """
         Verify connection fails to a wrong server
         """
-        bad_host = '1.1.1.1'
-        username = DEVICE_UNDER_TEST['username']
-        passwd = DEVICE_UNDER_TEST['username']
-        client = EvengClient(bad_host)
+        client = EvengClient(local_client_host)
         with pytest.raises(EvengLoginError):
-            client.login(username=username, password=passwd)
+            username = os.environ['EVE_NG_USERNAME']
+            passwd = os.environ['EVE_NG_PASSWORD']
+            resp = client.login(username=username, password=passwd)
+            print(resp)
+
+    def test_client_api_created(self, authenticated_client):
+        assert authenticated_client.api is not None
+        assert authenticated_client.api.__repr__() == f"EvengApi({authenticated_client.session})"
 
     # *********************************
     #   HTTP METHODS
     # *********************************
-    def test_get_call(self,  dut):
+    def test_client_get(self, authenticated_client):
         """
         Verify GET call from client
         """
-        username = DEVICE_UNDER_TEST['username']
-        passwd = DEVICE_UNDER_TEST['password']
-        dut.login(username=username, password=passwd)
-        url = dut.url_prefix + '/status'
-        r = dut.session.get(url)
+        url = authenticated_client.url_prefix + '/status'
+        r = authenticated_client.session.get(url)
         assert r.status_code >= 200 <= 299
 
-    @pytest.mark.xfail
-    def test_get_call_bad_url(self, dut):
+    def test_client_get_call_bad_ep(self, authenticated_client):
         """
-        Verify GET with bad URL returns an error
+        Verify GET with bad endpoint returns an error
         """
-        assert 1 == 2
+        url = authenticated_client.url_prefix + '/bad_endpoint'
+        r = authenticated_client.session.get(url)
+        assert r.status_code >= 400
 
-    @pytest.mark.xfail
-    def test_post_call(self, dut):
+    def test_post_call(self, authenticated_client):
         """
         Verify POST call with client
         """
         pass
 
-    @pytest.mark.xfail
-    def test_post_call_bad_url(self, dut):
+    def test_post_call_bad_url(self, authenticated_client):
         """
         Verify post with bad URL returns an error
         """
-        username = DEVICE_UNDER_TEST['username']
-        passwd = DEVICE_UNDER_TEST['password']
-        dut.set_log_level('DEBUG')
-        dut.login(username=username, password=passwd)
         with pytest.raises(EvengClientError):
-            dut.post('/bogus', data=None)
-
-    @pytest.mark.xfail
-    def test_put_call(self, dut):
-        """
-        Verify PUT call with client
-        """
-        pass
-
-    @pytest.mark.xfail
-    def test_put_call_bad_url(self, dut):
-        """
-        Verify PUT with bad URL returns an error
-        """
-        pass
+            authenticated_client.post('/bogus', data=None)
