@@ -21,7 +21,3 @@ To use evengsdk client in a project::
         'body': 'longer description'
     }
     client.api.create_lab(**lab)
-
-
-
-To use evengsdk api wrapper ::
