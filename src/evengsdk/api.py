@@ -302,7 +302,6 @@ class EvengApi:
         url = "/labs" + f"{self.normalize_path(path)}/configs/{str(node_id)}"
         return self.clnt.get(url)
 
-
     def upload_node_config(self, path: str, node_id: str, config: str, enable=False):
         """Upload node's startup config.
 
@@ -695,8 +694,8 @@ class EvengApi:
             if key not in valid_params:
                 raise ValueError(f"{key} is an invalid or unsupported paramater")
 
-        lab = self.get_lab(path)
-        url = "/labs" + f"/{lab['filename']}"
+        url = "/labs" + f"{self.normalize_path(path)}"
+        print(url)
         return self.clnt.put(url, data=json.dumps(param))
 
     def delete_lab(self, path: str) -> bool:

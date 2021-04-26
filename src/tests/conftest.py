@@ -8,12 +8,12 @@ from evengsdk.client import EvengClient
 load_dotenv()
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def client():
     return EvengClient(os.environ['EVE_NG_HOST'], log_file='test.log')
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def authenticated_client(client):
     username = os.environ['EVE_NG_USERNAME']
     passwd = os.environ['EVE_NG_PASSWORD']
