@@ -11,7 +11,7 @@ evengsdk is a Python libary and a collection of command line utilities to manage
    readme
    installation
    usage
-   modules
+   api
    commands
    contributing
    authors
