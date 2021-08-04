@@ -94,7 +94,7 @@ def main(ctx, host, port, username, password):
     """CLI application to manage EVE-NG objects
     """
 
-    client = EvengClient(host)
+    client = EvengClient(host, port=port)
 
     logging_level = (
         LOGGING_LEVELS[ctx.verbosity]

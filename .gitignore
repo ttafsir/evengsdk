@@ -133,3 +133,4 @@ dmypy.json
 .vscode
 *.old
 .eve-ng/
+docs
