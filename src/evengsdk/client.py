@@ -12,11 +12,13 @@ DISABLE_INSECURE_WARNINGS = True
 
 
 class EvengClient:
-    def __init__(self, host, log_level="INFO", log_file=None):
+    def __init__(
+        self, host, log_level="INFO", log_file=None, port=80, verify=False, **kwargs
+    ):
         self.host = host
-        self.port = None
+        self.port = port
         self.authdata = None
-        self.verify = False
+        self.verify = verify
         self.cookies = None
         self.url_prefix = ""
         self.api = None
@@ -85,9 +87,8 @@ class EvengClient:
         Login to EVE-NG host and set session information
         """
         host = self.host
-        port = self.port or 80
         protocol = {80: "http", 443: "https"}
-        self.url_prefix = f"{protocol[port]}://{host}:{port}/api"
+        self.url_prefix = f"{protocol.get(self.port, 'http')}://{host}:{self.port}/api"
 
         self.session = requests.Session()
         url = self.url_prefix + "/auth/login"
