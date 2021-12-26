@@ -6,7 +6,7 @@ from click.testing import CliRunner, Result
 
 from evengsdk.cli.cli import main as cli
 from evengsdk.cli.version import __version__
-from evengsdk.exceptions import EvengHTTPError
+
 
 LAB_TO_EDIT = {"name": "lab_to_edit", "path": "/"}
 LAB_TO_CREATE = {"name": "test lab1", "path": "/test lab1.unl"}
