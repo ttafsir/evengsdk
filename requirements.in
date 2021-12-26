@@ -1,0 +1,6 @@
+click
+requests>=2.20.0
+tabulate
+python-dotenv
+pyyaml
+jinja2
