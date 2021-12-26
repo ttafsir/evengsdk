@@ -15,9 +15,9 @@ def get_configs(src):
         filepath = Path(filename)
         hostname = filepath.stem
         fullpath = os.path.join(src, filepath)
-        with open(fullpath, 'r') as handle:
+        with open(fullpath, "r") as handle:
             stream = handle.read()
-            configs.append({'hostname': hostname, 'config': stream})
+            configs.append({"hostname": hostname, "config": stream})
     return configs
 
 
@@ -25,65 +25,62 @@ def get_config(src):
     """
     load device config
     """
-    with open(src, 'r') as handle:
+    with open(src, "r") as handle:
         stream = handle.read()
         return stream
 
 
 @click.command()
-@click.option('--lab-path', required=True)
-@click.option('--node-id', required=True)
-@click.option('--src', required=True, type=click.Path(exists=True))
+@click.option("--lab-path", required=True)
+@click.option("--node-id", required=True)
+@click.option("--src", required=True, type=click.Path(exists=True))
 @click.pass_context
 def upload_config(ctx, node_id, lab_path, src):
     """
     Upload device configuration
     """
-    client = ctx.obj['CLIENT']
+    client = ctx.obj["CLIENT"]
     config = get_config(src)
-    client.api.upload_node_config(
-        lab_path, node_id,
-        config=config,
-        enable=True)
+    client.api.upload_node_config(lab_path, node_id, config=config, enable=True)
 
 
 @click.command()
-@click.option('--lab-path', required=True)
-@click.option('--node-id')
+@click.option("--lab-path", required=True)
+@click.option("--node-id")
 @click.pass_context
 def start(ctx, lab_path, node_id):
     """
     start node in lab.
     """
-    client = ctx.obj['CLIENT']
+    client = ctx.obj["CLIENT"]
     resp = client.api.start_node(lab_path, node_id)
     click.echo(resp)
 
 
 @click.command()
-@click.option('--lab-path', required=True)
-@click.option('--node-id')
+@click.option("--lab-path", required=True)
+@click.option("--node-id")
 @click.pass_context
 def stop(ctx, lab_path, node_id):
     """
     stop node in lab.
     """
-    client = ctx.obj['CLIENT']
+    client = ctx.obj["CLIENT"]
     resp = client.api.stop_node(lab_path, node_id)
-    if resp.get('status') and resp['status'] == 'success':
-        close_resp = client.delete('/labs/close')
+    if resp.get("status") and resp["status"] == "success":
+        close_resp = client.delete("/labs/close")
         click.echo(close_resp)
 
 
 @click.command()
-@click.option('--lab-path', required=True)
+@click.option("--lab-path", required=True)
 @click.pass_context
 def ls(ctx, lab_path):
     """
     list lab nodes
     """
 
-    client = ctx.obj['CLIENT']
+    client = ctx.obj["CLIENT"]
 
     resp = client.api.list_nodes(lab_path)
     if resp:
@@ -92,20 +89,20 @@ def ls(ctx, lab_path):
 
         node_table = []
         for idx, n in nodes_list:
-            status_code = n['status']
+            status_code = n["status"]
             table_row = {
-                'id': idx,
-                'name': n['name'],
-                'url': n['url'],
-                'image': n['image'],
-                'template': n['template'],
-                'uuid': n['uuid'],
-                'status': click.style(NODE_STATUS_CODES[status_code],
-                                      fg=NODE_STATUS_COLOR[status_code])
+                "id": idx,
+                "name": n["name"],
+                "url": n["url"],
+                "image": n["image"],
+                "template": n["template"],
+                "uuid": n["uuid"],
+                "status": click.style(
+                    NODE_STATUS_CODES[status_code], fg=NODE_STATUS_COLOR[status_code]
+                ),
             }
             node_table.append(table_row)
-        click.echo(tabulate(node_table, headers="keys",
-                            tablefmt="fancy_grid"))
+        click.echo(tabulate(node_table, headers="keys", tablefmt="fancy_grid"))
 
 
 @click.group()

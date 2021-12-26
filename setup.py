@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-with open('README.md', 'r') as f:
+with open("README.md", "r") as f:
     long_description = f.read()
 
 REQUIRES = [
@@ -13,26 +13,25 @@ REQUIRES = [
 ]
 
 setup(
-    name='evengsdk',
-    keywords='evengsdk',
+    name="evengsdk",
+    keywords="evengsdk",
     license="MIT license",
-    version='0.1.0',
-    author='Tafsir Thiam',
-    author_email='ttafsir@gmail.com',
+    version="0.2.0",
+    author="Tafsir Thiam",
+    author_email="ttafsir@gmail.com",
     description=(
-        "Python SDK and command line utilities to "
-        "work with the EVE-NG REST API"
+        "Python SDK and command line utilities to " "work with the EVE-NG REST API"
     ),
     long_description=long_description,
-    long_description_content_type='text/markdown',
-    url='https://github.com/ttafsir/evengsdk',
-    packages=find_packages('src'),
-    package_dir={'': 'src'},
+    long_description_content_type="text/markdown",
+    url="https://github.com/ttafsir/evengsdk",
+    packages=find_packages("src"),
+    package_dir={"": "src"},
     install_requires=REQUIRES,
     entry_points={
-        'console_scripts': [
-            'eve-ng=evengsdk.cli.cli:main',
-            'eveng=evengsdk.cli.cli:main'
+        "console_scripts": [
+            "eve-ng=evengsdk.cli.cli:main",
+            "eveng=evengsdk.cli.cli:main",
         ],
-    }
+    },
 )

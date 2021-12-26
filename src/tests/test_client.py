@@ -6,7 +6,7 @@ import requests
 import pytest
 
 from evengsdk.client import EvengClient
-from evengsdk.exceptions import EvengClientError, EvengLoginError
+from evengsdk.exceptions import EvengLoginError
 
 
 @pytest.fixture()
