@@ -166,7 +166,9 @@ class TestEvengApi:
         """
         Verify that we can retrieve a specific lab by name
         """
-        r = authenticated_client.api.get_lab_network_by_name(LAB_PATH, TEST_NETWORK)
+        r = authenticated_client.api.get_lab_network_by_name(
+            LAB_PATH, TEST_NETWORK
+        )
         assert r["name"] is not None
 
     def test_list_lab_links(self, authenticated_client):
@@ -241,12 +243,13 @@ class TestEvengApi:
         """
         Upload node's config to set startup config
         """
-        config = authenticated_client.api.get_node_config_by_name(LAB_PATH, TEST_NODE)
-        node_id = config.get("id")
-        resp = authenticated_client.api.upload_node_config(
+        resp = authenticated_client.api.get_node_configs(LAB_PATH)
+        node_id = next((k for k, v in resp["data"].items() if v["name"] == TEST_NODE), None)
+        upload_resp = authenticated_client.api.upload_node_config(
             LAB_PATH, node_id, config=TEST_CONFIG
         )
-        assert resp["status"] == "success"
+        assert upload_resp["status"] == "success"
+        assert "Lab has been saved" in upload_resp["message"]
 
     def test_stop_all_nodes(self, authenticated_client):
         """
