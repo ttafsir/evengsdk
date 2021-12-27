@@ -20,7 +20,7 @@ def local_client(local_client_ip):
 
 
 class TestEvengClient:
-    """ Test cases """
+    """Test cases"""
 
     def test_create_client_with_logfile(self, local_client_host):
         """

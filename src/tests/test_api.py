@@ -18,7 +18,7 @@ hostname vEOS4
 
 
 class TestEvengApi:
-    """ Test cases """
+    """Test cases"""
 
     def test_api_get_server_status(self, authenticated_client):
         """
@@ -166,9 +166,7 @@ class TestEvengApi:
         """
         Verify that we can retrieve a specific lab by name
         """
-        r = authenticated_client.api.get_lab_network_by_name(
-            LAB_PATH, TEST_NETWORK
-        )
+        r = authenticated_client.api.get_lab_network_by_name(LAB_PATH, TEST_NETWORK)
         assert r["name"] is not None
 
     def test_list_lab_links(self, authenticated_client):
@@ -244,7 +242,9 @@ class TestEvengApi:
         Upload node's config to set startup config
         """
         resp = authenticated_client.api.get_node_configs(LAB_PATH)
-        node_id = next((k for k, v in resp["data"].items() if v["name"] == TEST_NODE), None)
+        node_id = next(
+            (k for k, v in resp["data"].items() if v["name"] == TEST_NODE), None
+        )
         upload_resp = authenticated_client.api.upload_node_config(
             LAB_PATH, node_id, config=TEST_CONFIG
         )
