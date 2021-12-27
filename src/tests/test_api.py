@@ -1,6 +1,6 @@
 import pytest
 
-from evengsdk.exceptions import EvengHTTPError
+import requests
 
 
 LAB_PATH = "/datacenter/leaf_spine_lab.unl"
@@ -20,19 +20,19 @@ hostname vEOS4
 class TestEvengApi:
     """ Test cases """
 
-    def test_api_get_get_server_status(self, authenticated_client):
+    def test_api_get_server_status(self, authenticated_client):
         """
         Verify server status using the API
         """
-        status = authenticated_client.api.get_server_status()
-        assert status.get("cpu") is not None
+        r = authenticated_client.api.get_server_status()
+        assert r["data"].get("cpu") is not None
 
     def test_list_node_templates(self, authenticated_client):
         """
         Verify we can list node templates from API
         """
-        templates = authenticated_client.api.list_node_templates()
-        assert isinstance(templates, dict)
+        r = authenticated_client.api.list_node_templates()
+        assert r["data"] is not None
 
     def test_node_template_detail(self, authenticated_client):
         """
@@ -48,29 +48,29 @@ class TestEvengApi:
         Verify that we can retrieve list of users and that
         the default 'admin' user  exists.
         """
-        users = authenticated_client.api.list_users()
-        assert "admin" in users
+        r = authenticated_client.api.list_users()
+        assert "admin" in r["data"]
 
     def test_list_user_roles(self, authenticated_client):
         """
         Verify that we can retrieve list of user roles
         """
-        roles = authenticated_client.api.list_user_roles()
-        assert "admin" in roles
+        r = authenticated_client.api.list_user_roles()
+        assert "admin" in r["data"]
 
     def test_get_user(self, authenticated_client):
         """
         Verify that we can retrieve a single user detail
         """
-        user_details = authenticated_client.api.get_user("admin")
-        assert "email" in user_details
+        r = authenticated_client.api.get_user("admin")
+        assert "email" in r["data"]
 
     def test_get_non_existing_user(self, authenticated_client):
         """
         Verify that the api returns an empty dictionary
         if the user does not exist
         """
-        with pytest.raises(EvengHTTPError):
+        with pytest.raises(requests.exceptions.HTTPError):
             user = USERS["non_existing"]
             authenticated_client.api.get_user(user)
 
@@ -82,8 +82,8 @@ class TestEvengApi:
         for username, password in iter(USERS["to_create"]):
             try:
                 r = authenticated_client.api.add_user(username, password)
-                assert r.get("status") == "success"
-            except EvengHTTPError as e:
+                assert r["status"] == "success"
+            except requests.exceptions.HTTPError as e:
                 assert "check if already exists" in str(e)
 
     def test_add_existing_user(self, authenticated_client):
@@ -92,7 +92,7 @@ class TestEvengApi:
         an exception
         """
         for username, password in iter(USERS["to_create"]):
-            with pytest.raises(EvengHTTPError):
+            with pytest.raises(requests.exceptions.HTTPError):
                 authenticated_client.api.add_user(username, password)
 
     def test_edit_existing_user(self, authenticated_client):
@@ -105,17 +105,17 @@ class TestEvengApi:
         authenticated_client.api.edit_user(user[0], data=new_data)
 
         # retrieve updates
-        updated_user = authenticated_client.api.get_user(user[0])
+        r = authenticated_client.api.get_user(user[0])
 
         # ensure new data was PUT successfully
-        assert updated_user["email"] == new_data["email"]
+        assert r["data"]["email"] == new_data["email"]
 
     def test_edit_non_existing_user(self, authenticated_client):
         """
         Verify that editing non existing users raises
         an exception.
         """
-        with pytest.raises(EvengHTTPError):
+        with pytest.raises(requests.exceptions.HTTPError):
             new_data = {"email": "test@testing.com", "name": "John Doe"}
             username = USERS["non_existing"]
             authenticated_client.api.edit_user(username, data=new_data)
@@ -132,11 +132,11 @@ class TestEvengApi:
         Verify that we can delete users
         """
         for username, _ in iter(USERS["to_create"]):
-            resp = authenticated_client.api.delete_user(username)
-            assert resp.get("status") == "success"
+            r = authenticated_client.api.delete_user(username)
+            assert r["status"] == "success"
 
             # make sure it was deleted
-            with pytest.raises(EvengHTTPError):
+            with pytest.raises(requests.exceptions.HTTPError):
                 authenticated_client.api.get_user(username)
 
     def test_list_networks(self, authenticated_client):
@@ -145,31 +145,29 @@ class TestEvengApi:
         data returned is a dictionary that includes
         network types and instances.
         """
-        networks = authenticated_client.api.list_networks()
-        assert networks["bridge"] is not None
+        r = authenticated_client.api.list_networks()
+        assert r["data"]["bridge"] is not None
 
     def test_list_lab_networks(self, authenticated_client):
         """
         Verify that we can list lab networks.
         """
-        networks = authenticated_client.api.list_lab_networks(LAB_PATH)
-        assert isinstance(networks, dict)
+        r = authenticated_client.api.list_lab_networks(LAB_PATH)
+        assert r["data"] is not None
 
     def test_get_lab_network(self, authenticated_client):
         """
         Verify that we can retrieve a specific lab by id
         """
-        network_details = authenticated_client.api.get_lab_network(LAB_PATH, "1")
-        assert network_details["type"] is not None
+        r = authenticated_client.api.get_lab_network(LAB_PATH, "1")
+        assert r["data"]["type"] is not None
 
     def test_get_lab_network_by_name(self, authenticated_client):
         """
         Verify that we can retrieve a specific lab by name
         """
-        network_details = authenticated_client.api.get_lab_network_by_name(
-            LAB_PATH, TEST_NETWORK
-        )
-        assert network_details is not None
+        r = authenticated_client.api.get_lab_network_by_name(LAB_PATH, TEST_NETWORK)
+        assert r["name"] is not None
 
     def test_list_lab_links(self, authenticated_client):
         """
@@ -177,15 +175,17 @@ class TestEvengApi:
         and serial interfaces. Returns dictionary
         of existing links or empty dictionary.
         """
-        links = authenticated_client.api.list_lab_links(LAB_PATH)
-        assert links is not None
+        r = authenticated_client.api.list_lab_links(LAB_PATH)
+        assert r["status"] == "success"
+        assert r["data"] is not None
 
     def test_list_nodes(self, authenticated_client):
         """
         Verify that we can retrieve all node details
         """
-        nodes = authenticated_client.api.list_nodes(LAB_PATH)
-        assert nodes is not None and nodes
+        r = authenticated_client.api.list_nodes(LAB_PATH)
+        assert r["status"] == "success"
+        assert r["data"] is not None
 
     def test_get_node(self, authenticated_client):
         """
@@ -193,7 +193,7 @@ class TestEvengApi:
         """
         # get with node with ID == 1
         node = authenticated_client.api.get_node(LAB_PATH, "1")
-        assert node["type"] is not None
+        assert node["data"]["type"] is not None
 
     def test_add_node(self, authenticated_client):
         """
@@ -209,16 +209,17 @@ class TestEvengApi:
             "serial": 2,
             "delay": 0,
         }
-        resp = authenticated_client.api.add_node(LAB_PATH, **node)
-        assert resp
+        r = authenticated_client.api.add_node(LAB_PATH, **node)
+        assert r["status"] == "success"
+        assert r["data"]
 
     def test_get_node_by_name(self, authenticated_client):
         """
         Verify that we can details for a single node by node name
         """
         # get with node with name == TEST_NODE
-        node = authenticated_client.api.get_node_by_name(LAB_PATH, TEST_NODE)
-        assert node["name"] == TEST_NODE
+        r = authenticated_client.api.get_node_by_name(LAB_PATH, TEST_NODE)
+        assert r["name"] == TEST_NODE
 
     def test_get_node_configs(self, authenticated_client):
         """
@@ -235,14 +236,6 @@ class TestEvengApi:
         """
         config = authenticated_client.api.get_node_config_by_id(LAB_PATH, "1")
         assert config["data"] is not None
-
-    def test_get_node_config_by_name(self, authenticated_client):
-        """
-        Verify that we can retrieve configuration data
-        using a node name
-        """
-        config = authenticated_client.api.get_node_config_by_name(LAB_PATH, TEST_NODE)
-        assert config["name"] == TEST_NODE
 
     def test_upload_node_config(self, authenticated_client):
         """
@@ -329,4 +322,4 @@ class TestEvengApi:
 
     def test_list_lab_pictures(self, authenticated_client):
         resp = authenticated_client.api.get_lab_pictures(LAB_PATH)
-        assert isinstance(resp, list)
+        assert resp["status"] == "success"
