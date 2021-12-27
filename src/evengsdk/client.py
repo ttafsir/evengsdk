@@ -3,6 +3,7 @@ import logging
 
 import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
+from evengsdk.api import EvengApi
 
 from evengsdk.exceptions import EvengLoginError
 
@@ -22,6 +23,7 @@ class EvengClient:
         self.log_level = log_level
         self.log_file = log_file
         self.html5 = -1
+        self.api = None
 
         # Create Logger and set Set log level
         self.log = logging.getLogger("eveng-client")
@@ -81,6 +83,7 @@ class EvengClient:
         if r.ok:
             try:
                 "logged in" in r.json()
+                self.api = EvengApi(self)  # create API wrapper object
             except json.decoder.JSONDecodeError:
                 raise EvengLoginError("Error logging in: {}".format(r.text))
         else:

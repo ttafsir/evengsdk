@@ -18,7 +18,7 @@ TESTLAB = {
 
 
 class TestEvengApiLab:
-    """ Test cases """
+    """Test cases"""
 
     def test_api_get_lab_wo_extension(self, authenticated_client):
         """
