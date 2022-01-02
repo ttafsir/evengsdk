@@ -264,8 +264,10 @@ class EvengApi:
         :type name: str
         """
         r = self.list_nodes(path)
-        nodes = r["data"]
-        return next((v for _, v in nodes.items() if v["name"] == name), None)
+        node_data = r["data"]
+        if node_data:
+            return next((v for _, v in node_data.items() if v["name"] == name), None)
+        return
 
     def get_node_configs(self, path: str) -> Dict:
         """Return information about node configs
