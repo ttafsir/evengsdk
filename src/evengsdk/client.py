@@ -5,7 +5,7 @@ import requests
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 from evengsdk.api import EvengApi
 
-from evengsdk.exceptions import EvengLoginError
+from evengsdk.exceptions import EvengHTTPError, EvengLoginError
 
 
 class EvengClient:
@@ -85,6 +85,7 @@ class EvengClient:
                 "logged in" in r.json()
                 self.api = EvengApi(self)  # create API wrapper object
             except json.decoder.JSONDecodeError:
+                self.log.error("Error logging in: {}".format(r.text))
                 raise EvengLoginError("Error logging in: {}".format(r.text))
         else:
             self.session = {}
@@ -123,6 +124,15 @@ class EvengClient:
                 return r.json()
             except json.JSONDecodeError:
                 raise ValueError("Invalid JSON data")
+        self.log.error("Error: {}".format(r.text))
+
+        # EVE-NG API returns HTTP error code and message in JSON response
+        if hasattr(r, "json"):
+            err_code = r.json().get('code')
+            err_msg = r.json().get('message')
+            raise EvengHTTPError("Error: {} {}".format(err_code, err_msg))
+
+        # Other HTTP errors for which we don't have a JSON response
         r.raise_for_status()
 
     def post(self, url: str, *args, **kwargs):

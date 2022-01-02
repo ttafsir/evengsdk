@@ -265,7 +265,9 @@ class EvengApi:
         """
         r = self.list_nodes(path)
         nodes = r["data"]
+        if nodes:
         return next((v for _, v in nodes.items() if v["name"] == name), None)
+        return
 
     def get_node_configs(self, path: str) -> Dict:
         """Return information about node configs
