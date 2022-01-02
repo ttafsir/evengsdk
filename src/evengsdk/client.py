@@ -128,8 +128,8 @@ class EvengClient:
 
         # EVE-NG API returns HTTP error code and message in JSON response
         if hasattr(r, "json"):
-            err_code = r.json().get('code')
-            err_msg = r.json().get('message')
+            err_code = r.json().get("code")
+            err_msg = r.json().get("message")
             raise EvengHTTPError("Error: {} {}".format(err_code, err_msg))
 
         # Other HTTP errors for which we don't have a JSON response
