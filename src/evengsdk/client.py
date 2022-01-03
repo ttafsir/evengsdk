@@ -15,6 +15,7 @@ class EvengClient:
         protocol: str = "http",
         log_file: str = None,
         log_level: str = "INFO",
+        port: int = None,
         disable_insecure_warnings: bool = False,
     ):
         self.host = host
@@ -24,6 +25,7 @@ class EvengClient:
         self.log_file = log_file
         self.html5 = -1
         self.api = None
+        self.port = port
 
         # Create Logger and set Set log level
         self.log = logging.getLogger("eveng-client")
@@ -39,6 +41,9 @@ class EvengClient:
 
     @property
     def url_prefix(self):
+        """Return full url prefix for EVE-NG API."""
+        if self.port:
+            return f"{self.protocol}://{self.host}:{self.port}/api"
         return f"{self.protocol}://{self.host}/api"
 
     def set_log_level(self, log_level: str) -> None:
