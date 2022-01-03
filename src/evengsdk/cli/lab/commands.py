@@ -61,20 +61,16 @@ def _get_lab_folder(name: str) -> List:
     """
     session = _get_client_session()
     r = session.api.get_folder(name)
-
     # get the labs from the folder
-    labs_from_folder = list()
-    labs_from_folder.append(r.get("labs"))
-
+    labs_from_folder = [r.get("data", {}).get("labs")]
     # let's get labs from nested folders too
-    while len(nested_folders := r.get("folders")) > 1:
+    nested_folders = r.get("data", {}).get("folders")
+    while len(nested_folders) > 1:
         for folder in nested_folders:
-            # skip the '..' folder as it refers to the parent
             if folder["name"] == "..":
                 continue
-            else:
-                r = session.api.get_folder(f'{folder["path"]}')
-                labs_from_folder.append(r.get("labs"))
+            r = session.api.get_folder(f'{folder["path"]}')
+            labs_from_folder.append(r.get("data", {}).get("labs"))
     return labs_from_folder
 
 
@@ -86,15 +82,17 @@ def _get_lab_details(path: str) -> Dict:
     response = session.api.get_lab(path)
     if response:
         path = path.lstrip("/")
-        response.update({"path": "/" + path})
+        response["data"].update({"path": "/" + path})
     return response
 
 
 def _get_all_labs(client: EvengClient) -> List:
+    """
+    Get all labs from EVE-NG host by parsing all nested folders
+    """
     resp = client.api.list_folders()
-
-    root_folders = resp["folders"]
-    labs_in_root_folder = resp.get("labs")
+    root_folders = resp.get("data", {}).get("folders")
+    labs_in_root_folder = resp.get("data", {}).get("labs")
 
     # Get the lab information from all other folders (non-root)
     labs_in_nested_folders = chain(
@@ -103,17 +101,12 @@ def _get_all_labs(client: EvengClient) -> List:
     # flatten the results to single iterable
     # (labs from root folder + labs from nested)
     all_lab_info = chain(labs_in_root_folder, *labs_in_nested_folders)
-
-    # Get the actual details for Each lab using the lab paths
-    lab_details = thread_executor(_get_lab_details, (x["path"] for x in all_lab_info))
-    return lab_details
+    return thread_executor(_get_lab_details, (x["path"] for x in all_lab_info))
 
 
 @click.command()
 @click.option(
-    "--path",
-    default=None,
-    callback=lambda ctx, params, v: v if v else ctx.obj.active_lab,
+    "--path", default=None, callback=lambda ctx, params, v: v or ctx.obj.active_lab
 )
 @click.option("--output", type=click.Choice(["json", "text"]), default="text")
 @click.pass_context
@@ -130,14 +123,12 @@ def read(ctx, path, output):
         msg = click.style(str(e), fg="bright_white")
         sys.exit(f"{ctx.obj.error_fmt}{msg}")
     except Exception as e:
-        sys.exit(f"{ctx.obj.unknown_error_fmt}{str(e)}")
+        sys.exit(f"{ctx.obj.unknown_error_fmt}{e}")
 
 
 @click.command()
 @click.option(
-    "--path",
-    default=None,
-    callback=lambda ctx, params, v: v if v else ctx.obj.active_lab,
+    "--path", default=None, callback=lambda ctx, params, v: v or ctx.obj.active_lab
 )
 @click.option("--output", type=click.Choice(["json", "text", "table"]), default="text")
 @click.pass_context
@@ -164,15 +155,13 @@ def topology(ctx, path, output):
         msg = click.style(str(e), fg="bright_white")
         sys.exit(f"{ctx.obj.error_fmt}{msg}")
     except Exception as e:
-        sys.exit(f"{ctx.obj.unknown_error_fmt}{str(e)}")
+        sys.exit(f"{ctx.obj.unknown_error_fmt}{e}")
 
 
 @click.command(name="export")
 @click.option("--dest", help="destination path", type=click.Path(), default=".")
 @click.option(
-    "--path",
-    default=None,
-    callback=lambda ctx, params, v: v if v else ctx.obj.active_lab,
+    "--path", default=None, callback=lambda ctx, params, v: v or ctx.obj.active_lab
 )
 @click.pass_context
 def export_lab(ctx, path, dest):
@@ -186,18 +175,15 @@ def export_lab(ctx, path, dest):
         # get name and content from response
         name, content = resp
         full_filepath = dest / Path(name)
-
-        # save file
         full_filepath.write_bytes(content)
 
-        success_message = f"Success: {str(full_filepath.resolve())}"
+        success_message = f"Success: {full_filepath.resolve()}"
         click.secho(display("text", success_message))
-
     except (EvengHTTPError, EvengApiError) as e:
         msg = click.style(str(e), fg="bright_white")
         sys.exit(f"{ctx.obj.error_fmt}{msg}")
     except Exception as e:
-        sys.exit(f"{ctx.obj.unknown_error_fmt}{str(e)}")
+        sys.exit(f"{ctx.obj.unknown_error_fmt}{e}")
 
 
 @click.command(name="import")
@@ -216,11 +202,11 @@ def import_lab(ctx, folder, src):
         msg = click.style(str(e), fg="bright_white")
         sys.exit(f"{ctx.obj.error_fmt}{msg}")
     except Exception as e:
-        sys.exit(f"{ctx.obj.unknown_error_fmt}{str(e)}")
+        sys.exit(f"{ctx.obj.unknown_error_fmt}{e}")
 
 
 @click.command(name="list")
-@click.option("--output", type=click.Choice(["json", "text"]), default="text")
+@click.option("--output", type=click.Choice(["json", "text"]), default="json")
 @click.pass_context
 def ls(ctx, output):
     """
@@ -229,19 +215,16 @@ def ls(ctx, output):
     try:
         client = get_client(ctx)
         lab_details = _get_all_labs(client)
-
-        # Display output - Human readable
         click.secho("Labs", fg="bright_blue")
 
         # header for table output
-        header = ["author", "filename", "id", "version", "path"]
-
-        click.echo(display(output, lab_details, header=header, record_header="name"))
+        # header = ["author", "filename", "id", "version", "path"]
+        click.echo(display(output, lab_details))
     except (EvengHTTPError, EvengApiError) as e:
         msg = click.style(str(e), fg="bright_white")
         sys.exit(f"{ctx.obj.error_fmt}{msg}")
     except Exception as e:
-        sys.exit(f"{ctx.obj.unknown_error_fmt}{str(e)}")
+        sys.exit(f"{ctx.obj.unknown_error_fmt}{e}")
 
 
 @click.command()
@@ -269,7 +252,7 @@ def create(ctx, path: str, author: str, description: str, version: int, name: st
         msg = click.style(str(e), fg="bright_white")
         sys.exit(f"{ctx.obj.error_fmt}{msg}")
     except Exception as e:
-        sys.exit(f"{ctx.obj.unknown_error_fmt}{str(e)}")
+        sys.exit(f"{ctx.obj.unknown_error_fmt}{e}")
 
 
 @click.command()
@@ -320,12 +303,11 @@ def edit(ctx, path: str, **kwargs):
         msg = click.style(str(e), fg="bright_white")
         sys.exit(f"{ctx.obj.error_fmt}{msg}")
     except Exception as e:
-        sys.exit(f"{ctx.obj.unknown_error_fmt}{str(e)}")
+        sys.exit(f"{ctx.obj.unknown_error_fmt}{e}")
 
 
 @click.command()
 @click.option("--path", default="/", help="folder to create lab in")
-# @click.option('--name', help='lab name')
 @click.pass_context
 def delete(ctx, path):
     """
@@ -339,14 +321,12 @@ def delete(ctx, path):
         msg = click.style(str(e), fg="bright_white")
         sys.exit(f"{ctx.obj.error_fmt}{msg}")
     except Exception as e:
-        sys.exit(f"{ctx.obj.unknown_error_fmt}{str(e)}")
+        sys.exit(f"{ctx.obj.unknown_error_fmt}{e}")
 
 
 @click.command()
 @click.option(
-    "--path",
-    default=None,
-    callback=lambda ctx, params, v: v if v else ctx.obj.active_lab,
+    "--path", default=None, callback=lambda ctx, params, v: v or ctx.obj.active_lab
 )
 @click.pass_context
 def start(ctx, path):
@@ -359,14 +339,12 @@ def start(ctx, path):
         msg = click.style(str(e), fg="bright_white")
         sys.exit(f"{ctx.obj.error_fmt}{msg}")
     except Exception as e:
-        sys.exit(f"{ctx.obj.unknown_error_fmt}{str(e)}")
+        sys.exit(f"{ctx.obj.unknown_error_fmt}{e}")
 
 
 @click.command()
 @click.option(
-    "--path",
-    default=None,
-    callback=lambda ctx, params, v: v if v else ctx.obj.active_lab,
+    "--path", default=None, callback=lambda ctx, params, v: v or ctx.obj.active_lab
 )
 @click.pass_context
 def stop(ctx, path):
@@ -385,14 +363,12 @@ def stop(ctx, path):
         msg = click.style(str(e), fg="bright_white")
         sys.exit(f"{ctx.obj.error_fmt}{msg}")
     except Exception as e:
-        sys.exit(f"{ctx.obj.unknown_error_fmt}{str(e)}")
+        sys.exit(f"{ctx.obj.unknown_error_fmt}{e}")
 
 
 @click.command()
 @click.option(
-    "--path",
-    default=None,
-    callback=lambda ctx, params, v: v if v else ctx.obj.active_lab,
+    "--path", default=None, callback=lambda ctx, params, v: v or ctx.obj.active_lab
 )
 @click.option("-w", "--write", help="Output filename.")
 @click.pass_context
@@ -469,10 +445,7 @@ def lab(ctx):
     Manage EVE-NG labs
     """
     global client
-
-    # get active lab path from eve-ng dir or ENV
     ctx.obj.active_lab = get_active_lab(ctx.obj.active_lab_dir)
-
     client = ctx.obj.client
 
 
