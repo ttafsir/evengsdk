@@ -4,7 +4,7 @@ import copy
 import json
 from pathlib import Path
 from random import randint
-from typing import Dict, List, Tuple
+from typing import Dict, Tuple, Literal
 from urllib.parse import quote_plus
 
 NETWORK_TYPES = ["bridge", "ovs"]
@@ -223,8 +223,10 @@ class EvengApi:
         :type name: str
         """
         r = self.list_lab_networks(path)
-        networks = r["data"]
-        return next((v for _, v in networks.items() if v["name"] == name), None)
+        networks = r.get("data")
+        if networks:
+            return next((v for _, v in networks.items() if v["name"] == name), None)
+        return
 
     def list_lab_links(self, path: str) -> Dict:
         """Get all remote endpoint for both ethernet and serial interfaces
@@ -308,14 +310,20 @@ class EvengApi:
         payload = {"id": node_id, "data": config}
         return self.client.put(url, data=json.dumps(payload))
 
-    @staticmethod
-    def find_node_interface(name: str, interface_list: List) -> Dict:
-        interface_list = list(interface_list)
+    def find_node_interface(
+        self,
+        path: str,
+        node_id: str,
+        interface_name: str,
+        media: Literal["ethernet", "serial"] = "ethernet",
+    ) -> Dict:
+        r = self.get_node_interfaces(path, node_id)
+        interface_list = r["data"].get(media, [])
         return next(
             (
-                (idx, intf)
-                for idx, intf in enumerate(interface_list)
-                if intf["name"] == name
+                (idx, interface)
+                for idx, interface in enumerate(interface_list)
+                if interface["name"] == interface_name
             ),
             None,
         )
@@ -382,89 +390,104 @@ class EvengApi:
         url = "/labs" f"{self.normalize_path(path)}/nodes/{node_id}/interfaces"
 
         # connect interfaces
-        intf_id = interface[0]
-        self.client.put(url, data=json.dumps({intf_id: str(net_id)}))
+        interface_id = interface[0]
+        payload = {interface_id: str(net_id)}
+        self.client.put(url, data=json.dumps(payload))
 
         # set visibility for bridge to "0" to hide bridge in the GUI
         return self.edit_lab_network(path, net_id, data={"visibility": "0"})
 
     def connect_node_to_cloud(
-        self, path, node_name, node_port, net_name, media="ethernet"
+        self,
+        path: str,
+        src: str,
+        src_label: str,
+        dst: str,
+        media: Literal["ethernet", "serial"] = "ethernet",
     ) -> Dict:
-        node = self.get_node_by_name(path, node_name)
+        """Connect node to a cloud"""
+        normpath = self.normalize_path(path)
+        node = self.get_node_by_name(path, src)
         if node is None:
-            raise ValueError(f"node {node_name} not found or invalid")
-
-        net = self.get_lab_network_by_name(path, net_name)
-        if net is None:
-            raise ValueError(f"network {net_name} not found or invalid")
-
+            raise ValueError(f"node {src} not found or invalid")
         node_id = node.get("id")
-        all_ports = self.get_node_interfaces(path, node_id).get(media)
-        found_interface = self.find_node_interface(node_port, all_ports)
 
-        if not found_interface:
-            raise ValueError(f"{node_port} invalid or missing for " f"{node_name}")
-
-        intf_id = str(found_interface[0])
+        net = self.get_lab_network_by_name(path, dst)
+        if net is None:
+            raise ValueError(f"network {dst} not found or invalid")
         net_id = net.get("id")
 
-        url = "/labs" f"{self.normalize_path(path)}/nodes/{node_id}/interfaces"
-        return self.client.put(url, data=json.dumps({intf_id: str(net_id)}))
+        node_interface = self.find_node_interface(path, node_id, src_label, media)
+        if not node_interface:
+            raise ValueError(f"{src_label} invalid or missing for " f"{src}")
+        interface = node_interface[0]
+
+        url = f"/labs{normpath}/nodes/{node_id}/interfaces"
+        return self.client.put(url, data=json.dumps({interface: f"{net_id}"}))
 
     def connect_node_to_node(
         self,
-        lab,
-        src_node_name,
-        src_node_i,
-        dst_node_name,
-        dst_node_i,
-        media="ethernet",
-    ) -> Dict:
-        src_node = self.get_node_by_name(lab, src_node_name)
-        dst_node = self.get_node_by_name(lab, dst_node_name)
+        path: str,
+        src: str,
+        src_label: str,
+        dst: str,
+        dst_label: str,
+        media: Literal["ethernet", "serial"] = "ethernet",
+    ) -> bool:
+        """Connect node to another node
 
-        # Validate hosts
-        if not all((src_node, dst_node)):
+        :param path: path to lab file (include parent folder)
+        :type path: str
+        :param src: source device name
+        :type src: str
+        :param src_label: source port name
+        :type src_label: str
+        :param dst: destination device name
+        :type dst: str
+        :param dst_label: destination port name
+        :type dst_label: str
+        :param media: port media type, defaults to "ethernet"
+        :type media: str, optional
+        :return: True if successful
+        :rtype: bool
+        """
+
+        self.client.log.debug(
+            f"connecting node {src} to node {dst}"
+            f" on interfaces {src_label} <-> {dst_label}"
+            f" in lab {path.replace(' ', '_')}"
+        )
+        # find nodes using node names
+        s_node_dict = self.get_node_by_name(path, src)
+        d_node_dict = self.get_node_by_name(path, dst)
+
+        # Validate that we found the hosts to connect
+        s_node_id = s_node_dict.get("id")
+        d_node_id = d_node_dict.get("id")
+        if not all((s_node_id, d_node_id)):
             raise ValueError("host(s) not found or invalid")
 
-        # Node IDs
-        src_node_id = src_node.get("id")
-        dst_node_id = dst_node.get("id")
+        # find the p2p interfaces on each of the nodes
+        src_int = self.find_node_interface(path, s_node_id, src_label, media)
+        dst_int = self.find_node_interface(path, d_node_id, dst_label, media)
 
-        if src_node_id and dst_node_id:
-            # Get all current interfaces of type media ("ethernet" or "serial")
-            src_node_ports = self.get_node_interfaces(lab, src_node_id).get(media)
-            dst_node_ports = self.get_node_interfaces(lab, dst_node_id).get(media)
+        # create the bridge for the p2p interfaces
+        self.client.log.debug(
+            f"creating bridge for p2p link: node{s_node_id} <-> node{d_node_id}"
+        )
+        net_resp = self.add_lab_network(path, network_type="bridge", visibility="1")
+        net_id = net_resp.get("data", {}).get("id")
+        self.client.log.debug(f"created bridge ID: {net_id}")
 
-            # Extract interface dicts from list of interfaces
-            src_intf = self.find_node_interface(src_node_i, src_node_ports)
-            dst_intf = self.find_node_interface(dst_node_i, dst_node_ports)
+        if not net_id:
+            raise ValueError("Failed to create bridge")
 
-            if src_intf and dst_intf:
-                net_resp = self.add_lab_network(
-                    lab, network_type="bridge", visibility="1"
-                )
-
-                if net_resp is not None and net_resp.get("id"):
-                    net_id = net_resp.get("id")
-                    if net_id:
-                        r1 = self.connect_p2p_interface(
-                            lab, src_node_id, src_intf, net_id
-                        )
-                        r2 = self.connect_p2p_interface(
-                            lab, dst_node_id, dst_intf, net_id
-                        )
-                        return (r1, r2)
-            elif src_intf:
-                raise ValueError(f"interface not found on node: {src_node_i}")
-            else:
-                raise ValueError(f"interface not found on node: {dst_node_i}")
-        elif src_node_id:
-            raise ValueError(f"node not found in lab: {dst_node_name}")
-        else:
-            raise ValueError(f"node not found in lab: {src_node_name}")
-        return
+        # connect the p2p interfaces to the bridge
+        self.client.log.debug(f"connecting node{s_node_id} -> net:{net_id}")
+        r1 = self.connect_p2p_interface(path, s_node_id, src_int, net_id)
+        self.client.log.debug(f"connecting node{d_node_id} -> net:{net_id}")
+        r2 = self.connect_p2p_interface(path, d_node_id, dst_int, net_id)
+        return r1["status"] == "success" and r2["status"] == "success"
 
     def start_all_nodes(self, path: str) -> Dict:
         """Start one or all nodes configured in a lab
@@ -557,9 +580,9 @@ class EvengApi:
     def get_node_interfaces(self, path: str, node_id: int) -> Dict:
         """Get configured interfaces from a node.
 
-        :param path: [description]
+        :param path: lab path
         :type path: str
-        :param node_id: [description]
+        :param node_id: node id in lab
         :type node_id: int
         """
         url = "/labs" + self.normalize_path(path) + f"/nodes/{node_id}/interfaces"
@@ -754,6 +777,10 @@ class EvengApi:
                     defaults to randint(30, 70)
         :type top: int, optional
         """
+        existing_network = self.get_lab_network_by_name(path, name)
+        if existing_network:
+            raise ValueError(f"Network already exists: `{name}` in lab {path}")
+
         if network_type not in self.network_types:
             raise ValueError(
                 f"invalid network type: {network_type} \
