@@ -1,0 +1,11 @@
+# create-issue-branch bot settings
+# By default the app comments on the issue after creating a branch.
+silent: true
+
+# This app can close issues automatically for you when a pull request for
+# an issue branch is merged.  You can enable this feature with:
+autoCloseIssue: true
+
+# You can override the source branch (by default the "default branch" of the repository is used)
+# in the configuration like this:
+defaultBranch: 'develop'
