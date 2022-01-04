@@ -183,8 +183,8 @@ class EvengApi:
 
         payload = {"0": str(lab_filepath), "path": ""}
         resp = self.client.post("/export", data=json.dumps(payload))
-        zip_file_endpoint = resp.get('data', '')
-        zip_filename = zip_file_endpoint.split('/')[-1]
+        zip_file_endpoint = resp.get("data", "")
+        zip_filename = zip_file_endpoint.split("/")[-1]
 
         if resp:
             client = self.client

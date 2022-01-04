@@ -102,7 +102,9 @@ class EvengClient:
         finally:
             self.session = None
 
-    def _make_request(self, method: str, url: str, use_prefix: bool = True, *args, **kwargs) -> dict:
+    def _make_request(
+        self, method: str, url: str, use_prefix: bool = True, *args, **kwargs
+    ) -> dict:
         """Craft request to EVE-NG API
 
         :param method: request method
