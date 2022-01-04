@@ -122,7 +122,6 @@ class EvengClient:
         if use_prefix and self.url_prefix not in url:
             url = self.url_prefix + url
 
-        print(url)
         req = requests.Request(method, url, *args, **kwargs)
         prepped_req = self.session.prepare_request(req)
 
