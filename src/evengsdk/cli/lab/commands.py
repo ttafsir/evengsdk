@@ -50,14 +50,12 @@ def _get_client_session():
     return thread_local.client
 
 
-def _get_lab_folder(name: str) -> List:
+def _get_lab_folder(name: str) -> List[Dict]:
     """Get labs from nested folder structure
 
-    Args:
-        name (str): name of folder
-
-    Returns:
-        [list]: list of labs from folder(s)
+    :param name: folder name
+    :type name: str
+    :return: list of labs
     """
     session = _get_client_session()
     r = session.api.get_folder(name)
@@ -106,9 +104,9 @@ def _get_all_labs(client: EvengClient) -> List:
 
 @click.command()
 @click.option(
-    "--path", default=None, callback=lambda ctx, params, v: v or ctx.obj.active_lab
+    "--path", default=None, callback=lambda ctx, _, v: v or ctx.obj.active_lab
 )
-@click.option("--output", type=click.Choice(["json", "text"]), default="text")
+@click.option("--output", type=click.Choice(["json", "text"]), default="json")
 @click.pass_context
 def read(ctx, path, output):
     """
@@ -116,8 +114,9 @@ def read(ctx, path, output):
     """
     try:
         client = get_client(ctx)
-        lab = client.api.get_lab(path)
-        click.secho(lab["name"].upper(), fg="yellow")
+        resp = client.api.get_lab(path)
+        lab = resp.get("data", {})
+        click.secho(f"Lab: {lab.get('name')}", fg="bright_blue")
         click.echo(display(output, lab))
     except (EvengHTTPError, EvengApiError) as e:
         msg = click.style(str(e), fg="bright_white")
@@ -128,9 +127,9 @@ def read(ctx, path, output):
 
 @click.command()
 @click.option(
-    "--path", default=None, callback=lambda ctx, params, v: v or ctx.obj.active_lab
+    "--path", default=None, callback=lambda ctx, _, v: v or ctx.obj.active_lab
 )
-@click.option("--output", type=click.Choice(["json", "text", "table"]), default="text")
+@click.option("--output", type=click.Choice(["json"]), default="json")
 @click.pass_context
 def topology(ctx, path, output):
     """
@@ -139,18 +138,9 @@ def topology(ctx, path, output):
     try:
         client = get_client(ctx)
         resp = client.api.get_lab_topology(path)
-
+        topology = resp.get("data", {})
         click.secho(f"Lab Topology @ {path}", fg="bright_blue")
-        header = [
-            "type",
-            "source",
-            "source_type",
-            "source_label",
-            "destination",
-            "destination_type",
-            "destination_label",
-        ]
-        click.echo(display(output, resp, header=header))
+        click.echo(display(output, topology))
     except (EvengHTTPError, EvengApiError) as e:
         msg = click.style(str(e), fg="bright_white")
         sys.exit(f"{ctx.obj.error_fmt}{msg}")
@@ -216,9 +206,6 @@ def ls(ctx, output):
         client = get_client(ctx)
         lab_details = _get_all_labs(client)
         click.secho("Labs", fg="bright_blue")
-
-        # header for table output
-        # header = ["author", "filename", "id", "version", "path"]
         click.echo(display(output, lab_details))
     except (EvengHTTPError, EvengApiError) as e:
         msg = click.style(str(e), fg="bright_white")
@@ -247,7 +234,7 @@ def create(ctx, path: str, author: str, description: str, version: int, name: st
             description=description,
             version=version,
         )
-        click.echo(display("text", response))
+        click.echo(display("text", response.get("message", {})))
     except (EvengHTTPError, EvengApiError) as e:
         msg = click.style(str(e), fg="bright_white")
         sys.exit(f"{ctx.obj.error_fmt}{msg}")
@@ -281,7 +268,7 @@ def create(ctx, path: str, author: str, description: str, version: int, name: st
     mutually_exclusive=["author", "description", "version"],
 )
 @click.option(
-    "--path", default=None, callback=lambda ctx, params, v: v or ctx.obj.active_lab
+    "--path", default=None, callback=lambda ctx, _, v: v or ctx.obj.active_lab
 )
 @click.pass_context
 def edit(ctx, path: str, **kwargs):
@@ -298,7 +285,7 @@ def edit(ctx, path: str, **kwargs):
         client = get_client(ctx)
         click.echo(f"updating lab @: {path}")
         response = client.api.edit_lab(path, param=edit_param)
-        click.echo(display("text", response))
+        click.echo(display("text", response.get("message", {})))
     except (EvengHTTPError, EvengApiError) as e:
         msg = click.style(str(e), fg="bright_white")
         sys.exit(f"{ctx.obj.error_fmt}{msg}")
@@ -316,7 +303,7 @@ def delete(ctx, path):
     try:
         client = get_client(ctx)
         response = client.api.delete_lab(path)
-        click.echo(display("text", response))
+        click.echo(display("text", response.get("message", {})))
     except (EvengHTTPError, EvengApiError) as e:
         msg = click.style(str(e), fg="bright_white")
         sys.exit(f"{ctx.obj.error_fmt}{msg}")
@@ -326,7 +313,7 @@ def delete(ctx, path):
 
 @click.command()
 @click.option(
-    "--path", default=None, callback=lambda ctx, params, v: v or ctx.obj.active_lab
+    "--path", default=None, callback=lambda ctx, _, v: v or ctx.obj.active_lab
 )
 @click.pass_context
 def start(ctx, path):
@@ -334,7 +321,7 @@ def start(ctx, path):
     try:
         client = get_client(ctx)
         response = client.api.start_all_nodes(path)
-        click.echo(display("text", response))
+        click.echo(display("text", response.get("message", {})))
     except (EvengHTTPError, EvengApiError) as e:
         msg = click.style(str(e), fg="bright_white")
         sys.exit(f"{ctx.obj.error_fmt}{msg}")
@@ -344,7 +331,7 @@ def start(ctx, path):
 
 @click.command()
 @click.option(
-    "--path", default=None, callback=lambda ctx, params, v: v or ctx.obj.active_lab
+    "--path", default=None, callback=lambda ctx, _, v: v or ctx.obj.active_lab
 )
 @click.pass_context
 def stop(ctx, path):
@@ -356,9 +343,9 @@ def stop(ctx, path):
         response = client.api.stop_all_nodes(path)
         if response.get("status") and response["status"] == "success":
             close_resp = client.delete("/labs/close")
-            click.echo(display("text", close_resp))
+            click.echo(display("text", close_resp.get("message", {})))
         else:
-            click.echo(display("text", response))
+            click.echo(display("text", response.get("message", {})))
     except (EvengHTTPError, EvengApiError) as e:
         msg = click.style(str(e), fg="bright_white")
         sys.exit(f"{ctx.obj.error_fmt}{msg}")

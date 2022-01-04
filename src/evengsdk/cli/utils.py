@@ -40,7 +40,7 @@ def to_human_readable(obj: Dict, keys: List[str] = []) -> str:
 
 
 def thread_executor(func, items):
-    futures = list()
+    futures = []
     with ThreadPoolExecutor(max_workers=5) as executor:
         for future in executor.map(func, items):
             futures.append(future)
@@ -73,6 +73,5 @@ def get_active_lab(eveng_directory: str):
     active_lab_filepath = Path(eveng_directory) / "active"
 
     if active_lab_filepath.exists():
-        active_lab = active_lab_filepath.read_text()
-        return active_lab
+        return active_lab_filepath.read_text()
     return os.environ.get("EVE_NG_LAB_PATH")
