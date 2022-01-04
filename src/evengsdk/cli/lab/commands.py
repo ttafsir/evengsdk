@@ -11,7 +11,6 @@ import click
 from evengsdk.cli.utils import get_active_lab, get_client, thread_executor
 from evengsdk.client import EvengClient
 from evengsdk.exceptions import EvengApiError, EvengHTTPError
-from evengsdk.inventory import build_inventory
 from evengsdk.plugins.display import display
 
 
@@ -158,7 +157,7 @@ def export_lab(ctx, path, dest):
     """
     Export and download lab file as ZIP archive
     """
-        client = get_client(ctx)
+    client = get_client(ctx)
     try:
         client.log.debug(f"Exporting lab {path} to {dest}")
         saved, zipname = client.api.export_lab(path)
@@ -349,29 +348,6 @@ def stop(ctx, path):
         sys.exit(f"{ctx.obj.unknown_error_fmt}{e}")
 
 
-@click.command()
-@click.option(
-    "--path", default=None, callback=lambda ctx, params, v: v or ctx.obj.active_lab
-)
-@click.option("-w", "--write", help="Output filename.")
-@click.pass_context
-def inventory(ctx, path, write):
-    """
-    generate inventory file (INI).
-    """
-    eve_host = ctx.obj.host
-    client.login(username=ctx.obj.username, password=ctx.obj.password)
-    resp = client.api.list_nodes(path)
-    node_indexes = resp.keys()
-    nodes_list = [resp[idx] for idx in node_indexes]
-
-    inventory = build_inventory(eve_host, path, nodes_list)
-    if write:
-        with open(write, "w") as handle:
-            handle.write(inventory)
-    sys.exit()
-
-
 @click.command(name="show-active")
 @click.pass_context
 def show_active(ctx):
@@ -439,7 +415,6 @@ lab.add_command(stop)
 lab.add_command(create)
 lab.add_command(edit)
 lab.add_command(delete)
-lab.add_command(inventory)
 lab.add_command(active)
 lab.add_command(show_active)
 lab.add_command(topology)
