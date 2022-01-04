@@ -170,7 +170,7 @@ class EvengApi:
         url = "/labs" + self.normalize_path(path)
         return self.client.get(url)
 
-    def export_lab(self, path: str, filename: str = "lab_export.zip") -> None:
+    def export_lab(self, path: str, filename: str = None) -> bool:
         """Export and download a lab as a .unl file
 
         :param path: the path of the lab (include parent folder)
@@ -183,13 +183,18 @@ class EvengApi:
 
         payload = {"0": str(lab_filepath), "path": ""}
         resp = self.client.post("/export", data=json.dumps(payload))
+        zip_file_endpoint = resp.get('data', '')
+        zip_filename = zip_file_endpoint.split('/')[-1]
+
         if resp:
             client = self.client
-            download_url = f"{client.protocol}://{client.host}{resp}"
-            _, r = self.client.get(download_url)
+            download_url = f"{client.protocol}://{client.host}{zip_file_endpoint}"
+            r = self.client.get(download_url, use_prefix=False)
 
-            with open(filename, "wb") as handle:
+            with open(filename or zip_filename, "wb") as handle:
                 handle.write(r.content)
+            return (True, zip_filename)
+        return (False, None)
 
     def list_lab_networks(self, path: str) -> Dict:
         """Get all networks configured in a lab

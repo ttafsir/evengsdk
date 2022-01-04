@@ -102,7 +102,7 @@ class EvengClient:
         finally:
             self.session = None
 
-    def _make_request(self, method: str, url: str, *args, **kwargs) -> dict:
+    def _make_request(self, method: str, url: str, use_prefix: bool = True, *args, **kwargs) -> dict:
         """Craft request to EVE-NG API
 
         :param method: request method
@@ -117,9 +117,10 @@ class EvengClient:
         if not self.session:
             raise ValueError("No valid session exist")
 
-        if self.url_prefix not in url:
+        if use_prefix and self.url_prefix not in url:
             url = self.url_prefix + url
 
+        print(url)
         req = requests.Request(method, url, *args, **kwargs)
         prepped_req = self.session.prepare_request(req)
 
@@ -128,7 +129,7 @@ class EvengClient:
             try:
                 return r.json()
             except json.JSONDecodeError:
-                raise ValueError("Invalid JSON data")
+                return r
         self.log.error("Error: {}".format(r.text))
 
         # EVE-NG API returns HTTP error code and message in JSON response

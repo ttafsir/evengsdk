@@ -151,29 +151,25 @@ def topology(ctx, path, output):
 @click.command(name="export")
 @click.option("--dest", help="destination path", type=click.Path(), default=".")
 @click.option(
-    "--path", default=None, callback=lambda ctx, params, v: v or ctx.obj.active_lab
+    "--path", default=None, callback=lambda ctx, _, v: v or ctx.obj.active_lab
 )
 @click.pass_context
 def export_lab(ctx, path, dest):
     """
     Export and download lab file as ZIP archive
     """
-    try:
         client = get_client(ctx)
-        resp = client.api.export_lab(path)
-
-        # get name and content from response
-        name, content = resp
-        full_filepath = dest / Path(name)
-        full_filepath.write_bytes(content)
-
-        success_message = f"Success: {full_filepath.resolve()}"
-        click.secho(display("text", success_message))
+    try:
+        client.log.debug(f"Exporting lab {path} to {dest}")
+        saved, zipname = client.api.export_lab(path)
+        if saved:
+            click.secho(display("text", f"Success: {zipname}"))
     except (EvengHTTPError, EvengApiError) as e:
         msg = click.style(str(e), fg="bright_white")
         sys.exit(f"{ctx.obj.error_fmt}{msg}")
     except Exception as e:
-        sys.exit(f"{ctx.obj.unknown_error_fmt}{e}")
+        client.log.error(f"{e}")
+        raise
 
 
 @click.command(name="import")
