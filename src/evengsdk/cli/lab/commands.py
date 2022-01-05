@@ -382,8 +382,10 @@ def active(ctx, path):
     else:
         client.login(username=ctx.obj.username, password=ctx.obj.password)
         # Make sure this is a lab that exists in EVE-NG
-        labs = _get_all_labs(client)
-        existing_lab = next((lab for lab in labs if lab["path"] == path), None)
+        resp = _get_all_labs(client)
+        existing_lab = next(
+            (lab["data"] for lab in resp if lab["data"]["path"] == path), None
+        )
         if not existing_lab:
             msg = click.style(
                 f"\nLab @ {path} does not exist or could not be found.", fg="red"

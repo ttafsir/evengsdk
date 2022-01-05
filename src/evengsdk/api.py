@@ -262,6 +262,17 @@ class EvengApi:
         url = "/labs" + f"{self.normalize_path(path)}/nodes/{node_id}"
         return self.client.get(url)
 
+    def delete_node(self, path: str, node_id: str) -> Dict:
+        """Delete a node from the lab
+
+        :param path: path to lab file (include parent folder)
+        :type path: str
+        :param node_id: node ID to delete
+        :type node_id: str
+        """
+        url = "/labs" + f"{self.normalize_path(path)}/nodes/{node_id}"
+        return self.client.delete(url)
+
     def get_node_by_name(self, path: str, name: str) -> Dict:
         """Retrieve single node from lab by name
 
@@ -568,19 +579,19 @@ class EvengApi:
         :type path: str
         """
         url = "/labs" + self.normalize_path(path) + "/nodes/export"
-        return self.client.get(url)
+        return self.client.put(url)
 
     def export_node(self, path: str, node_id: int) -> Dict:
         """Export node configuration. Exporting means
         saving the startup-config into the lab file.
 
-        :param path: [description]
+        :param path: lab path
         :type path: str
-        :param node_id: [description]
+        :param node_id: node ID for to export config from
         :type node_id: int
         """
-        url = "/labs" + self.normalize_path(path) + f"/nodes/{node_id}/export"
-        return self.client.get(url)
+        url = "/labs" + f"{self.normalize_path(path)}/nodes/{node_id}/export"
+        return self.client.put(url)
 
     def get_node_interfaces(self, path: str, node_id: int) -> Dict:
         """Get configured interfaces from a node.
