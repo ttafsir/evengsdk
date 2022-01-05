@@ -5,7 +5,6 @@ import pytest
 from click.testing import CliRunner, Result
 
 from evengsdk.cli.cli import main as cli
-from evengsdk.cli.version import __version__
 
 
 LAB_TO_EDIT = {"name": "lab_to_edit", "path": "/"}
@@ -51,7 +50,6 @@ def setup_test_lab(lab_to_edit, cli_client):
 
 
 class TestLabNodeCommands:
-
     def _run_commands(self, commands: list):
         runner: CliRunner = CliRunner(env={"EVE_NG_LAB_PATH": "/test lab1.unl"})
         return runner.invoke(cli, commands)
@@ -132,8 +130,8 @@ class TestLabNodeCommands:
                 "-n",
                 "1",
                 "-c",
-                "hostname test"
-                f"--path {LAB_TO_CREATE}"]
+                "hostname test" f"--path {LAB_TO_CREATE}",
+            ]
             result: Result = runner.invoke(cli, commands)
             assert result.exit_code == 0, result.output
             assert "Lab has been saved" in result.output
