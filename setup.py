@@ -16,7 +16,7 @@ setup(
     name="evengsdk",
     keywords="evengsdk",
     license="MIT license",
-    version="0.1.0",
+    version="0.1.1",
     author="Tafsir Thiam",
     author_email="ttafsir@gmail.com",
     description=(
