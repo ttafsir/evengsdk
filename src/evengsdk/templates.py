@@ -1,4 +1,3 @@
-
 # -*- coding: utf-8 -*-
 from jinja2 import BaseLoader, Environment
 
@@ -14,11 +13,7 @@ def render_template(templateIO, data):
     Returns:
         str: rendered string
     """
-    env = Environment(
-        loader=BaseLoader(),
-        trim_blocks=True,
-        lstrip_blocks=True
-    )
+    env = Environment(loader=BaseLoader(), trim_blocks=True, lstrip_blocks=True)
     template = env.from_string(templateIO)
     return template.render(data)
 
@@ -34,6 +29,6 @@ def render_from_path(path, data):
     Returns:
         str: rendered string
     """
-    with open(path, 'r') as f:
+    with open(path, "r") as f:
         template_string = f.read()
         return render_template(template_string, data)

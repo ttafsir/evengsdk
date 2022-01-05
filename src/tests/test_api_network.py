@@ -28,26 +28,14 @@ class TestEvengApiNetwork:
 
     @pytest.mark.parametrize(
         "name, network_type, visibility",
-        [
-            ("bridge_network", "bridge", "1"),
-            ("cloud0", "pnet0", "1")
-        ],
+        [("bridge_network", "bridge", "1"), ("cloud0", "pnet0", "1")],
     )
     def test_add_network(
-        self,
-        authenticated_client,
-        setup_lab,
-        lab,
-        name,
-        network_type,
-        visibility
+        self, authenticated_client, setup_lab, lab, name, network_type, visibility
     ):
         lab_path = lab["path"] + lab["name"]
         resp = authenticated_client.api.add_lab_network(
-            lab_path,
-            network_type=network_type,
-            name=name,
-            visibility=visibility
+            lab_path, network_type=network_type, name=name, visibility=visibility
         )
         # ID is returned after creation
         network_id = resp["id"]
@@ -59,10 +47,7 @@ class TestEvengApiNetwork:
 
     @pytest.mark.parametrize(
         "network_type, visibility",
-        [
-            ("point-to-point", "1"),
-            ("pnet10", "1")
-        ],
+        [("point-to-point", "1"), ("pnet10", "1")],
     )
     def test_add_invalid_network_raises(
         self, authenticated_client, setup_lab, lab, network_type, visibility
@@ -84,7 +69,9 @@ class TestEvengApiNetwork:
         edited.update({"name": "edited"})
 
         # edit operation is successful
-        edit_resp = authenticated_client.api.edit_lab_network(lab_path, net_id, data=edited)
+        edit_resp = authenticated_client.api.edit_lab_network(
+            lab_path, net_id, data=edited
+        )
         assert edit_resp["code"] == 201
 
         # network updated

@@ -19,12 +19,7 @@ def register_plugin(func):
     return func
 
 
-def display(
-    plugin: str,
-    data: Union[List, Dict],
-    *args,
-    **kwargs
-) -> str:
+def display(plugin: str, data: Union[List, Dict], *args, **kwargs) -> str:
     if plugin in _PLUGINS:
         return _PLUGINS[plugin](data, *args, **kwargs)
     else:
@@ -33,16 +28,16 @@ def display(
 
 @register_plugin
 def json(data, *args, **kwargs):
-    indent = kwargs.get('indent', 2)
-    fg_color = kwargs.get('fg_color', 'bright_white')
+    indent = kwargs.get("indent", 2)
+    fg_color = kwargs.get("fg_color", "bright_white")
     return click.style(jsonlib.dumps(data, indent=indent), fg=fg_color)
 
 
 @register_plugin
 def table(data, *args, **kwargs):
-    header = kwargs.get('header')
+    header = kwargs.get("header")
     display_table = []
-    fmt = kwargs.get('tablefmt', 'grid')
+    fmt = kwargs.get("tablefmt", "grid")
 
     if isinstance(data, dict) and header:
         display_table = iter(data.items())
@@ -63,9 +58,9 @@ def _dict_to_string(obj: dict) -> str:
     for key, val in obj.items():
         if isinstance(val, str):
             escaped_val = html.unescape(val)
-            yield f'  {key}: {escaped_val}\n'
+            yield f"  {key}: {escaped_val}\n"
         elif isinstance(val, int):
-            yield f'  {key}: {val}\n'
+            yield f"  {key}: {val}\n"
 
 
 @register_plugin
@@ -74,7 +69,7 @@ def text(
     header: List[str] = [],
     fg_color: str = "bright_white",
     record_header: str = "",
-    record_header_fg_color: str = "yellow"
+    record_header_fg_color: str = "yellow",
 ) -> str:
     """Generate human readable output for passed object
 
@@ -89,7 +84,7 @@ def text(
     Returns:
         str: formatted output string
     """
-    string_output = '\n'
+    string_output = "\n"
 
     if isinstance(data, dict):
         for ln in _dict_to_string(data):
@@ -99,14 +94,14 @@ def text(
         for obj in data:
             if record_header:
                 string_output += click.style(
-                    obj[record_header].upper(),
-                    fg=record_header_fg_color)
-                string_output += '\n'
+                    obj[record_header].upper(), fg=record_header_fg_color
+                )
+                string_output += "\n"
 
             if isinstance(obj, dict):
                 for ln in _dict_to_string(obj):
                     string_output += ln
-                string_output += '\n'
+                string_output += "\n"
     else:
         string_output += str(data)
     return click.style(string_output, fg=fg_color)

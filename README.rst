@@ -20,7 +20,7 @@ evengsdk
 
 
 
-Python SDK and command line utilities to work with the EVE-NG REST API 
+Python SDK and command line utilities to work with the EVE-NG REST API
 
 
 * Free software: MIT license

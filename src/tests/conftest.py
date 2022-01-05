@@ -10,13 +10,13 @@ load_dotenv()
 
 @pytest.fixture(scope="session")
 def client():
-    return EvengClient(os.environ['EVE_NG_HOST'], log_file='test.log')
+    return EvengClient(os.environ["EVE_NG_HOST"], log_file="test.log")
 
 
 @pytest.fixture(scope="session")
 def authenticated_client(client):
-    username = os.environ['EVE_NG_USERNAME']
-    passwd = os.environ['EVE_NG_PASSWORD']
+    username = os.environ["EVE_NG_USERNAME"]
+    passwd = os.environ["EVE_NG_PASSWORD"]
     client.login(username=username, password=passwd)
     yield client
     client.logout()
