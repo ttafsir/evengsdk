@@ -14,13 +14,13 @@ from evengsdk.cli.system.commands import (
     templates,
     read_template,
     user_roles,
-    network_types
+    network_types,
 )
 from evengsdk.cli.version import __version__
 
 
-ERROR = click.style('ERROR: ', fg='red')
-UNKNOWN_ERROR = click.style('UNKNOWN ERROR: ', fg='red')
+ERROR = click.style("ERROR: ", fg="red")
+UNKNOWN_ERROR = click.style("UNKNOWN ERROR: ", fg="red")
 LOGGING_LEVELS = {
     0: logging.NOTSET,
     1: logging.ERROR,
@@ -31,12 +31,11 @@ LOGGING_LEVELS = {
 
 
 class Context:
-
     def __init__(self):
         self.verbosity = 0
         self.logger = None
         self.debug = None
-        self.active_lab_dir = os.environ.get('EVE_NG_LAB_DIR', '.eve-ng')
+        self.active_lab_dir = os.environ.get("EVE_NG_LAB_DIR", ".eve-ng")
         self.error_fmt = ERROR
         self.unknown_error_fmt = UNKNOWN_ERROR
 
@@ -49,10 +48,15 @@ def verbosity_option(f):
         state = ctx.ensure_object(Context)
         state.verbosity = value
         return value
-    return click.option('-v', '--verbose', count=True,
-                        expose_value=False,
-                        help='Enables verbosity.',
-                        callback=callback)(f)
+
+    return click.option(
+        "-v",
+        "--verbose",
+        count=True,
+        expose_value=False,
+        help="Enables verbosity.",
+        callback=callback,
+    )(f)
 
 
 def debug_option(f):
@@ -60,10 +64,13 @@ def debug_option(f):
         state = ctx.ensure_object(Context)
         state.debug = value
         return value
-    return click.option('--debug/--no-debug',
-                        expose_value=False,
-                        help='Enables or disables debug mode.',
-                        callback=callback)(f)
+
+    return click.option(
+        "--debug/--no-debug",
+        expose_value=False,
+        help="Enables or disables debug mode.",
+        callback=callback,
+    )(f)
 
 
 def common_options(f):
@@ -79,20 +86,23 @@ def version():
 
 
 @click.group()
-@click.option('--host', envvar='EVE_NG_HOST', required=True)
-@click.option('--username', prompt=True,
-              envvar='EVE_NG_USERNAME',
-              default=lambda: os.environ.get('USER', ''),
-              show_default='current user', required=True)
-@click.option('--password', prompt=True, hide_input=True,
-              envvar='EVE_NG_PASSWORD', required=True)
-@click.option('--port', default=80,
-              help='HTTP port to connect to. Default is 80')
+@click.option("--host", envvar="EVE_NG_HOST", required=True)
+@click.option(
+    "--username",
+    prompt=True,
+    envvar="EVE_NG_USERNAME",
+    default=lambda: os.environ.get("USER", ""),
+    show_default="current user",
+    required=True,
+)
+@click.option(
+    "--password", prompt=True, hide_input=True, envvar="EVE_NG_PASSWORD", required=True
+)
+@click.option("--port", default=80, help="HTTP port to connect to. Default is 80")
 @common_options
 @PASS_CTX
 def main(ctx, host, port, username, password):
-    """CLI application to manage EVE-NG objects
-    """
+    """CLI application to manage EVE-NG objects"""
 
     client = EvengClient(host, port=port)
 
@@ -103,7 +113,7 @@ def main(ctx, host, port, username, password):
     )
 
     if ctx.verbosity > 0:
-        client.log = logging.getLogger('evengcli')
+        client.log = logging.getLogger("evengcli")
         client.log.addHandler(logging.StreamHandler())
         client.log.setLevel(logging_level)
         click.echo(

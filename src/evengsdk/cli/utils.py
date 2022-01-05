@@ -17,10 +17,7 @@ def get_client(ctx):
     return
 
 
-def to_human_readable(
-    obj: Dict,
-    keys: List[str] = []
-) -> str:
+def to_human_readable(obj: Dict, keys: List[str] = []) -> str:
     """Generate human readable output for passed object
 
     Args:
@@ -37,9 +34,9 @@ def to_human_readable(
     for key, val in obj.items():
         if isinstance(val, str):
             escaped_val = html.unescape(val)
-            yield f'  {key}: {escaped_val}'
+            yield f"  {key}: {escaped_val}"
         elif isinstance(val, int):
-            yield f'  {key}: {val}'
+            yield f"  {key}: {val}"
 
 
 def thread_executor(func, items):
@@ -52,11 +49,11 @@ def thread_executor(func, items):
 
 def display_status(resp: Dict):
     if resp:
-        msg = resp.get('message')
-        fg_color = 'green' if resp['status'] == 'success' else 'red'
+        msg = resp.get("message")
+        fg_color = "green" if resp["status"] == "success" else "red"
         click.secho(msg, fg=fg_color)
         sys.exit(0)
-    err = click.style('Unknown Error: no status received', fg='red')
+    err = click.style("Unknown Error: no status received", fg="red")
     sys.exit(err)
 
 
@@ -73,9 +70,9 @@ def get_active_lab(eveng_directory: str):
     Path(eveng_directory).mkdir(exist_ok=True)
 
     # path to active lab file
-    active_lab_filepath = Path(eveng_directory) / 'active'
+    active_lab_filepath = Path(eveng_directory) / "active"
 
     if active_lab_filepath.exists():
         active_lab = active_lab_filepath.read_text()
         return active_lab
-    return os.environ.get('EVE_NG_LAB_PATH')
+    return os.environ.get("EVE_NG_LAB_PATH")

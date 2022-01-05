@@ -172,7 +172,7 @@ class EvengApi:
         quoted_parts = [str(quote_plus(x)) for x in path.parts[1:]]
 
         # rejoin the path and return string
-        new_path = Path("/").joinpath(*quoted_parts)
+        new_path = Path("/").joinpath(*quoted_parts).as_posix()
         return str(new_path)
 
     def get_lab(self, path: str):

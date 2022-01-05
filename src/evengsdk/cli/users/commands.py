@@ -2,7 +2,7 @@
 import click
 
 
-@click.command(name='list')
+@click.command(name="list")
 @click.pass_context
 def ls(ctx):
     """
@@ -21,7 +21,7 @@ def create(ctx):
 
 
 @click.command()
-@click.option('--user-id', help='user ID to delete')
+@click.option("--user-id", help="user ID to delete")
 @click.pass_context
 def read(ctx, user_id):
     """
@@ -31,7 +31,7 @@ def read(ctx, user_id):
 
 
 @click.command()
-@click.option('--user-id', help='user ID to delete')
+@click.option("--user-id", help="user ID to delete")
 @click.pass_context
 def edit(ctx, user_id):
     """
@@ -41,7 +41,7 @@ def edit(ctx, user_id):
 
 
 @click.command()
-@click.option('--user-id', help='user ID to delete')
+@click.option("--user-id", help="user ID to delete")
 @click.pass_context
 def delete(ctx, user_id):
     """
