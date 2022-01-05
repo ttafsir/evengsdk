@@ -79,7 +79,6 @@ class TestSystemCommands:
         """
         runner: CliRunner = CliRunner()
         result: Result = runner.invoke(cli, ["show-status"])
-
         assert result.exit_code == 0, result.output
         assert "System" in result.output
 
@@ -437,13 +436,22 @@ class TestLabNodeCommands:
         """
         Arrange/Act: Run the `node` command with the 'upload-config'
             subcommand.
-        Assert: The output indicates that lab started successfully.
+        Assert: The output indicates that lab string configuration
+            uploaded successfully.
         """
         runner: CliRunner = CliRunner()
         with runner.isolated_filesystem():
             with open("config.txt", "w") as f:
                 f.write(TEST_CONFIG)
-            cli_commands = ["node", "upload-config", "-n", "1", "--src", "config.txt"]
+            cli_commands = [
+                "-v",
+                "node",
+                "upload-config",
+                "-n",
+                "1",
+                "-c",
+                "hostname test",
+            ]
             result: Result = runner.invoke(cli, cli_commands)
             assert result.exit_code == 0, result.output
             assert "Lab has been saved" in result.output

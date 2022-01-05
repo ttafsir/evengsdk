@@ -7,7 +7,7 @@ import click
 from evengsdk.client import EvengClient
 from evengsdk.cli.folders.commands import folder
 from evengsdk.cli.lab.commands import lab
-from evengsdk.cli.nodes.commands import node
+from evengsdk.cli.node.commands import node
 from evengsdk.cli.users.commands import user
 from evengsdk.cli.system.commands import (
     status,
