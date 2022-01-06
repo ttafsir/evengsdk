@@ -1,6 +1,6 @@
 import pytest
 
-import requests
+from evengsdk.exceptions import EvengHTTPError
 
 
 LAB_PATH = "/datacenter/leaf_spine_lab.unl"
@@ -70,7 +70,7 @@ class TestEvengApi:
         Verify that the api returns an empty dictionary
         if the user does not exist
         """
-        with pytest.raises(requests.exceptions.HTTPError):
+        with pytest.raises(EvengHTTPError):
             user = USERS["non_existing"]
             authenticated_client.api.get_user(user)
 
@@ -83,7 +83,7 @@ class TestEvengApi:
             try:
                 r = authenticated_client.api.add_user(username, password)
                 assert r["status"] == "success"
-            except requests.exceptions.HTTPError as e:
+            except EvengHTTPError as e:
                 assert "check if already exists" in str(e)
 
     def test_add_existing_user(self, authenticated_client):
@@ -92,7 +92,7 @@ class TestEvengApi:
         an exception
         """
         for username, password in iter(USERS["to_create"]):
-            with pytest.raises(requests.exceptions.HTTPError):
+            with pytest.raises(EvengHTTPError):
                 authenticated_client.api.add_user(username, password)
 
     def test_edit_existing_user(self, authenticated_client):
@@ -115,7 +115,7 @@ class TestEvengApi:
         Verify that editing non existing users raises
         an exception.
         """
-        with pytest.raises(requests.exceptions.HTTPError):
+        with pytest.raises(EvengHTTPError):
             new_data = {"email": "test@testing.com", "name": "John Doe"}
             username = USERS["non_existing"]
             authenticated_client.api.edit_user(username, data=new_data)
@@ -136,7 +136,7 @@ class TestEvengApi:
             assert r["status"] == "success"
 
             # make sure it was deleted
-            with pytest.raises(requests.exceptions.HTTPError):
+            with pytest.raises(EvengHTTPError):
                 authenticated_client.api.get_user(username)
 
     def test_list_networks(self, authenticated_client):

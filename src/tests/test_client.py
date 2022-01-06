@@ -2,11 +2,10 @@
 import os
 import logging
 
-import requests
 import pytest
 
 from evengsdk.client import EvengClient
-from evengsdk.exceptions import EvengLoginError
+from evengsdk.exceptions import EvengLoginError, EvengHTTPError
 
 
 @pytest.fixture()
@@ -103,7 +102,7 @@ class TestEvengClient:
         Verify GET with bad endpoint returns an error
         """
         endpoint = "/bad_endpoint"
-        with pytest.raises(requests.exceptions.HTTPError):
+        with pytest.raises(EvengHTTPError):
             authenticated_client.get(endpoint)
 
     def test_client_post_bad_endpoint(self, authenticated_client):
@@ -111,5 +110,5 @@ class TestEvengClient:
         Verify post with bad URL returns an error
         """
         endpoint = "/bad_endpoint"
-        with pytest.raises(requests.exceptions.HTTPError):
+        with pytest.raises(EvengHTTPError):
             authenticated_client.post(endpoint, data=None)
