@@ -14,28 +14,27 @@ UNKNOWN_ERROR = click.style("UNKNOWN ERROR: ", fg="red")
 
 
 @click.command(name="list-node-templates")
-@click.option("--include-missing", is_flag=True, default=False)
-@click.option("--output", type=click.Choice(["json", "text", "table"]), default="text")
+@click.option("--output", type=click.Choice(["json", "text"]), default="json")
 @click.pass_context
-def templates(ctx, output, include_missing):
+def templates(ctx, output):
     """
     list EVE-NG node templates
     """
     try:
         client = get_client(ctx)
-        resp = client.api.list_node_templates(include_missing=include_missing)
-        click.secho("Node Templates", fg="blue")
-        table_header = ["Template", "Description"]
-        click.echo(display(output, resp, header=table_header))
+        resp = client.api.list_node_templates()
+        if output != "json":
+            click.secho("Node Templates", fg="blue")
+        click.echo(display(output, resp.get("data", {})))
     except (EvengHTTPError, EvengApiError) as e:
         msg = click.style(str(e), fg="bright_white")
         sys.exit(f"{ERROR}{msg}")
     except Exception as e:
-        sys.exit(f"{UNKNOWN_ERROR}{str(e)}")
+        sys.exit(f"{UNKNOWN_ERROR}{e}")
 
 
 @click.command(name="show-template")
-@click.option("--output", type=click.Choice(["json", "text"]), default="text")
+@click.option("--output", type=click.Choice(["json", "text"]), default="json")
 @click.argument("template_name")
 @click.pass_context
 def read_template(ctx, template_name, output):
@@ -45,17 +44,18 @@ def read_template(ctx, template_name, output):
     try:
         client = get_client(ctx)
         resp = client.api.node_template_detail(template_name)
-        click.secho(f"Node Template: {template_name}", fg="blue")
-        click.echo(display(output, resp))
+        if output != "json":
+            click.secho(f"Node Template: {template_name}", fg="blue")
+        click.echo(display(output, resp.get("data", {})))
     except (EvengHTTPError, EvengApiError) as e:
         msg = click.style(str(e), fg="bright_white")
         sys.exit(f"{ERROR}{msg}")
     except Exception as e:
-        sys.exit(f"{UNKNOWN_ERROR}{str(e)}")
+        sys.exit(f"{UNKNOWN_ERROR}{e}")
 
 
 @click.command(name="list-network-types")
-@click.option("--output", type=click.Choice(["json", "text", "table"]), default="text")
+@click.option("--output", type=click.Choice(["json", "text", "table"]), default="json")
 @click.pass_context
 def network_types(ctx, output):
     """
@@ -64,18 +64,19 @@ def network_types(ctx, output):
     try:
         client = get_client(ctx)
         resp = client.api.list_networks()
-        click.secho("Network Types", fg="blue")
+        if output != "json":
+            click.secho("Network Types", fg="blue")
         table_header = ["Network Type", "Name"]
-        click.echo(display(output, resp, header=table_header))
+        click.echo(display(output, resp.get("data", {}), header=table_header))
     except (EvengHTTPError, EvengApiError) as e:
         msg = click.style(str(e), fg="bright_white")
         sys.exit(f"{ERROR}{msg}")
     except Exception as e:
-        sys.exit(f"{UNKNOWN_ERROR}{str(e)}")
+        sys.exit(f"{UNKNOWN_ERROR}{e}")
 
 
 @click.command(name="list-user-roles")
-@click.option("--output", type=click.Choice(["json", "text", "table"]), default="text")
+@click.option("--output", type=click.Choice(["json", "text", "table"]), default="json")
 @click.pass_context
 def user_roles(ctx, output):
     """
@@ -84,46 +85,31 @@ def user_roles(ctx, output):
     try:
         client = get_client(ctx)
         resp = client.api.list_user_roles()
-        click.secho("User Roles", fg="blue")
+        if output != "json":
+            click.secho("User Roles", fg="blue")
         table_header = ["Role Name", "Description"]
-        click.echo(display(output, resp, header=table_header))
+        click.echo(display(output, resp.get("data", {}), header=table_header))
     except (EvengHTTPError, EvengApiError) as e:
         msg = click.style(str(e), fg="bright_white")
         sys.exit(f"{ERROR}{msg}")
     except Exception as e:
-        sys.exit(f"{UNKNOWN_ERROR}{str(e)}")
+        sys.exit(f"{UNKNOWN_ERROR}{e}")
 
 
 @click.command(name="show-status")
-@click.option("--output", type=click.Choice(["json", "text", "table"]), default="text")
+@click.option("--output", type=click.Choice(["json", "text", "table"]), default="json")
 @click.pass_context
 def status(ctx, output):
     """View EVE-NG server status"""
     try:
         client = get_client(ctx)
-        status = client.api.get_server_status()
-        click.secho("System", fg="blue")
+        resp = client.api.get_server_status()
+        if output != "json":
+            click.secho("System", fg="blue")
         table_header = ["Component", "Status"]
-        click.echo(display(output, status, header=table_header))
+        click.echo(display(output, resp.get("data", {}), header=table_header))
     except (EvengHTTPError, EvengApiError) as e:
         msg = click.style(str(e), fg="bright_white")
         sys.exit(f"{ERROR}{msg}")
     except Exception as e:
-        sys.exit(f"{UNKNOWN_ERROR}{str(e)}")
-
-
-# @click.group()
-# @click.pass_context
-# def system(ctx):
-#     """
-#     EVE-NG system commands
-#     """
-#     global client
-#     client = ctx.obj.client
-
-
-# system.add_command(status)
-# system.add_command(templates)
-# system.add_command(read_template)
-# system.add_command(network_types)
-# system.add_command(user_roles)
+        sys.exit(f"{UNKNOWN_ERROR}{e}")
