@@ -4,3 +4,4 @@ tabulate
 python-dotenv
 pyyaml
 jinja2
+rich
