@@ -8,10 +8,9 @@ from typing import Dict, List
 
 import click
 
+from evengsdk.cli.console import cli_print, cli_print_output
 from evengsdk.cli.utils import get_active_lab, get_client, thread_executor
 from evengsdk.client import EvengClient
-from evengsdk.exceptions import EvengApiError, EvengHTTPError
-from evengsdk.plugins.display import display
 
 
 # https://stackoverflow.com/questions/37310718/mutually-exclusive-option-groups-in-python-click
@@ -110,18 +109,15 @@ def _get_all_labs(client: EvengClient) -> List:
 def read(ctx, path, output):
     """
     Get EVE-NG lab details
+
+    \b
+    Examples:
+        eve-ng lab read
+        eve-ng lab read --path /folder/to/lab.unl
     """
-    try:
-        client = get_client(ctx)
-        resp = client.api.get_lab(path)
-        lab = resp.get("data", {})
-        click.secho(f"Lab: {lab.get('name')}", fg="bright_blue")
-        click.echo(display(output, lab))
-    except (EvengHTTPError, EvengApiError) as e:
-        msg = click.style(str(e), fg="bright_white")
-        sys.exit(f"{ctx.obj.error_fmt}{msg}")
-    except Exception as e:
-        sys.exit(f"{ctx.obj.unknown_error_fmt}{e}")
+    client = get_client(ctx)
+    resp = client.api.get_lab(path)
+    cli_print_output(output, resp, header=f"Lab: {resp.get('name')}")
 
 
 @click.command()
@@ -133,18 +129,25 @@ def read(ctx, path, output):
 def topology(ctx, path, output):
     """
     Retrieve lab topology
+
+    \b
+    Examples:
+        eve-ng lab topology
     """
-    try:
-        client = get_client(ctx)
-        resp = client.api.get_lab_topology(path)
-        topology = resp.get("data", {})
-        click.secho(f"Lab Topology @ {path}", fg="bright_blue")
-        click.echo(display(output, topology))
-    except (EvengHTTPError, EvengApiError) as e:
-        msg = click.style(str(e), fg="bright_white")
-        sys.exit(f"{ctx.obj.error_fmt}{msg}")
-    except Exception as e:
-        sys.exit(f"{ctx.obj.unknown_error_fmt}{e}")
+    client = get_client(ctx)
+    resp = client.api.get_lab_topology(path)
+    table_header = [
+        "Type",
+        "SRC",
+        "SRC Type",
+        "SRC Label",
+        "DEST",
+        "DEST Type",
+        "DEST Label",
+    ]
+    cli_print_output(
+        output, resp, header=f"Lab Topology @ {path}", table_header=table_header
+    )
 
 
 @click.command(name="export")
@@ -156,19 +159,17 @@ def topology(ctx, path, output):
 def export_lab(ctx, path, dest):
     """
     Export and download lab file as ZIP archive
+
+    \b
+    Examples:
+        eve-ng lab export
     """
     client = get_client(ctx)
-    try:
-        client.log.debug(f"Exporting lab {path} to {dest}")
-        saved, zipname = client.api.export_lab(path)
-        if saved:
-            click.secho(display("text", f"Success: {zipname}"))
-    except (EvengHTTPError, EvengApiError) as e:
-        msg = click.style(str(e), fg="bright_white")
-        sys.exit(f"{ctx.obj.error_fmt}{msg}")
-    except Exception as e:
-        client.log.error(f"{e}")
-        raise
+    client.log.debug(f"Exporting lab {path} to {dest}")
+    saved, zipname = client.api.export_lab(path)
+    if saved:
+        cli_print(f"Lab exported to {zipname}")
+    sys.exit(0)
 
 
 @click.command(name="import")
@@ -179,15 +180,10 @@ def import_lab(ctx, folder, src):
     """
     Import lab into EVE-NG from ZIP archive
     """
-    try:
-        client = get_client(ctx)
-        resp = client.api.import_lab(Path(src), folder)
-        click.echo(display("text", resp))
-    except (EvengHTTPError, EvengApiError) as e:
-        msg = click.style(str(e), fg="bright_white")
-        sys.exit(f"{ctx.obj.error_fmt}{msg}")
-    except Exception as e:
-        sys.exit(f"{ctx.obj.unknown_error_fmt}{e}")
+
+    client = get_client(ctx)
+    resp = client.api.import_lab(Path(src), folder)
+    cli_print_output("json", resp)
 
 
 @click.command(name="list")
@@ -196,22 +192,23 @@ def import_lab(ctx, folder, src):
 def ls(ctx, output):
     """
     List the available labs in EVE-NG host
+
+    \b
+    Examples:
+        eve-ng lab list
     """
-    try:
-        client = get_client(ctx)
-        lab_details = _get_all_labs(client)
-        click.secho("Labs", fg="bright_blue")
-        click.echo(display(output, lab_details))
-    except (EvengHTTPError, EvengApiError) as e:
-        msg = click.style(str(e), fg="bright_white")
-        sys.exit(f"{ctx.obj.error_fmt}{msg}")
-    except Exception as e:
-        sys.exit(f"{ctx.obj.unknown_error_fmt}{e}")
+    client = get_client(ctx)
+    resp = _get_all_labs(client)
+    lab_data = [x["data"] for x in resp] if resp else resp
+    table_header = ["Name", "Path", "Description", "Author", "Lock"]
+    cli_print_output(
+        output, {"data": lab_data}, header="Labs", table_header=table_header
+    )
 
 
 @click.command()
 @click.option("--path", default="/", help="folder to create lab in")
-@click.option("--name", help="lab name")
+@click.option("--name", help="lab name", required=True)
 @click.option("--author", help="lab author")
 @click.option("--description", help="lab description")
 @click.option("--version", help="lab version")
@@ -219,22 +216,20 @@ def ls(ctx, output):
 def create(ctx, path: str, author: str, description: str, version: int, name: str):
     """
     Create a new lab
+
+    \b
+    Examples:
+        eve-ng lab create --name lab1 --author "John Doe" --description "My lab"
     """
-    try:
-        client = get_client(ctx)
-        response = client.api.create_lab(
-            name=name,
-            author=author,
-            path=path,
-            description=description,
-            version=version,
-        )
-        click.echo(display("text", response.get("message", {})))
-    except (EvengHTTPError, EvengApiError) as e:
-        msg = click.style(str(e), fg="bright_white")
-        sys.exit(f"{ctx.obj.error_fmt}{msg}")
-    except Exception as e:
-        sys.exit(f"{ctx.obj.unknown_error_fmt}{e}")
+    client = get_client(ctx)
+    response = client.api.create_lab(
+        name=name,
+        author=author,
+        path=path,
+        description=description,
+        version=version,
+    )
+    cli_print_output("text", response)
 
 
 @click.command()
@@ -275,17 +270,10 @@ def edit(ctx, path: str, **kwargs):
         eve-ng lab edit --author "Tafsir Thiam"
         eve-ng lab edit --body "Lab to demonstrate VXLAN/BGP-EVPN on vEOS"
     """
-    try:
-        edit_param = {k: v for k, v in kwargs.items() if v is not None}
-        client = get_client(ctx)
-        click.echo(f"updating lab @: {path}")
-        response = client.api.edit_lab(path, param=edit_param)
-        click.echo(display("text", response.get("message", {})))
-    except (EvengHTTPError, EvengApiError) as e:
-        msg = click.style(str(e), fg="bright_white")
-        sys.exit(f"{ctx.obj.error_fmt}{msg}")
-    except Exception as e:
-        sys.exit(f"{ctx.obj.unknown_error_fmt}{e}")
+    edit_param = {k: v for k, v in kwargs.items() if v is not None}
+    client = get_client(ctx)
+    response = client.api.edit_lab(path, param=edit_param)
+    cli_print_output("text", response)
 
 
 @click.command()
@@ -294,16 +282,14 @@ def edit(ctx, path: str, **kwargs):
 def delete(ctx, path):
     """
     Delete a lab on EVE-NG host
+
+    \b
+    Examples:
+        eve-ng lab delete --path /lab1
     """
-    try:
-        client = get_client(ctx)
-        response = client.api.delete_lab(path)
-        click.echo(display("text", response.get("message", {})))
-    except (EvengHTTPError, EvengApiError) as e:
-        msg = click.style(str(e), fg="bright_white")
-        sys.exit(f"{ctx.obj.error_fmt}{msg}")
-    except Exception as e:
-        sys.exit(f"{ctx.obj.unknown_error_fmt}{e}")
+    client = get_client(ctx)
+    response = client.api.delete_lab(path)
+    cli_print_output("text", response)
 
 
 @click.command()
@@ -312,16 +298,16 @@ def delete(ctx, path):
 )
 @click.pass_context
 def start(ctx, path):
-    """Start all nodes in lab"""
-    try:
-        client = get_client(ctx)
-        response = client.api.start_all_nodes(path)
-        click.echo(display("text", response.get("message", {})))
-    except (EvengHTTPError, EvengApiError) as e:
-        msg = click.style(str(e), fg="bright_white")
-        sys.exit(f"{ctx.obj.error_fmt}{msg}")
-    except Exception as e:
-        sys.exit(f"{ctx.obj.unknown_error_fmt}{e}")
+    """Start all nodes in lab
+
+    \b
+    Examples:
+        eve-ng lab start
+        eve-ng lab start --path /lab1
+    """
+    client = get_client(ctx)
+    response = client.api.start_all_nodes(path)
+    cli_print_output("text", response)
 
 
 @click.command()
@@ -332,20 +318,19 @@ def start(ctx, path):
 def stop(ctx, path):
     """
     Stop all nodes in lab
+
+    \b
+    Examples:
+        eve-ng lab stop
+        eve-ng lab stop --path /lab1
     """
-    try:
-        client = get_client(ctx)
-        response = client.api.stop_all_nodes(path)
-        if response.get("status") and response["status"] == "success":
-            close_resp = client.delete("/labs/close")
-            click.echo(display("text", close_resp.get("message", {})))
-        else:
-            click.echo(display("text", response.get("message", {})))
-    except (EvengHTTPError, EvengApiError) as e:
-        msg = click.style(str(e), fg="bright_white")
-        sys.exit(f"{ctx.obj.error_fmt}{msg}")
-    except Exception as e:
-        sys.exit(f"{ctx.obj.unknown_error_fmt}{e}")
+    client = get_client(ctx)
+    response = client.api.stop_all_nodes(path)
+    if response.get("status") and response["status"] == "success":
+        close_resp = client.delete("/labs/close")
+        cli_print_output("text", close_resp)
+    else:
+        cli_print_output("text", response)
 
 
 @click.command(name="show-active")
@@ -353,10 +338,13 @@ def stop(ctx, path):
 def show_active(ctx):
     """
     Show active lab
+
+    \b
+    Examples:
+        eve-ng lab show-active
     """
-    title = click.style("Active Lab: ", fg="bright_blue")
     active_lab = ctx.obj.active_lab or os.environ.get("EVE_NG_PATH")
-    click.echo(f"{title}{active_lab}")
+    cli_print(f"Active Lab: {active_lab}")
 
 
 @click.command(name="set-active")
@@ -375,8 +363,8 @@ def active(ctx, path):
             active_lab = active_lab_filepath.read_text()
         else:
             active_lab = os.environ.get("EVE_NG_PATH")
-        click.secho("Active Lab", fg="bright_blue")
-        click.echo(active_lab)
+        cli_print("Active Lab", style="info")
+        cli_print(active_lab)
 
     # set path option as active lab
     else:
@@ -394,7 +382,7 @@ def active(ctx, path):
         else:
             # TODO: Stop previously active lab?
             active_lab_filepath.write_text(path)
-            click.secho(f"Active Lab set to {path}", fg="green")
+            cli_print(f"Active Lab set to {path}", style="info")
 
 
 @click.group()
@@ -420,5 +408,5 @@ lab.add_command(delete)
 lab.add_command(active)
 lab.add_command(show_active)
 lab.add_command(topology)
-lab.add_command(import_lab)
+# lab.add_command(import_lab)
 lab.add_command(export_lab)

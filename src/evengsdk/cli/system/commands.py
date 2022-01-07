@@ -1,16 +1,11 @@
 # -*- coding: utf-8 -*-
-import sys
-
 import click
 
 from evengsdk.cli.utils import get_client
-from evengsdk.plugins.display import display
-from evengsdk.exceptions import EvengHTTPError, EvengApiError
+from evengsdk.cli.console import cli_print_output
 
 
 client = None
-ERROR = click.style("ERROR: ", fg="red")
-UNKNOWN_ERROR = click.style("UNKNOWN ERROR: ", fg="red")
 
 
 @click.command(name="list-node-templates")
@@ -19,18 +14,14 @@ UNKNOWN_ERROR = click.style("UNKNOWN ERROR: ", fg="red")
 def templates(ctx, output):
     """
     list EVE-NG node templates
+
+    \b
+    Examples:
+        eveng list-node-templates
     """
-    try:
-        client = get_client(ctx)
-        resp = client.api.list_node_templates()
-        if output != "json":
-            click.secho("Node Templates", fg="blue")
-        click.echo(display(output, resp.get("data", {})))
-    except (EvengHTTPError, EvengApiError) as e:
-        msg = click.style(str(e), fg="bright_white")
-        sys.exit(f"{ERROR}{msg}")
-    except Exception as e:
-        sys.exit(f"{UNKNOWN_ERROR}{e}")
+    client = get_client(ctx)
+    resp = client.api.list_node_templates()
+    cli_print_output(output, resp, header="Node Templates")
 
 
 @click.command(name="show-template")
@@ -40,18 +31,17 @@ def templates(ctx, output):
 def read_template(ctx, template_name, output):
     """
     get EVE-NG node template details
+
+    \b
+    Examples:
+        eveng show-template veos
     """
-    try:
-        client = get_client(ctx)
-        resp = client.api.node_template_detail(template_name)
-        if output != "json":
-            click.secho(f"Node Template: {template_name}", fg="blue")
-        click.echo(display(output, resp.get("data", {})))
-    except (EvengHTTPError, EvengApiError) as e:
-        msg = click.style(str(e), fg="bright_white")
-        sys.exit(f"{ERROR}{msg}")
-    except Exception as e:
-        sys.exit(f"{UNKNOWN_ERROR}{e}")
+    client = get_client(ctx)
+    resp = client.api.node_template_detail(template_name)
+    if resp:
+        del resp["data"]["options"]["icon"]["list"]
+    text_header = f"Node Template: {template_name}"
+    cli_print_output(output, resp, header=text_header)
 
 
 @click.command(name="list-network-types")
@@ -60,19 +50,14 @@ def read_template(ctx, template_name, output):
 def network_types(ctx, output):
     """
     list EVE-NG network types
+
+    \b
+    Examples:
+        eveng list-network-types
     """
-    try:
-        client = get_client(ctx)
-        resp = client.api.list_networks()
-        if output != "json":
-            click.secho("Network Types", fg="blue")
-        table_header = ["Network Type", "Name"]
-        click.echo(display(output, resp.get("data", {}), header=table_header))
-    except (EvengHTTPError, EvengApiError) as e:
-        msg = click.style(str(e), fg="bright_white")
-        sys.exit(f"{ERROR}{msg}")
-    except Exception as e:
-        sys.exit(f"{UNKNOWN_ERROR}{e}")
+    client = get_client(ctx)
+    resp = client.api.list_networks()
+    cli_print_output(output, resp, header="Network Types")
 
 
 @click.command(name="list-user-roles")
@@ -81,35 +66,28 @@ def network_types(ctx, output):
 def user_roles(ctx, output):
     """
     list EVE-NG user roles
+
+    \b
+    Examples:
+        eveng list-user-roles
     """
-    try:
-        client = get_client(ctx)
-        resp = client.api.list_user_roles()
-        if output != "json":
-            click.secho("User Roles", fg="blue")
-        table_header = ["Role Name", "Description"]
-        click.echo(display(output, resp.get("data", {}), header=table_header))
-    except (EvengHTTPError, EvengApiError) as e:
-        msg = click.style(str(e), fg="bright_white")
-        sys.exit(f"{ERROR}{msg}")
-    except Exception as e:
-        sys.exit(f"{UNKNOWN_ERROR}{e}")
+    client = get_client(ctx)
+    resp = client.api.list_user_roles()
+    table_header = ["Role Name", "Description"]
+    cli_print_output(output, resp, header="User Roles", table_header=table_header)
 
 
 @click.command(name="show-status")
 @click.option("--output", type=click.Choice(["json", "text", "table"]), default="json")
 @click.pass_context
 def status(ctx, output):
-    """View EVE-NG server status"""
-    try:
-        client = get_client(ctx)
-        resp = client.api.get_server_status()
-        if output != "json":
-            click.secho("System", fg="blue")
-        table_header = ["Component", "Status"]
-        click.echo(display(output, resp.get("data", {}), header=table_header))
-    except (EvengHTTPError, EvengApiError) as e:
-        msg = click.style(str(e), fg="bright_white")
-        sys.exit(f"{ERROR}{msg}")
-    except Exception as e:
-        sys.exit(f"{UNKNOWN_ERROR}{e}")
+    """View EVE-NG server status
+
+    \b
+    Examples:
+        eveng show-status
+    """
+    client = get_client(ctx)
+    resp = client.api.get_server_status()
+    table_header = ["Component", "Status"]
+    cli_print_output(output, resp, header="System", table_header=table_header)

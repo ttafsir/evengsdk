@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
 from pathlib import Path
 import os
-import sys
 from typing import List, Dict
 
 import click
 
-from evengsdk.exceptions import EvengHTTPError, EvengApiError
 from evengsdk.cli.utils import get_client, get_active_lab
-from evengsdk.plugins.display import display
-from evengsdk.cli.node import NODE_STATUS_CODES, NODE_STATUS_COLOR
+from evengsdk.cli.console import cli_print_output
 
 
 client = None
@@ -48,20 +45,16 @@ def upload_config(ctx, node_id, path, src, config):
 
     \b
     Examples:
-        eveng node upload-config -n 4 -config "hostname testing" # upload config from string
+        eveng node upload-config -n 4 --config "hostname testing" # upload config from string
         eveng node upload-config -n 4 -src config.txt            # load config from file
     """
-    try:
-        print(path)
-        client = get_client(ctx)
-        _config = config or _get_config(src)
-        resp = client.api.upload_node_config(path, node_id, config=_config, enable=True)
-        click.echo(display("json", resp))
-    except (EvengHTTPError, EvengApiError) as e:
-        msg = click.style(str(e), fg="bright_white")
-        sys.exit(f"{ctx.obj.error_fmt}{msg}")
-    except Exception as e:
-        sys.exit(f"{ctx.obj.unknown_error_fmt}{e}")
+    if not any([src, config]):
+        raise click.BadParameter("--src or --config must be provided")
+
+    client = get_client(ctx)
+    _config = config or _get_config(src)
+    resp = client.api.upload_node_config(path, node_id, config=_config, enable=True)
+    cli_print_output("text", resp)
 
 
 @click.command()
@@ -77,15 +70,9 @@ def start(ctx, path, node_id):
     Example:
         eve-ng node start -n 4
     """
-    try:
-        client = get_client(ctx)
-        resp = client.api.start_node(path, node_id)
-        click.echo(display("json", resp))
-    except (EvengHTTPError, EvengApiError) as e:
-        msg = click.style(str(e), fg="bright_white")
-        sys.exit(f"{ctx.obj.error_fmt}{msg}")
-    except Exception as e:
-        sys.exit(f"{ctx.obj.unknown_error_fmt}{e}")
+    client = get_client(ctx)
+    resp = client.api.start_node(path, node_id)
+    cli_print_output("text", resp)
 
 
 @click.command()
@@ -101,15 +88,9 @@ def stop(ctx, path, node_id):
     Example:
         eve-ng node stop -n 1
     """
-    try:
-        client = get_client(ctx)
-        resp = client.api.stop_node(path, node_id)
-        click.echo(display("json", resp))
-    except (EvengHTTPError, EvengApiError) as e:
-        msg = click.style(str(e), fg="bright_white")
-        sys.exit(f"{ctx.obj.error_fmt}{msg}")
-    except Exception as e:
-        sys.exit(f"{ctx.obj.unknown_error_fmt}{e}")
+    client = get_client(ctx)
+    resp = client.api.stop_node(path, node_id)
+    cli_print_output("text", resp)
 
 
 @click.command()
@@ -122,7 +103,7 @@ def stop(ctx, path, node_id):
 @click.option("--ethernet", default=2, help="number of ethernet interfaces.")
 @click.option("--serial", default=2, help="number of serial interfaces.")
 @click.option(
-    "--console",
+    "--console-type",
     default="telnet",
     type=click.Choice(["telnet", "vnc"]),
     help="number of serial interfaces.",
@@ -142,7 +123,7 @@ def create(
     image,
     ethernet,
     serial,
-    console,
+    console_type,
     cpu,
     ram,
 ):
@@ -150,28 +131,22 @@ def create(
 
     \b
     Example:
-        eveng node create --name leaf05 --template veos --image veos-4.22.0F
+        eve-ng node create --name leaf05 --template veos --image veos-4.22.0F
     """
-    try:
-        client = get_client(ctx)
-        node = {
-            "name": name,
-            "node_type": node_type,
-            "template": template,
-            "image": image,
-            "ethernet": ethernet,
-            "serial": serial,
-            "console": console,
-            "cpu": cpu,
-            "ram": ram,
-        }
-        resp = client.api.add_node(path, **node)
-        click.echo(display("json", resp))
-    except (EvengHTTPError, EvengApiError) as e:
-        msg = click.style(str(e), fg="bright_white")
-        sys.exit(f"{ctx.obj.error_fmt}{msg}")
-    except Exception as e:
-        sys.exit(f"{ctx.obj.unknown_error_fmt}{e}")
+    client = get_client(ctx)
+    node = {
+        "name": name,
+        "node_type": node_type,
+        "template": template,
+        "image": image,
+        "ethernet": ethernet,
+        "serial": serial,
+        "console": console_type,
+        "cpu": cpu,
+        "ram": ram,
+    }
+    resp = client.api.add_node(path, **node)
+    cli_print_output("text", resp)
 
 
 @click.command()
@@ -188,21 +163,13 @@ def wipe(ctx, path, node_id):
     eve-ng node wipe -n 4   # wipe node with id 4
     eve-ng node wipe        # wipe all nodes
     """
-    try:
-        client = get_client(ctx)
-        if node_id:
-            client.api.get_node(path, node_id)
-            resp = client.api.wipe_node(path, node_id)
-        else:
-            resp = client.api.wipe_all_nodes(path)
-        click.echo(display("json", resp))
-    except EvengHTTPError as e:
-        if "Cannot find node" in str(e):
-            sys.exit(click.style("could not find specified node in lab", fg="red"))
-        else:
-            sys.exit(f"{ctx.obj.unknown_error_fmt}{e}")
-    except Exception as e:
-        sys.exit(f"{ctx.obj.unknown_error_fmt}{e}")
+    client = get_client(ctx)
+    if node_id:
+        client.api.get_node(path, node_id)
+        resp = client.api.wipe_node(path, node_id)
+    else:
+        resp = client.api.wipe_all_nodes(path)
+    cli_print_output("text", resp)
 
 
 @click.command(name="export")
@@ -219,21 +186,13 @@ def export_node(ctx, path, node_id):
     eve-ng node export -n 4   # export node with id 4
     eve-ng node export        # export all nodes
     """
-    try:
-        client = get_client(ctx)
-        if node_id:
-            client.api.get_node(path, node_id)
-            resp = client.api.export_node(path, node_id)
-        else:
-            resp = client.api.export_all_nodes(path)
-        click.echo(display("json", resp))
-    except EvengHTTPError as e:
-        if "Cannot find node" in str(e):
-            sys.exit(click.style("could not find specified node in lab", fg="red"))
-        else:
-            sys.exit(f"{ctx.obj.unknown_error_fmt}{e}")
-    except Exception as e:
-        sys.exit(f"{ctx.obj.unknown_error_fmt}{e}")
+    client = get_client(ctx)
+    if node_id:
+        client.api.get_node(path, node_id)
+        resp = client.api.export_node(path, node_id)
+    else:
+        resp = client.api.export_all_nodes(path)
+    cli_print_output("text", resp)
 
 
 @click.command()
@@ -250,18 +209,10 @@ def read(ctx, path, node_id, output):
     Example:
     eve-ng node read -n 4   # read node with id 4
     """
-    try:
-        client = get_client(ctx)
-        resp = client.api.get_node(path, node_id)
-        node = resp.get("data", {})
-        if output != "json":
-            click.secho(node["name"].upper(), fg="bright_blue", dim=True)
-        click.echo(display(output, node))
-    except (EvengHTTPError, EvengApiError) as e:
-        msg = click.style(str(e), fg="bright_white")
-        sys.exit(f"{ctx.obj.error_fmt}{msg}")
-    except Exception as e:
-        sys.exit(f"{ctx.obj.unknown_error_fmt}{e}")
+    client = get_client(ctx)
+    resp = client.api.get_node(path, node_id)
+    node_name = resp["data"]["name"].upper()
+    cli_print_output(output, resp, header=node_name)
 
 
 @click.command()
@@ -277,18 +228,10 @@ def delete(ctx, path, node_id):
     Example:
     eve-ng node delete -n 4   # delete node with id 4
     """
-    try:
-        client = get_client(ctx)
-        client.api.get_node(path, node_id)
-        resp = client.api.delete_node(path, node_id)
-        click.echo(display("text", resp.get("message")))
-    except EvengHTTPError as e:
-        if "Cannot find node" in str(e):
-            sys.exit(click.style("could not find specified node in lab", fg="red"))
-        else:
-            sys.exit(f"{ctx.obj.unknown_error_fmt}{e}")
-    except Exception as e:
-        sys.exit(f"{ctx.obj.unknown_error_fmt}{e}")
+    client = get_client(ctx)
+    client.api.get_node(path, node_id)
+    resp = client.api.delete_node(path, node_id)
+    cli_print_output("text", resp)
 
 
 @click.command(name="list")
@@ -305,38 +248,28 @@ def ls(ctx, path, output):
     Example:
         eve-ng node list   # list all nodes
     """
-    try:
-        client = get_client(ctx)
-        resp = client.api.list_nodes(path)
-        node_indexes = resp.get("data", {}).keys()
-        nodes_list = [(idx, resp["data"][idx]) for idx in node_indexes]
+    client = get_client(ctx)
+    resp = client.api.list_nodes(path)
+    node_indexes = resp.get("data", {}).keys()
+    nodes_list = [(idx, resp["data"][idx]) for idx in node_indexes]
 
-        node_table = []
-        for idx, n in nodes_list:
-            status_code = n["status"]
-            table_row = {
-                "id": idx,
-                "name": n["name"],
-                "url": n["url"],
-                "image": n["image"],
-                "template": n["template"],
-                "uuid": n["uuid"],
-                "status": click.style(
-                    NODE_STATUS_CODES[status_code], fg=NODE_STATUS_COLOR[status_code]
-                ),
-            }
-            node_table.append(table_row)
+    node_table = []
+    for idx, n in nodes_list:
+        table_row = {
+            "id": idx,
+            "name": n["name"],
+            "url": n["url"],
+            "image": n["image"],
+            "template": n["template"],
+            "uuid": n["uuid"],
+            "status": n["status"],
+            "console": n["console"],
+        }
+        node_table.append(table_row)
 
-        if output != "json":
-            click.secho(f"Nodes @ {path}", fg="blue")
-
-        keys_to_display = "id name url image uuid template status".split()
-        click.echo(display(output, node_table, header=keys_to_display))
-    except (EvengHTTPError, EvengApiError) as e:
-        msg = click.style(str(e), fg="bright_white")
-        sys.exit(f"{ctx.obj.error_fmt}{msg}")
-    except Exception as e:
-        sys.exit(f"{ctx.obj.unknown_error_fmt}{e}")
+    text_header = f"Nodes @ {path}"
+    table_header = "id name url image uuid template status".split()
+    cli_print_output(output, node_table, header=text_header, table_header=table_header)
 
 
 @click.group()
