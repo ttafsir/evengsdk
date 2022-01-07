@@ -213,7 +213,7 @@ class TestLabCommands:
         ]
         result: Result = runner.invoke(cli, cli_args)
         assert result.exit_code > 0
-        assert "invalid or missing mandatory parameters" in result.output
+        assert "Missing option" in result.output
 
     def test_lab_edit(self, setup_test_lab, lab_to_edit):
         """
