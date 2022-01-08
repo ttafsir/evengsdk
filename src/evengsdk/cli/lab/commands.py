@@ -182,7 +182,7 @@ def import_lab(ctx, folder, src):
     """
 
     client = get_client(ctx)
-    resp = client.api.import_lab(Path(src), folder)
+    resp = client.api.import_lab(src, folder)
     cli_print_output("json", resp)
 
 
@@ -408,5 +408,5 @@ lab.add_command(delete)
 lab.add_command(active)
 lab.add_command(show_active)
 lab.add_command(topology)
-# lab.add_command(import_lab)
+lab.add_command(import_lab)
 lab.add_command(export_lab)

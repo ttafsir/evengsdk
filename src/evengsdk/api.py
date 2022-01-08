@@ -4,7 +4,7 @@ import copy
 import json
 from pathlib import Path
 from random import randint
-from typing import Dict, Tuple, Literal
+from typing import Dict, Tuple, Literal, Optional, BinaryIO
 from urllib.parse import quote_plus
 
 NETWORK_TYPES = ["bridge", "ovs"]
@@ -170,7 +170,9 @@ class EvengApi:
         url = "/labs" + self.normalize_path(path)
         return self.client.get(url)
 
-    def export_lab(self, path: str, filename: str = None) -> bool:
+    def export_lab(
+        self, path: str, filename: str = None
+    ) -> Tuple[bool, Optional[BinaryIO]]:
         """Export and download a lab as a .unl file
 
         :param path: the path of the lab (include parent folder)
@@ -178,6 +180,7 @@ class EvengApi:
         :param filename: filename to save the export.
                         defaults to 'lab_export.zip'
         :type filename: str, optional
+        :return: tuple of (success, file)
         """
         lab_filepath = Path(path)
 
@@ -195,6 +198,31 @@ class EvengApi:
                 handle.write(r.content)
             return (True, zip_filename)
         return (False, None)
+
+    def import_lab(self, path: str, folder: str = "/") -> bool:
+        """Import a lab from a .unl file
+
+        :param path: the source .zip file path of the lab
+        :type path: str
+        :param folder: the destination folder(s) for the lab as a path string
+                        defaults to '/'
+        :type folder: str, optional
+        :return: True if import was successful, False otherwise
+        """
+        if not Path(path).exists():
+            raise FileNotFoundError(f"{path} does not exist.")
+
+        # retrieve the current cookies and reset the client custom headers
+        cookies = self.client.session.cookies.get_dict()
+        headers = {
+            "Accept": "*/*",
+            "Cookie": "; ".join(f"{k}={v}" for k, v in cookies.items()),
+        }
+        self.client.session.headers = headers
+
+        # upload the file
+        files = {"file": open(path, "rb")}
+        return self.client.post("/import", data={"path": folder}, files=files)
 
     def list_lab_networks(self, path: str) -> Dict:
         """Get all networks configured in a lab
