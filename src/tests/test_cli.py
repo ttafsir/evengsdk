@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 import os
+import re
 
 import pytest
 from click.testing import CliRunner, Result
 
 from evengsdk.cli.cli import main as cli
 from evengsdk.cli.version import __version__
+from evengsdk.exceptions import EvengHTTPError
 
 
 LAB_TO_EDIT = {"name": "lab_to_edit", "path": "/"}
@@ -27,27 +29,37 @@ hostname vEOS4
 """
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def lab_to_edit():
     return LAB_TO_EDIT.copy()
 
 
-@pytest.fixture()
-def cli_client(lab_to_edit, client, request):
+@pytest.fixture(scope="session")
+def cli_client(client):
     client.login(
         username=os.environ["EVE_NG_USERNAME"], password=os.environ["EVE_NG_PASSWORD"]
     )
-    return client
+    yield client
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def setup_test_lab(lab_to_edit, cli_client):
-    cli_client.api.create_lab(**lab_to_edit)
+    cli_client.log.debug("starting CLI test..")
+    try:
+        cli_client.api.create_lab(**lab_to_edit)
+    except EvengHTTPError as e:
+        if "already exists" not in f"{e}":
+            cli_client.log.debug("Lab already exists...skipping setup")
+            raise e
     yield
-    cli_client.login(
-        username=os.environ["EVE_NG_USERNAME"], password=os.environ["EVE_NG_PASSWORD"]
-    )
+    cli_client.log.debug("cleaning up test session..")
     cli_client.api.delete_lab(lab_to_edit["path"] + lab_to_edit["name"])
+    if not cli_client.session:
+        cli_client.login(
+            username=os.environ["EVE_NG_USERNAME"],
+            password=os.environ["EVE_NG_PASSWORD"],
+        )
+    cli_client.logout()
 
 
 class TestCli:
@@ -215,7 +227,7 @@ class TestLabCommands:
         assert result.exit_code > 0
         assert "Missing option" in result.output
 
-    def test_lab_edit(self, setup_test_lab, lab_to_edit):
+    def test_lab_edit(self, lab_to_edit):
         """
         Arrange/Act: Run the `lab` command with the 'edit' subcommand.
         Assert: The output indicates that lab is updated successfully.
@@ -292,14 +304,26 @@ class TestLabCommands:
         result: Result = runner.invoke(cli, ["lab", "topology"])
         assert result.exit_code == 0, result.output
 
-    @pytest.mark.xfail
-    def test_lab_export(self):
+
+class TestImportExportCommands:
+    def test_lab_export_and_import(self, lab_to_edit, setup_test_lab):
         """
         Arrange/Act: Run the `lab` command with the 'export' subcommand.
         Assert: The output indicates that lab exported successfully.
         """
-        runner: CliRunner = CliRunner()
+        path = f"{lab_to_edit['path']}{lab_to_edit['name']}.unl"
+        runner: CliRunner = CliRunner(env={"EVE_NG_LAB_PATH": path})
         with runner.isolated_filesystem():
-            result: Result = runner.invoke(cli, ["lab", "export"])
+            # Export the lab
+            result: Result = runner.invoke(cli, ["lab", "export", "--path", path])
             assert result.exit_code == 0, result.output
-            assert "Success" in result.output
+            assert "Lab exported" in result.output
+
+            # grab the exported lab
+            match = re.search(r"unetlab_.*zip", result.output)
+            zipname = match.group(0)
+
+            # Import the lab
+            result2: Result = runner.invoke(cli, ["lab", "import", "--src", zipname])
+            assert result2.exit_code == 0, result2.output
+            assert "imported" in result2.output
