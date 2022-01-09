@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import click
 
+from evengsdk.cli.common import list_command
 from evengsdk.cli.utils import get_client
 from evengsdk.cli.console import cli_print_output
 
@@ -8,8 +9,8 @@ from evengsdk.cli.console import cli_print_output
 client = None
 
 
+@list_command
 @click.command(name="list-node-templates")
-@click.option("--output", type=click.Choice(["json", "text"]), default="json")
 @click.pass_context
 def templates(ctx, output):
     """
@@ -21,14 +22,40 @@ def templates(ctx, output):
     """
     client = get_client(ctx)
     resp = client.api.list_node_templates()
-    cli_print_output(output, resp, header="Node Templates")
+
+    if output == "table":
+        table_data = []
+        style = {"true": "green", "false": "red"}
+        for key, value in resp["data"].items():
+            template_image_available = "true" if "missing" not in value else "false"
+            this_style = style[template_image_available]
+            table_data.append(
+                {
+                    "name": key,
+                    "description": value,
+                    "available": f"[{this_style}]{template_image_available}[/{this_style}]",
+                }
+            )
+
+        table_header = [
+            ("Name", dict(justify="right", style="cyan", no_wrap=True)),
+            ("Description", {}),
+            ("Available", dict(justify="center")),
+        ]
+        cli_print_output(
+            output,
+            {"data": table_data},
+            table_header=table_header,
+            table_title="Node Templates",
+        )
+    else:
+        cli_print_output("json", resp)
 
 
 @click.command(name="show-template")
-@click.option("--output", type=click.Choice(["json", "text"]), default="json")
 @click.argument("template_name")
 @click.pass_context
-def read_template(ctx, template_name, output):
+def read_template(ctx, template_name):
     """
     get EVE-NG node template details
 
@@ -41,11 +68,11 @@ def read_template(ctx, template_name, output):
     if resp:
         del resp["data"]["options"]["icon"]["list"]
     text_header = f"Node Template: {template_name}"
-    cli_print_output(output, resp, header=text_header)
+    cli_print_output("json", resp, header=text_header)
 
 
+@list_command
 @click.command(name="list-network-types")
-@click.option("--output", type=click.Choice(["json", "text", "table"]), default="json")
 @click.pass_context
 def network_types(ctx, output):
     """
@@ -57,11 +84,26 @@ def network_types(ctx, output):
     """
     client = get_client(ctx)
     resp = client.api.list_networks()
+    if output == "table":
+        table_data = [
+            {"name": key, "description": value} for key, value in resp["data"].items()
+        ]
+
+        table_header = [
+            ("Name", dict(justify="right", style="cyan", no_wrap=True)),
+            ("Description", {}),
+        ]
+        cli_print_output(
+            output,
+            {"data": table_data},
+            table_header=table_header,
+            table_title="Network Types",
+        )
     cli_print_output(output, resp, header="Network Types")
 
 
+@list_command
 @click.command(name="list-user-roles")
-@click.option("--output", type=click.Choice(["json", "text", "table"]), default="json")
 @click.pass_context
 def user_roles(ctx, output):
     """
@@ -73,12 +115,26 @@ def user_roles(ctx, output):
     """
     client = get_client(ctx)
     resp = client.api.list_user_roles()
-    table_header = ["Role Name", "Description"]
-    cli_print_output(output, resp, header="User Roles", table_header=table_header)
+    if output == "table":
+        table_data = [
+            {"name": key, "description": value} for key, value in resp["data"].items()
+        ]
+
+        table_header = [
+            ("Name", dict(justify="right", style="cyan", no_wrap=True)),
+            ("Description", {}),
+        ]
+        cli_print_output(
+            output,
+            {"data": table_data},
+            table_header=table_header,
+            table_title="User Roles",
+        )
+    cli_print_output("json", resp, header="User Roles")
 
 
+@list_command
 @click.command(name="show-status")
-@click.option("--output", type=click.Choice(["json", "text", "table"]), default="json")
 @click.pass_context
 def status(ctx, output):
     """View EVE-NG server status
@@ -89,5 +145,19 @@ def status(ctx, output):
     """
     client = get_client(ctx)
     resp = client.api.get_server_status()
-    table_header = ["Component", "Status"]
-    cli_print_output(output, resp, header="System", table_header=table_header)
+    if output == "table":
+        table_data = [
+            {"name": key, "value": value} for key, value in resp["data"].items()
+        ]
+
+        table_header = [
+            ("Name", dict(justify="right", style="cyan", no_wrap=True)),
+            ("Value", {}),
+        ]
+        cli_print_output(
+            output,
+            {"data": table_data},
+            table_header=table_header,
+            table_title="Server Status",
+        )
+    cli_print_output(output, resp, header="System")

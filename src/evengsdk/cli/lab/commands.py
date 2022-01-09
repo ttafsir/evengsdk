@@ -8,6 +8,7 @@ from typing import Dict, List
 
 import click
 
+from evengsdk.cli.common import list_sub_command, list_command
 from evengsdk.cli.console import cli_print, cli_print_output
 from evengsdk.cli.utils import get_active_lab, get_client, thread_executor
 from evengsdk.client import EvengClient
@@ -124,7 +125,7 @@ def read(ctx, path, output):
 @click.option(
     "--path", default=None, callback=lambda ctx, _, v: v or ctx.obj.active_lab
 )
-@click.option("--output", type=click.Choice(["json"]), default="json")
+@list_command
 @click.pass_context
 def topology(ctx, path, output):
     """
@@ -137,13 +138,13 @@ def topology(ctx, path, output):
     client = get_client(ctx)
     resp = client.api.get_lab_topology(path)
     table_header = [
-        "Type",
-        "SRC",
-        "SRC Type",
-        "SRC Label",
-        "DEST",
-        "DEST Type",
-        "DEST Label",
+        ("type", {}),
+        ("source", dict(justify="center", style="cyan", no_wrap=True)),
+        ("source_type", {}),
+        ("source_label", {}),
+        ("destination", dict(justify="center", style="magenta", no_wrap=True)),
+        ("destination_type", {}),
+        ("destination_label", {}),
     ]
     cli_print_output(
         output, resp, header=f"Lab Topology @ {path}", table_header=table_header
@@ -186,8 +187,7 @@ def import_lab(ctx, folder, src):
     cli_print_output("json", resp)
 
 
-@click.command(name="list")
-@click.option("--output", type=click.Choice(["json", "text"]), default="json")
+@list_sub_command
 @click.pass_context
 def ls(ctx, output):
     """
@@ -200,9 +200,20 @@ def ls(ctx, output):
     client = get_client(ctx)
     resp = _get_all_labs(client)
     lab_data = [x["data"] for x in resp] if resp else resp
-    table_header = ["Name", "Path", "Description", "Author", "Lock"]
+    table_header = [
+        ("Name", dict(justify="right", style="cyan", no_wrap=True)),
+        ("Path", {}),
+        ("Description", {}),
+        ("Author", {}),
+        ("Lock", {}),
+    ]
     cli_print_output(
-        output, {"data": lab_data}, header="Labs", table_header=table_header
+        output,
+        {"data": lab_data},
+        header="Labs",
+        table_header=table_header,
+        table_title="Labs",
+        record_header_key="name",
     )
 
 

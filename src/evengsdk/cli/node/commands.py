@@ -5,8 +5,10 @@ from typing import List, Dict
 
 import click
 
+from evengsdk.cli.common import list_sub_command
 from evengsdk.cli.utils import get_client, get_active_lab
 from evengsdk.cli.console import cli_print_output
+from evengsdk.cli.node import NODE_STATUS_CODES
 
 
 client = None
@@ -31,7 +33,7 @@ def _get_config(src: Path) -> str:
         return handle.read()
 
 
-@click.command()
+@click.command("config")
 @click.option(
     "--path", default=None, callback=lambda ctx, _, v: v or ctx.obj.active_lab
 )
@@ -146,7 +148,7 @@ def create(
         "ram": ram,
     }
     resp = client.api.add_node(path, **node)
-    cli_print_output("text", resp)
+    cli_print_output("json", resp, header="Node created")
 
 
 @click.command()
@@ -169,7 +171,7 @@ def wipe(ctx, path, node_id):
         resp = client.api.wipe_node(path, node_id)
     else:
         resp = client.api.wipe_all_nodes(path)
-    cli_print_output("text", resp)
+    cli_print_output("text", resp, header="Node wiped")
 
 
 @click.command(name="export")
@@ -234,11 +236,10 @@ def delete(ctx, path, node_id):
     cli_print_output("text", resp)
 
 
-@click.command(name="list")
+@list_sub_command
 @click.option(
     "--path", default=None, callback=lambda ctx, _, v: v or ctx.obj.active_lab
 )
-@click.option("--output", type=click.Choice(["json", "text"]), default="json")
 @click.pass_context
 def ls(ctx, path, output):
     """
@@ -255,21 +256,37 @@ def ls(ctx, path, output):
 
     node_table = []
     for idx, n in nodes_list:
+        node_status = n["status"]
+        status = NODE_STATUS_CODES[node_status]
         table_row = {
             "id": idx,
             "name": n["name"],
             "url": n["url"],
             "image": n["image"],
             "template": n["template"],
-            "uuid": n["uuid"],
-            "status": n["status"],
+            "status": f"{status[0]} {status[1]}",
             "console": n["console"],
+            "ram": n["ram"],
+            "cpu": n["cpu"],
         }
         node_table.append(table_row)
 
-    text_header = f"Nodes @ {path}"
-    table_header = "id name url image uuid template status".split()
-    cli_print_output(output, node_table, header=text_header, table_header=table_header)
+    table_header = [
+        ("ID", dict(justify="right", style="cyan", no_wrap=True)),
+        ("Name", {}),
+        ("Url", {}),
+        ("Image", {}),
+        ("Template", {}),
+        ("Status", {}),
+        ("Console", {}),
+        ("RAM", {}),
+        ("CPU", {}),
+    ]
+
+    table_data = {"data": node_table}
+    cli_print_output(
+        output, table_data, table_header=table_header, table_title=f"Nodes @ {path}"
+    )
 
 
 @click.group()
