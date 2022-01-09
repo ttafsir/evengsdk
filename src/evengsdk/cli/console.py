@@ -31,7 +31,7 @@ class ConsolePrinter(Console):
                 self.print_json(output)
                 sys.exit(0)
 
-            if header:
+            if plugin == "text" and header:
                 self.print(header, style="info")
 
             self.print(output)
