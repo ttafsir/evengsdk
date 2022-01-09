@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 import click
 
+from evengsdk.cli.common import list_sub_command
 from evengsdk.cli.console import cli_print_output
 from evengsdk.cli.utils import get_client
 
 
-@click.command(name="list")
+@list_sub_command
 @click.pass_context
-def ls(ctx):
+def ls(ctx, output):
     """
     List folders on EVE-NG host
 
@@ -17,7 +18,18 @@ def ls(ctx):
     """
     client = get_client(ctx)
     resp = client.api.list_folders()
-    cli_print_output("json", resp)
+    folder_data = resp["data"]["folders"]
+    table_header = [
+        ("Name", dict(justify="right", style="cyan", no_wrap=True)),
+        ("Path", {}),
+    ]
+    cli_print_output(
+        output,
+        {"data": folder_data},
+        header="Folders",
+        table_header=table_header,
+        table_title="Folders",
+    )
 
 
 @click.command()
