@@ -7,7 +7,7 @@ import click
 
 from evengsdk.cli.common import list_sub_command
 from evengsdk.cli.utils import get_client, get_active_lab
-from evengsdk.cli.console import cli_print_output
+from evengsdk.cli.console import cli_print_output, cli_print_error
 from evengsdk.cli.node import NODE_STATUS_CODES
 
 
@@ -251,6 +251,11 @@ def ls(ctx, path, output):
     """
     client = get_client(ctx)
     resp = client.api.list_nodes(path)
+
+    node_data = resp.get("data", {})
+    if not node_data:
+        cli_print_error("No nodes found. Is this lab empty?")
+
     node_indexes = resp.get("data", {}).keys()
     nodes_list = [(idx, resp["data"][idx]) for idx in node_indexes]
 
