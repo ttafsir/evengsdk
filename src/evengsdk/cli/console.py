@@ -74,3 +74,8 @@ def cli_print(output: Any, *args, **kwargs):
         console.print(output, *args, **kwargs)
     except (EvengHTTPError, EvengApiError) as e:
         console.print_error(f"{e}")
+
+
+def cli_print_error(output: Any):
+    """Generic print function"""
+    console.print_error(f"{output}")
