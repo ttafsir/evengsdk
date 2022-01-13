@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from jsonschema import Draft7Validator, FormatChecker
+from jsonschema import Draft7Validator
 
 
 SCHEMAFILE = Path(__file__).parent / "lab-schema.json"
