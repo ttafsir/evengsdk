@@ -7,9 +7,11 @@ from pathlib import Path
 from typing import Dict, List
 
 import click
+import yaml
 
 from evengsdk.cli.common import list_sub_command, list_command
-from evengsdk.cli.console import cli_print, cli_print_output
+from evengsdk.cli.console import cli_print, cli_print_error, cli_print_output
+from evengsdk.cli.lab.topology import Topology
 from evengsdk.cli.utils import get_active_lab, get_client, thread_executor
 from evengsdk.client import EvengClient
 
@@ -245,6 +247,92 @@ def create(ctx, path: str, author: str, description: str, version: int, name: st
 
 @click.command()
 @click.option(
+    "-t",
+    "--topology",
+    required=True,
+    help="Toplogy file to import",
+    type=click.Path(exists=True),
+)
+@click.option(
+    "-d",
+    "--template-dir",
+    default="templates",
+    help="Template directory",
+    type=click.Path(),
+)
+@click.pass_context
+def create_from_topology(ctx, topology, template_dir):
+    """
+    Create a new lab
+
+    \b
+    Examples:
+        eveng lab create-from-topology --topology examples/test_topology.yml
+    """
+    client = get_client(ctx)
+
+    if not Path(topology).exists():
+        raise click.BadParameter(f"Topology file {topology} does not exist")
+
+    topology_data = yaml.safe_load(Path(topology).read_text())
+    topology = Topology(topology_data)
+
+    errors = topology.validate()
+    if errors:
+        cli_print_error(f"Topology validation failed: {errors}")
+
+    # create device configs, if needed
+    topology.build_node_configs(template_dir=template_dir)
+
+    try:
+        # create lab
+        resp = client.api.create_lab(**topology.lab)
+        if resp["status"] == "success":
+            client.log.debug(f"Lab created: {resp}")
+
+        # create nodes and apply configs, if needed
+        for node in topology.nodes:
+            name = node["name"]
+            resp = client.api.add_node(topology.path, **node)
+            if resp["status"] == "success":
+                client.log.debug(f"Device created: {name}")
+                config = topology.get_node_config(name)
+                success = False
+                if config:
+                    node_id = resp["data"]["id"]
+                    resp = client.api.upload_node_config(
+                        topology.path, node_id, config, enable=True
+                    )
+                    success = resp["status"] == "success"
+                client.log.debug(f"Device config applied: {success}")
+
+        # create networks
+        for network in topology.networks:
+            resp = client.api.add_lab_network(topology.path, **network)
+            if resp["status"] == "success":
+                client.log.debug(f"Network created: {resp.get('data')}")
+
+        # create network links
+        for link in topology.cloud_links:
+            r = client.api.connect_node_to_cloud(topology.path, **link)
+            if r["status"] == "success":
+                client.log.debug(
+                    f"Node connected: {link['src']}:{link['src_label']}"
+                    f" -> {link['dst']}"
+                )
+
+        # create p2p links
+        for link in topology.p2p_links:
+            created = client.api.connect_node_to_node(topology.path, **link)
+            client.log.debug(f"P2P {link['src']} <-> {link['dst']}; success: {created}")
+    except Exception as e:
+        if "already exists" not in str(e):
+            client.api.delete_lab(topology.path)
+        cli_print_error(f"Error creating lab: {e}")
+
+
+@click.command()
+@click.option(
     "--author",
     help="lab author",
     cls=MutuallyExclusiveOption,
@@ -421,3 +509,4 @@ lab.add_command(show_active)
 lab.add_command(topology)
 lab.add_command(import_lab)
 lab.add_command(export_lab)
+lab.add_command(create_from_topology)
