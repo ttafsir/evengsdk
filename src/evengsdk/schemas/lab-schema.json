@@ -225,48 +225,105 @@
             "enum": ["telnet", "vnc"],
             "default": "telnet"
         },
+        "nodeConfigurationFile": {
+            "type": "string",
+            "title": "Configuration file path",
+            "minLength": 1
+        },
+        "nodeConfigurationTemplate": {
+            "type": "string",
+            "title": "Configuration template",
+            "minLength": 1
+        },
+        "nodeConfigurationTemplateVars": {
+            "type": "object",
+            "title": "Configuration template variables"
+        },
+        "nodeConfigurationTemplateVarsfile": {
+            "type": "string",
+            "title": "Configuration template variables file"
+        },
+        "nodeConfigurationFileOption": {
+            "type": "object",
+            "properties": {
+                "file": {
+                    "$ref": "#/definitions/nodeConfigurationFile"
+                }
+            },
+            "required": ["file"]
+        },
+        "nodeConfigurationTemplateOption": {
+            "type": "object",
+            "properties": {
+                "template": {
+                    "$ref": "#/definitions/nodeConfigurationTemplate"
+                },
+                "vars": {
+                    "oneOf": [
+                        {
+                            "$ref": "#/definitions/nodeConfigurationTemplateVars"
+                        },
+                        {
+                            "$ref": "#/definitions/nodeConfigurationTemplateVarsfile"
+                        }
+                    ],
+                    "minimumProperties": 1
+                }
+            },
+            "required": ["template", "vars"]
+        },
         "node": {
-            "console": {
-                "$ref": "#/definitions/nodeConsole"
-            },
-            "config": {
-                "$ref": "#/definitions/nodeConfig"
-            },
-            "delay": {
-                "$ref": "#/definitions/nodeDelay"
-            },
-            "left": {
-                "$ref": "#/definitions/nodeLeft"
-            },
-            "icon": {
-                "$ref": "#/definitions/nodeIcon"
-            },
-            "image": {
-                "$ref": "#/definitions/nodeImage"
-            },
-            "name": {
-                "$ref": "#/definitions/nodeName"
-            },
-            "template": {
-                "$ref": "#/definitions/nodeTemplate"
-            },
-            "node_type": {
-                "$ref": "#/definitions/nodeType"
-            },
-            "top": {
-                "$ref": "#/definitions/nodeTop"
-            },
-            "cpu": {
-                "$ref": "#/definitions/nodeCpu"
-            },
-            "ram": {
-                "$ref": "#/definitions/nodeRam"
-            },
-            "ethernet": {
-                "$ref": "#/definitions/nodeEthernet"
-            },
-            "serial": {
-                "$ref": "#/definitions/nodeSerial"
+            "type": "object",
+            "properties":{
+                "console": {
+                    "$ref": "#/definitions/nodeConsole"
+                },
+                "config": {
+                    "$ref": "#/definitions/nodeConfig"
+                },
+                "delay": {
+                    "$ref": "#/definitions/nodeDelay"
+                },
+                "left": {
+                    "$ref": "#/definitions/nodeLeft"
+                },
+                "icon": {
+                    "$ref": "#/definitions/nodeIcon"
+                },
+                "image": {
+                    "$ref": "#/definitions/nodeImage"
+                },
+                "name": {
+                    "$ref": "#/definitions/nodeName"
+                },
+                "template": {
+                    "$ref": "#/definitions/nodeTemplate"
+                },
+                "node_type": {
+                    "$ref": "#/definitions/nodeType"
+                },
+                "top": {
+                    "$ref": "#/definitions/nodeTop"
+                },
+                "cpu": {
+                    "$ref": "#/definitions/nodeCpu"
+                },
+                "ram": {
+                    "$ref": "#/definitions/nodeRam"
+                },
+                "ethernet": {
+                    "$ref": "#/definitions/nodeEthernet"
+                },
+                "serial": {
+                    "$ref": "#/definitions/nodeSerial"
+                },
+                "configuration": {
+                    "title": "Node configuration file or template",
+                    "oneOf": [
+                        {"$ref": "#/definitions/nodeConfigurationFileOption"},
+                        {"$ref": "#/definitions/nodeConfigurationTemplateOption"}
+                    ]
+                }
             },
             "required": ["name", "image", "template"]
         },
