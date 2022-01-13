@@ -4,4 +4,4 @@ python-dotenv
 pyyaml
 jinja2
 rich
-jsonschema
+jsonschema[format]
