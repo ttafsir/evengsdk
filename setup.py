@@ -21,7 +21,7 @@ def get_version():
 
 
 setup(
-    name="evengsdk",
+    name="eve-ng",
     keywords=["eve-ng", "eveng", "unetlab", "evengsdk"],
     license="MIT license",
     version=get_version(),
