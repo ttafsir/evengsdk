@@ -119,36 +119,43 @@ client.logout()
 
 <details>
 <summary>System</summary>
+
 *  `get_server_status`
 * `node_template_detail`
 * `list_node_templates`
 * `list_user_roles`
 * `list_networks`
+
 </details>
 
 <details>
 <summary>Users</summary>
+
 * `list_users`
 * `add_user`
 * `get_user`
 * `edit_user`
 * `delete_user`
+
 </details>
 
 <details>
-<summary>Lab</summary>
+<summary>Labs</summary>
+
 * `get_lab`
 * `create_lab`
-* `delete_lab `,
+* `delete_lab `
 * `edit_lab`
 * `lock_lab`
 * `unlock_lab`
 * `export_lab`
 * `import_lab`
+
 </details>
 
 <details>
 <summary>Nodes</summary>
+
 * `list_nodes`
 * `add_node`
 * `get_node`
@@ -169,23 +176,28 @@ client.logout()
 * `wipe_node`
 * `connect_node_to_cloud`
 * `connect_node_to_node`
-<details>
+
+</details>
 
 <details>
 <summary>Lab Networks</summary>
-'add_lab_network`
-'edit_lab_network`
-'delete_lab_network`
-'get_lab_network`
-'get_lab_network_by_name`
-'get_lab_topology`
-'list_lab_networks`
+
+* `add_lab_network`
+* `edit_lab_network`
+* `delete_lab_network`
+* `get_lab_network`
+* `get_lab_network_by_name`
+* `get_lab_topology`
+* `list_lab_networks`
+
 </details>
 
 <details>
 <summary>Folders</summary>
-'get_folder`
-'list_folders`
+
+* `get_folder`
+* `list_folders`
+
 </details>
 
 
@@ -236,7 +248,7 @@ Commands:
 
 ### CLI sample output
 
-![image-20220114112752004](/Users/thiamt/Projects/eve-ng-sdk-project/cli-output.png)
+![image-20220114112752004](./cli-output.png)
 
 ## :gear: Configuration
 
