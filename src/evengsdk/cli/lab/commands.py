@@ -10,7 +10,7 @@ import click
 import yaml
 
 from evengsdk.cli.common import list_sub_command, list_command
-from evengsdk.cli.console import cli_print, cli_print_error, cli_print_output
+from evengsdk.cli.console import cli_print, cli_print_error, cli_print_output, console
 from evengsdk.cli.lab.topology import Topology
 from evengsdk.cli.utils import get_active_lab, get_client, thread_executor
 from evengsdk.client import EvengClient
@@ -103,6 +103,64 @@ def _get_all_labs(client: EvengClient) -> List:
     return thread_executor(_get_lab_details, (x["path"] for x in all_lab_info))
 
 
+def create_network_links(
+    client: EvengClient, topology: Topology, tasks: List = None
+) -> None:
+    """
+    Create network links
+    """
+    for link in topology.cloud_links:
+        r = client.api.connect_node_to_cloud(topology.path, **link)
+        status = "completed" if r["status"] == "success" else "failed"
+        console.log(f"{tasks.pop(0)} {status}")
+
+
+def create_p2p_links(
+    client: EvengClient, topology: Topology, tasks: List = None
+) -> None:
+    """
+    Create p2p links
+    """
+    for link in topology.p2p_links:
+        created = client.api.connect_node_to_node(topology.path, **link)
+        console.log(f"{tasks.pop(0)} {'completed' if created else 'failed'}")
+
+
+def create_and_configure_nodes(
+    client: EvengClient, topology: Topology, tasks: List = None
+) -> None:
+    """
+    Create and configure nodes
+    """
+    for node in topology.nodes:
+        # create node
+        resp = client.api.add_node(topology.path, **node)
+        create_result = "completed" if resp["status"] == "success" else "failed"
+
+        # configure node
+        if resp["status"] == "success":
+            config = topology.get_node_config(node["name"])
+            if config:
+                node_id = resp["data"]["id"]
+                resp = client.api.upload_node_config(
+                    topology.path, node_id, config, enable=True
+                )
+        console.log(f"{tasks.pop(0)} {create_result}")
+
+
+def create_networks(
+    client: EvengClient, topology: Topology, tasks: List = None
+) -> None:
+    """
+    Create networks
+    """
+    for network in topology.networks:
+        resp = client.api.add_lab_network(topology.path, **network)
+        success = resp["status"] == "success"
+        status = "completed" if success else "failed"
+        console.log(f"{tasks.pop(0)} {status}. ID: {resp.get('data', {}).get('id')}")
+
+
 @click.command()
 @click.option(
     "--path", default=None, callback=lambda ctx, _, v: v or ctx.obj.active_lab
@@ -168,10 +226,10 @@ def export_lab(ctx, path, dest):
         eve-ng lab export
     """
     client = get_client(ctx)
-    client.log.debug(f"Exporting lab {path} to {dest}")
-    saved, zipname = client.api.export_lab(path)
-    if saved:
-        cli_print(f"Lab exported to {zipname}")
+    with console.status("[bold green]Exporting lab..."):
+        saved, zipname = client.api.export_lab(path)
+        if saved:
+            cli_print(f"Lab exported to {zipname}")
     sys.exit(0)
 
 
@@ -185,8 +243,9 @@ def import_lab(ctx, folder, src):
     """
 
     client = get_client(ctx)
-    resp = client.api.import_lab(src, folder)
-    cli_print_output("json", resp)
+    with console.status("[bold green]Importing lab..."):
+        resp = client.api.import_lab(src, folder)
+        cli_print_output("json", resp)
 
 
 @list_sub_command
@@ -286,45 +345,41 @@ def create_from_topology(ctx, topology, template_dir):
 
     try:
         # create lab
-        resp = client.api.create_lab(**topology.lab)
-        if resp["status"] == "success":
-            client.log.debug(f"Lab created: {resp}")
+        with console.status("[bold green]Creating lab..."):
+            resp = client.api.create_lab(**topology.lab)
+            if resp["status"] == "success":
+                console.log(f"Lab created: {topology.path}")
 
         # create nodes and apply configs, if needed
-        for node in topology.nodes:
-            name = node["name"]
-            resp = client.api.add_node(topology.path, **node)
-            if resp["status"] == "success":
-                client.log.debug(f"Device created: {name}")
-                config = topology.get_node_config(name)
-                success = False
-                if config:
-                    node_id = resp["data"]["id"]
-                    resp = client.api.upload_node_config(
-                        topology.path, node_id, config, enable=True
-                    )
-                    success = resp["status"] == "success"
-                client.log.debug(f"Device config applied: {success}")
+        node_tasks = [
+            f"node [bold green]{n['name']}[/bold green]" for n in topology.nodes
+        ]
+        with console.status("[bold green]Creating nodes..."):
+            create_and_configure_nodes(client, topology, tasks=node_tasks)
 
         # create networks
-        for network in topology.networks:
-            resp = client.api.add_lab_network(topology.path, **network)
-            if resp["status"] == "success":
-                client.log.debug(f"Network created: {resp.get('data')}")
+        network_tasks = [f"network {n['name']}" for n in topology.networks]
+        with console.status("[bold green]Creating networks..."):
+            create_networks(client, topology, tasks=network_tasks)
 
         # create network links
-        for link in topology.cloud_links:
-            r = client.api.connect_node_to_cloud(topology.path, **link)
-            if r["status"] == "success":
-                client.log.debug(
-                    f"Node connected: {link['src']}:{link['src_label']}"
-                    f" -> {link['dst']}"
-                )
+        link_tasks = [
+            f"link [bold green]{link['src']}:{link['src_label']}[/bold green]"
+            f" -> [bold green]{link['dst']}[/bold green]"
+            for link in topology.cloud_links
+        ]
+        with console.status("[bold green]Creating links..."):
+            create_network_links(client, topology, tasks=link_tasks)
 
         # create p2p links
-        for link in topology.p2p_links:
-            created = client.api.connect_node_to_node(topology.path, **link)
-            client.log.debug(f"P2P {link['src']} <-> {link['dst']}; success: {created}")
+        p2p_tasks = [
+            f"link [bold green]{link['src']}:{link['src_label']}[/bold green]"
+            f" <-> [bold green]{link['dst']}:{link['dst_label']}[/bold green]"
+            for link in topology.p2p_links
+        ]
+        with console.status("[bold green]Creating links..."):
+            create_p2p_links(client, topology, tasks=p2p_tasks)
+
     except Exception as e:
         if "already exists" not in str(e):
             client.api.delete_lab(topology.path)
