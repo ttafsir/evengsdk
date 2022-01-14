@@ -22,11 +22,12 @@ jobs:
           ${{ runner.os }}-publish-pip-
     - name: Install dependencies
       run: |
-        pip install setuptools wheel twine
+        python3 -m pip install --upgrade build
     - name: Publish to PyPI
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
       run: |
-        python -m build
+        python3 -m build
         twine upload dist/*
+
