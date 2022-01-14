@@ -24,7 +24,7 @@ jobs:
     - name: Install dependencies
       run: |
         python3 -m pip install --upgrade build
-
+        pip install setuptools wheel twine
     - name: Publish to PyPI
       env:
         TWINE_USERNAME: __token__
