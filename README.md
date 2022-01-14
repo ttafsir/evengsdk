@@ -14,7 +14,7 @@ Evegnsdk allows you to quickly builds network topologies in EVE-NG for testing a
 You can install `evengsdk` using pip
 
 ```sh
-pip install evegnsdk
+pip install eve-ng
 ```
 
 ## Basic Usage
