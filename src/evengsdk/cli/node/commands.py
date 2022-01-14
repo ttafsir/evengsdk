@@ -7,7 +7,7 @@ import click
 
 from evengsdk.cli.common import list_sub_command
 from evengsdk.cli.utils import get_client, get_active_lab
-from evengsdk.cli.console import cli_print_output, cli_print_error
+from evengsdk.cli.console import cli_print_output, cli_print_error, cli_print
 from evengsdk.cli.node import NODE_STATUS_CODES
 
 
@@ -47,16 +47,20 @@ def upload_config(ctx, node_id, path, src, config):
 
     \b
     Examples:
-        eveng node upload-config -n 4 --config "hostname testing" # upload config from string
-        eveng node upload-config -n 4 -src config.txt            # load config from file
+        eveng node config -n 1                             # view startup config
+        eveng node config -n 4 --config "hostname testing" # upload config from string
+        eveng node -config -n 4 -src config.txt            # load config from file
     """
-    if not any([src, config]):
-        raise click.BadParameter("--src or --config must be provided")
-
     client = get_client(ctx)
-    _config = config or _get_config(src)
-    resp = client.api.upload_node_config(path, node_id, config=_config, enable=True)
-    cli_print_output("text", resp)
+    if any([src, config]):
+        _config = config or _get_config(src)
+        resp = client.api.upload_node_config(path, node_id, config=_config, enable=True)
+        cli_print_output("text", resp)
+    else:
+        resp = client.api.get_node_config_by_id(path, node_id)
+        if resp["status"] == "success":
+            resp = resp.get("data", {}).get("data")
+            cli_print(resp)
 
 
 @click.command()
