@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 import os
 import logging
+
 import pytest
 
 from evengsdk.client import EvengClient
-from evengsdk.exceptions import EvengClientError, EvengLoginError
+from evengsdk.exceptions import EvengLoginError, EvengHTTPError
 
 
 @pytest.fixture()
@@ -18,7 +19,7 @@ def local_client(local_client_ip):
 
 
 class TestEvengClient:
-    """ Test cases """
+    """Test cases"""
 
     def test_create_client_with_logfile(self, local_client_host):
         """
@@ -76,44 +77,38 @@ class TestEvengClient:
         with pytest.raises(EvengLoginError):
             username = os.environ["EVE_NG_USERNAME"]
             passwd = os.environ["EVE_NG_PASSWORD"]
-            resp = client.login(username=username, password=passwd)
-            print(resp)
-
-    def test_client_api_created(self, authenticated_client):
-        assert authenticated_client.api is not None
-        assert (
-            authenticated_client.api.__repr__()
-            == f"EvengApi({authenticated_client.session})"
-        )
+            client.login(username=username, password=passwd)
 
     # *********************************
     #   HTTP METHODS
     # *********************************
-    def test_client_get(self, authenticated_client):
+    def test_client_get_status_full_url(self, authenticated_client):
         """
         Verify GET call from client
         """
-        url = authenticated_client.url_prefix + "/status"
-        r = authenticated_client.session.get(url)
-        assert r.status_code >= 200 <= 299
+        url = f"http://{authenticated_client.host}/api/status"
+        r = authenticated_client.get(url)
+        assert r["data"]
 
-    def test_client_get_call_bad_ep(self, authenticated_client):
+    def test_client_get_status_endpoint(self, authenticated_client):
+        """
+        Verify GET call from client
+        """
+        r = authenticated_client.get("/status")
+        assert r["data"]
+
+    def test_client_get_bad_endpoint(self, authenticated_client):
         """
         Verify GET with bad endpoint returns an error
         """
-        url = authenticated_client.url_prefix + "/bad_endpoint"
-        r = authenticated_client.session.get(url)
-        assert r.status_code >= 400
+        endpoint = "/bad_endpoint"
+        with pytest.raises(EvengHTTPError):
+            authenticated_client.get(endpoint)
 
-    def test_post_call(self, authenticated_client):
-        """
-        Verify POST call with client
-        """
-        pass
-
-    def test_post_call_bad_url(self, authenticated_client):
+    def test_client_post_bad_endpoint(self, authenticated_client):
         """
         Verify post with bad URL returns an error
         """
-        with pytest.raises(EvengClientError):
-            authenticated_client.post("/bogus", data=None)
+        endpoint = "/bad_endpoint"
+        with pytest.raises(EvengHTTPError):
+            authenticated_client.post(endpoint, data=None)

@@ -10,7 +10,9 @@ load_dotenv()
 
 @pytest.fixture(scope="session")
 def client():
-    return EvengClient(os.environ["EVE_NG_HOST"], log_file="test.log")
+    return EvengClient(
+        os.environ["EVE_NG_HOST"], log_file="test.log", log_level="DEBUG"
+    )
 
 
 @pytest.fixture(scope="session")

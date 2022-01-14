@@ -1,0 +1,507 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "type": "object",
+    "definitions": {
+        "labName": {
+            "type": "string",
+            "description": "Name",
+            "minLength": 1,
+            "maxLength": 255
+        },
+        "labPath": {
+            "type": "string",
+            "description": "Path",
+            "default": "/"
+        },
+        "labVersion": {
+            "type": "number",
+            "description": "Version",
+            "default": 0
+        },
+        "labAuthor": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "title": "Author"
+        },
+        "labScriptTimeout": {
+            "type": "number",
+            "default": 300,
+            "title": "Config script timeout"
+        },
+        "labDescription": {
+            "type": "string",
+            "title": "Description"
+        },
+        "labTasks": {
+            "type": "string",
+            "title": "Tasks"
+        },
+        "labBody": {
+            "type": "string",
+            "title": "Body"
+        },
+        "nodeName": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Name/Prefix"
+        },
+        "nodeConfig": {
+            "type": "number",
+            "enum": [0, 1],
+            "default": 0,
+            "title": "Startup config",
+            "description": "Startup config configured"
+        },
+        "nodeDelay": {
+            "type": "number",
+            "default": 0,
+            "title": "Delay",
+            "description": "Seconds to wait before starting the node"
+        },
+        "nodeLeft": {
+            "type": "number",
+            "title": "Left",
+            "description": "Margin from left, in percentage (i.e. 35%)"
+        },
+        "nodeTop": {
+            "type": "number",
+            "title": "Top",
+            "description": "Margin from top, in percentage (i.e. 35%)"
+        },
+        "nodeIcon": {
+            "type": "string",
+            "title": "Icon",
+            "description": "Node Icon filename"
+        },
+        "nodeImage": {
+            "type": "string",
+            "title": "Image",
+            "description": "The Application Service Port. Use '0' for ICMP only"
+        },
+        "nodeTemplate": {
+            "type": "string",
+            "enum": [
+                "a10",
+                "osx",
+                "veos",
+                "clearpass",
+                "arubacx",
+                "aruba",
+                "barracuda",
+                "brocadevadx",
+                "cpsg",
+                "acs",
+                "ampcloud",
+                "apicem",
+                "asa",
+                "asav",
+                "c9800cl",
+                "cda",
+                "csr1000v",
+                "csr1000vng",
+                "cucm",
+                "dcnm",
+                "phoebe",
+                "cexpresw",
+                "firepower",
+                "firepower6",
+                "iol",
+                "c1710",
+                "c3725",
+                "c7200",
+                "cips",
+                "ise",
+                "cms",
+                "titanium",
+                "nxosv9k",
+                "prime",
+                "stealth",
+                "uccx",
+                "cup",
+                "ucspe",
+                "cue",
+                "vios",
+                "viosl2",
+                "vnam",
+                "vwaas",
+                "vwlc",
+                "coeus",
+                "xrv",
+                "xrv9k",
+                "nsvpx",
+                "ctxsdw",
+                "cumulus",
+                "cyberoam",
+                "extremexos",
+                "bigip",
+                "fortinet",
+                "hpvsr",
+                "huaweiar1k",
+                "huaweiusg6kv",
+                "infoblox",
+                "olive",
+                "junipervrr",
+                "vmx",
+                "vmxvcp",
+                "vmxvfp",
+                "vqfxpfe",
+                "vqfxre",
+                "vsrx",
+                "vsrxng",
+                "jspace",
+                "kerio",
+                "linux",
+                "mikrotik",
+                "newimage",
+                "timoscpm",
+                "timosiom",
+                "timos",
+                "ostinato",
+                "paloalto",
+                "pfsense",
+                "scrutinizer",
+                "pulse",
+                "alteon",
+                "riverbed",
+                "sterra",
+                "silveredge",
+                "silverorch",
+                "sonicwall",
+                "sophosutm",
+                "sophosxg",
+                "trendmivtps",
+                "veloedge",
+                "velogw",
+                "veloorch",
+                "versaana",
+                "versadir",
+                "versafvnf",
+                "vtbond",
+                "vtedge",
+                "vtmgmt",
+                "vtsmart",
+                "vpcs",
+                "esxi",
+                "nsx",
+                "vcenter",
+                "vyos",
+                "win",
+                "winserver"
+            ],
+            "title": "Template",
+            "description": "Template for device image and type"
+        },
+        "nodeType": {
+            "type": "string",
+            "title": "Node hypervisor type",
+            "enum": ["qemu", "dynamips", "iol"],
+            "default": "qemu"
+        },
+        "nodeCpu": {
+            "type": "number",
+            "title": "CPU",
+            "default": 1
+        },
+        "nodeRam": {
+            "type": "number",
+            "title": "RAM",
+            "default": 1024,
+            "description": "MB of RAM configured for the node"
+        },
+        "nodeEthernet": {
+            "title": "Ethernet",
+            "type": "number",
+            "description": "Number of Ethernet ports",
+            "default": 2
+        },
+        "nodeSerial": {
+            "title": "Serial",
+            "type": "number"
+        },
+        "nodeConsole": {
+            "title": "Console",
+            "type": "string",
+            "enum": ["telnet", "vnc"],
+            "default": "telnet"
+        },
+        "nodeConfigurationFile": {
+            "type": "string",
+            "title": "Configuration file path",
+            "minLength": 1
+        },
+        "nodeConfigurationTemplate": {
+            "type": "string",
+            "title": "Configuration template",
+            "minLength": 1
+        },
+        "nodeConfigurationTemplateVars": {
+            "type": "object",
+            "title": "Configuration template variables"
+        },
+        "nodeConfigurationTemplateVarsfile": {
+            "type": "string",
+            "title": "Configuration template variables file"
+        },
+        "nodeConfigurationFileOption": {
+            "type": "object",
+            "properties": {
+                "file": {
+                    "$ref": "#/definitions/nodeConfigurationFile"
+                }
+            },
+            "required": ["file"]
+        },
+        "nodeConfigurationTemplateOption": {
+            "type": "object",
+            "properties": {
+                "template": {
+                    "$ref": "#/definitions/nodeConfigurationTemplate"
+                },
+                "vars": {
+                    "oneOf": [
+                        {
+                            "$ref": "#/definitions/nodeConfigurationTemplateVars"
+                        },
+                        {
+                            "$ref": "#/definitions/nodeConfigurationTemplateVarsfile"
+                        }
+                    ],
+                    "minimumProperties": 1
+                }
+            },
+            "required": ["template", "vars"]
+        },
+        "node": {
+            "type": "object",
+            "properties":{
+                "console": {
+                    "$ref": "#/definitions/nodeConsole"
+                },
+                "config": {
+                    "$ref": "#/definitions/nodeConfig"
+                },
+                "delay": {
+                    "$ref": "#/definitions/nodeDelay"
+                },
+                "left": {
+                    "$ref": "#/definitions/nodeLeft"
+                },
+                "icon": {
+                    "$ref": "#/definitions/nodeIcon"
+                },
+                "image": {
+                    "$ref": "#/definitions/nodeImage"
+                },
+                "name": {
+                    "$ref": "#/definitions/nodeName"
+                },
+                "template": {
+                    "$ref": "#/definitions/nodeTemplate"
+                },
+                "node_type": {
+                    "$ref": "#/definitions/nodeType"
+                },
+                "top": {
+                    "$ref": "#/definitions/nodeTop"
+                },
+                "cpu": {
+                    "$ref": "#/definitions/nodeCpu"
+                },
+                "ram": {
+                    "$ref": "#/definitions/nodeRam"
+                },
+                "ethernet": {
+                    "$ref": "#/definitions/nodeEthernet"
+                },
+                "serial": {
+                    "$ref": "#/definitions/nodeSerial"
+                },
+                "configuration": {
+                    "title": "Node configuration file or template",
+                    "oneOf": [
+                        {"$ref": "#/definitions/nodeConfigurationFileOption"},
+                        {"$ref": "#/definitions/nodeConfigurationTemplateOption"}
+                    ]
+                }
+            },
+            "required": ["name", "image", "template"]
+        },
+        "networkName": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Name"
+        },
+        "networkVisibility": {
+            "type": "number",
+            "enum": [0, 1],
+            "default": 1,
+            "title": "Network Visibility"
+        },
+        "networkTop": {
+            "type": "number",
+            "title": "Top",
+            "description": "Margin from top, in percentage (i.e. 35%)"
+        },
+        "networkLeft": {
+            "type": "number",
+            "title": "Left",
+            "description": "Margin from left, in percentage (i.e. 35%)"
+        },
+        "networkType": {
+            "type": "string",
+            "enum": [
+                "bridge",
+                "ovs",
+                "pnet0",
+                "pnet1",
+                "pnet2",
+                "pnet3",
+                "pnet4",
+                "pnet5",
+                "pnet6",
+                "pnet7",
+                "pnet8",
+                "pnet9"
+            ],
+            "title": "Name"
+        },
+        "network": {
+            "name": {
+                "$ref": "#/definitions/networkName"
+            },
+            "visibility": {
+                "$ref": "#/definitions/networkVisibility"
+            },
+            "top": {
+                "$ref": "#/definitions/networkTop"
+            },
+            "left": {
+                "$ref": "#/definitions/networkLeft"
+            },
+            "network_type": {
+                "$ref": "#/definitions/networkType"
+            },
+            "required": ["name", "network_type"]
+        },
+        "linkSrc": {
+            "type": "string",
+            "title": "Link source"
+        },
+        "linkSrcLabel": {
+            "type": "string",
+            "title": "Link source label"
+        },
+        "linkDst": {
+            "type": "string",
+            "title": "Link destination"
+        },
+        "linkDstLabel": {
+            "type": "string",
+            "title": "Link destination label"
+        },
+        "linkMedia": {
+            "type": "string",
+            "title": "Link media",
+            "enum": ["ethernet", "serial"],
+            "default": "ethernet"
+        },
+        "nodeToNetworkLink": {
+            "type": "object",
+            "properties": {
+                "src": {
+                    "$ref": "#/definitions/linkSrc"
+                },
+                "src_label": {
+                    "$ref": "#/definitions/linkSrcLabel"
+                },
+                "dst": {
+                    "$ref": "#/definitions/linkDst"
+                }
+            },
+            "required": ["src", "dst"]
+        },
+        "nodeToNodeLink": {
+            "type": "object",
+            "properties": {
+                "src": {
+                    "$ref": "#/definitions/linkSrc"
+                },
+                "src_label": {
+                    "$ref": "#/definitions/linkSrcLabel"
+                },
+                "dst": {
+                    "$ref": "#/definitions/linkDst"
+                },
+                "dst_label": {
+                    "$ref": "#/definitions/linkDstLabel"
+                },
+                "media": {
+                    "$ref": "#/definitions/linkMedia"
+                }
+            },
+            "required": ["src", "dst"]
+        }
+    },
+    "properties": {
+        "name": {
+            "$ref": "#/definitions/labName"
+        },
+        "path": {
+            "$ref": "#/definitions/labPath"
+        },
+        "author": {
+            "$ref": "#/definitions/labAuthor"
+        },
+        "description": {
+            "$ref": "#/definitions/labDescription"
+        },
+        "version": {
+            "$ref": "#/definitions/labVersion"
+        },
+        "tasks": {
+            "$ref": "#/definitions/labTasks"
+        },
+        "scripttimeout": {
+            "$ref": "#/definitions/labScriptTimeout"
+        },
+        "body": {
+            "$ref": "#/definitions/labBody"
+        },
+        "nodes": {
+            "title": "nodes",
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/node"
+            }
+        },
+        "networks": {
+            "title": "networks",
+            "type": "array",
+            "items": {
+                "$ref": "#/definitions/network"
+            }
+        },
+        "links": {
+            "title": "links",
+            "type": "object",
+            "properties": {
+                "network": {
+                    "type": "array",
+                    "title": "Node to Network Link",
+                    "items": {
+                        "$ref": "#/definitions/nodeToNetworkLink"
+                    }
+                },
+                "node": {
+                    "type": "array",
+                    "title": "Node to Node Link",
+                    "items": {
+                        "$ref": "#/definitions/nodeToNodeLink"
+                    }
+                }
+            }
+        }
+    },
+    "required": ["name"]
+}

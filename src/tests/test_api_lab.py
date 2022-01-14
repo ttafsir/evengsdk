@@ -18,23 +18,23 @@ TESTLAB = {
 
 
 class TestEvengApiLab:
-    """ Test cases """
+    """Test cases"""
 
     def test_api_get_lab_wo_extension(self, authenticated_client):
         """
         Retrieve Lab details without file extension
         """
         fullpath = LAB_PATH + LAB_NAME
-        lab = authenticated_client.api.get_lab(fullpath)
-        assert lab.get("name") == LAB_NAME
+        resp = authenticated_client.api.get_lab(fullpath)
+        assert resp["data"]["name"] == LAB_NAME
 
     def test_api_get_lab_w_extension(self, authenticated_client):
         """
         Retrieve Lab details with file extension
         """
         fullpath = LAB_PATH + LAB_NAME + EXT
-        lab = authenticated_client.api.get_lab(fullpath)
-        assert lab.get("name") == LAB_NAME
+        resp = authenticated_client.api.get_lab(fullpath)
+        assert resp["data"]["name"] == LAB_NAME
 
     def test_get_non_existing_lab(self, authenticated_client):
         """
@@ -80,7 +80,7 @@ class TestEvengApiLab:
     def test_get_lab_topology(self, authenticated_client):
         lab_path = TESTLAB["path"] + TESTLAB["name"]
         resp = authenticated_client.api.get_lab(lab_path)
-        assert resp["name"] == TESTLAB["name"]
+        assert resp["data"]["name"] == TESTLAB["name"]
         lab_path = TESTLAB["path"] + TESTLAB["name"]
 
     def test_delete_lab(self, authenticated_client):

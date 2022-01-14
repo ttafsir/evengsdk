@@ -5,9 +5,10 @@ import os
 import click
 
 from evengsdk.client import EvengClient
+from evengsdk.cli.console import cli_print
 from evengsdk.cli.folders.commands import folder
 from evengsdk.cli.lab.commands import lab
-from evengsdk.cli.nodes.commands import node
+from evengsdk.cli.node.commands import node
 from evengsdk.cli.users.commands import user
 from evengsdk.cli.system.commands import (
     status,
@@ -82,7 +83,7 @@ def common_options(f):
 @click.command()
 def version():
     """display library version"""
-    click.echo(click.style(f"{__version__}", bold=True))
+    cli_print(f"evengsdk {__version__}")
 
 
 @click.group()
@@ -109,19 +110,16 @@ def main(ctx, host, port, username, password):
     logging_level = (
         LOGGING_LEVELS[ctx.verbosity]
         if ctx.verbosity in LOGGING_LEVELS
-        else logging.DEBUG
+        else logging.ERROR
     )
 
     if ctx.verbosity > 0:
         client.log = logging.getLogger("evengcli")
         client.log.addHandler(logging.StreamHandler())
         client.log.setLevel(logging_level)
-        click.echo(
-            click.style(
-                f"Verbose logging is enabled. "
-                f"(LEVEL={logging.getLogger().getEffectiveLevel()})",
-                fg="yellow",
-            )
+        cli_print(
+            f"Verbose logging is enabled. " f"(LEVEL={client.log.getEffectiveLevel()})",
+            style="warning",
         )
 
     ctx.client = client

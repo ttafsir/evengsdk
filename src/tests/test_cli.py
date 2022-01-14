@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 import os
+import re
 
 import pytest
 from click.testing import CliRunner, Result
 
 from evengsdk.cli.cli import main as cli
 from evengsdk.cli.version import __version__
+from evengsdk.exceptions import EvengHTTPError
 
 
 LAB_TO_EDIT = {"name": "lab_to_edit", "path": "/"}
@@ -27,27 +29,37 @@ hostname vEOS4
 """
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def lab_to_edit():
     return LAB_TO_EDIT.copy()
 
 
-@pytest.fixture()
-def cli_client(lab_to_edit, client, request):
+@pytest.fixture(scope="session")
+def cli_client(client):
     client.login(
         username=os.environ["EVE_NG_USERNAME"], password=os.environ["EVE_NG_PASSWORD"]
     )
-    return client
+    yield client
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def setup_test_lab(lab_to_edit, cli_client):
-    cli_client.api.create_lab(**lab_to_edit)
+    cli_client.log.debug("starting CLI test..")
+    try:
+        cli_client.api.create_lab(**lab_to_edit)
+    except EvengHTTPError as e:
+        if "already exists" not in f"{e}":
+            cli_client.log.debug("Lab already exists...skipping setup")
+            raise e
     yield
-    cli_client.login(
-        username=os.environ["EVE_NG_USERNAME"], password=os.environ["EVE_NG_PASSWORD"]
-    )
+    cli_client.log.debug("cleaning up test session..")
     cli_client.api.delete_lab(lab_to_edit["path"] + lab_to_edit["name"])
+    if not cli_client.session:
+        cli_client.login(
+            username=os.environ["EVE_NG_USERNAME"],
+            password=os.environ["EVE_NG_PASSWORD"],
+        )
+    cli_client.logout()
 
 
 class TestCli:
@@ -69,63 +81,6 @@ class TestCli:
         assert (
             __version__ in result.output.strip()
         ), "Version number should match library version."
-
-
-class TestSystemCommands:
-    def test_system_status(self):
-        """
-        Arrange/Act: Run the `system` command with the 'status' subcommand.
-        Assert: The output indicates that a status is successfully returned.
-        """
-        runner: CliRunner = CliRunner()
-        result: Result = runner.invoke(cli, ["show-status"])
-
-        assert result.exit_code == 0, result.output
-        assert "System" in result.output
-
-    def test_system_list_network_types_text_output(self):
-        """
-        Arrange/Act: Run the `system` command with the 'list-network-types'
-            subcommand.
-        Assert: The output indicates that network types are successfully
-            returned.
-        """
-        runner: CliRunner = CliRunner()
-        result: Result = runner.invoke(cli, ["list-network-types"])
-        assert result.exit_code == 0, result.output
-
-    def test_system_list_node_templates_text_output(self):
-        """
-        Arrange/Act: Run the `system` command with the 'list-node-templates'
-            subcommand.
-        Assert: The output indicates that node templates are successfully
-            returned.
-        """
-        runner: CliRunner = CliRunner()
-        result: Result = runner.invoke(cli, ["list-node-templates"])
-        assert result.exit_code == 0, result.output
-
-    def test_system_list_user_roles_text_output(self):
-        """
-        Arrange/Act: Run the `system` command with the 'user-roles'
-            subcommand.
-        Assert: The output indicates that node templates are successfully
-            returned.
-        """
-        runner: CliRunner = CliRunner()
-        result: Result = runner.invoke(cli, ["list-user-roles"])
-        assert result.exit_code == 0, result.output
-
-    def test_system_read_template(self):
-        """
-        Arrange/Act: Run the `system` command with the 'read-template'
-            subcommand.
-        Assert: The output indicates that node templates are successfully
-            returned.
-        """
-        runner: CliRunner = CliRunner()
-        result: Result = runner.invoke(cli, ["show-template", "asa"])
-        assert result.exit_code == 0, result.output
 
 
 class TestUserCommands:
@@ -270,9 +225,9 @@ class TestLabCommands:
         ]
         result: Result = runner.invoke(cli, cli_args)
         assert result.exit_code > 0
-        assert "invalid or missing mandatory parameters" in result.output
+        assert "Missing option" in result.output
 
-    def test_lab_edit(self, setup_test_lab, lab_to_edit):
+    def test_lab_edit(self, lab_to_edit):
         """
         Arrange/Act: Run the `lab` command with the 'edit' subcommand.
         Assert: The output indicates that lab is updated successfully.
@@ -349,101 +304,26 @@ class TestLabCommands:
         result: Result = runner.invoke(cli, ["lab", "topology"])
         assert result.exit_code == 0, result.output
 
-    @pytest.mark.xfail
-    def test_lab_export(self):
+
+class TestImportExportCommands:
+    def test_lab_export_and_import(self, lab_to_edit, setup_test_lab):
         """
         Arrange/Act: Run the `lab` command with the 'export' subcommand.
         Assert: The output indicates that lab exported successfully.
         """
-        runner: CliRunner = CliRunner()
+        path = f"{lab_to_edit['path']}{lab_to_edit['name']}.unl"
+        runner: CliRunner = CliRunner(env={"EVE_NG_LAB_PATH": path})
         with runner.isolated_filesystem():
-            result: Result = runner.invoke(cli, ["lab", "export"])
+            # Export the lab
+            result: Result = runner.invoke(cli, ["lab", "export", "--path", path])
             assert result.exit_code == 0, result.output
-            assert "Success" in result.output
+            assert "Lab exported" in result.output
 
-    # def test_lab_import(self):
-    #     """
-    #     Arrange/Act: Run the `lab` command with the 'export' subcommand.
-    #     Assert: The output indicates that lab imported successfully.
-    #     """
-    #     runner: CliRunner = CliRunner()
-    #     cli_commands = ["lab", "import", "--src", "test.zip"]
-    #     result: Result = runner.invoke(cli, cli_commands)
-    #     assert result.exit_code == 0, result.output
+            # grab the exported lab
+            match = re.search(r"unetlab_.*zip", result.output)
+            zipname = match.group(0)
 
-
-class TestLabNodeCommands:
-    def test_lab_node_create(self):
-        """
-        Arrange/Act: Run the `node` command with the 'create' subcommand.
-        Assert: The output indicates that lab imported successfully.
-        """
-        cli_commands = [
-            "node",
-            "create",
-            "--node-type",
-            "qemu",
-            "--name",
-            "TEST_CSR",
-            "--template",
-            "csr1000v",
-            "--ethernet",
-            "4",
-        ]
-        runner: CliRunner = CliRunner()
-        result: Result = runner.invoke(cli, cli_commands)
-        assert result.exit_code == 0, result.output
-
-    def test_lab_node_list(self):
-        """
-        Arrange/Act: Run the `node` command with the 'list' subcommand.
-        Assert: The output indicates that lab imported successfully.
-        """
-        runner: CliRunner = CliRunner()
-        result: Result = runner.invoke(cli, ["node", "list"])
-        assert result.exit_code == 0, result.output
-
-    def test_lab_node_read(self):
-        """
-        Arrange/Act: Run the `node` command with the 'read' subcommand.
-        Assert: The output indicates that lab retrieved successfully.
-        """
-        runner: CliRunner = CliRunner()
-        result: Result = runner.invoke(cli, ["node", "read", "--node-id", "1"])
-        assert result.exit_code == 0, result.output
-
-    def test_lab_node_start_command(self):
-        """
-        Arrange/Act: Run the `node` command with the 'start' subcommand.
-        Assert: The output indicates that lab started successfully.
-        """
-        cli_commands = ["node", "start", "--node-id", "1"]
-        runner: CliRunner = CliRunner()
-        result: Result = runner.invoke(cli, cli_commands)
-        assert result.exit_code == 0, result.output
-        assert "started" in result.output
-
-    def test_lab_node_stop_command(self):
-        """
-        Arrange/Act: Run the `node` command with the 'stop' subcommand.
-        Assert: The output indicates that lab stopped successfully.
-        """
-        runner: CliRunner = CliRunner()
-        result: Result = runner.invoke(cli, ["node", "stop", "--node-id", "1"])
-        assert result.exit_code == 0, result.output
-        assert "stopped" in result.output
-
-    def test_lab_node_upload_config_command(self):
-        """
-        Arrange/Act: Run the `node` command with the 'upload-config'
-            subcommand.
-        Assert: The output indicates that lab started successfully.
-        """
-        runner: CliRunner = CliRunner()
-        with runner.isolated_filesystem():
-            with open("config.txt", "w") as f:
-                f.write(TEST_CONFIG)
-            cli_commands = ["node", "upload-config", "-n", "1", "--src", "config.txt"]
-            result: Result = runner.invoke(cli, cli_commands)
-            assert result.exit_code == 0, result.output
-            assert "Lab has been saved" in result.output
+            # Import the lab
+            result2: Result = runner.invoke(cli, ["lab", "import", "--src", zipname])
+            assert result2.exit_code == 0, result2.output
+            assert "imported" in result2.output
