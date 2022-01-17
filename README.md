@@ -2,7 +2,17 @@
 
 Open source library and command line utilities to work with the [EVE-NG](https://www.eve-ng.net/)  [REST API](https://www.eve-ng.net/index.php/documentation/howtos/how-to-eve-ng-api/) .
 
-Evegnsdk allows you to quickly builds network topologies in EVE-NG for testing and developing. The CLI tool also enables you quickly integrate EVE-NG into you CI/CD toolset for automated testing and validation.
+Evegnsdk allows you to quickly build network topologies in EVE-NG for testing and development. The CLI tool also enables you quickly integrate EVE-NG into your CI/CD toolset for automated testing and validation.
+
+* [Requirements](#requirements)
+* [Installation](#rocketinstallation)
+* [Basic Usage](#basic-usage)
+  * [Example: Build a Lab](#example-build-a-lab)
+* [API Wrapper Methods](#api-wrapper-methods)
+* Using the `eve-ng` CLI
+  * [The `eve-ng` CLI application](#the-eve-ng-cli-application)
+  * [Configuration](#configuration)
+  * [IaC/CICD](#iac--cicd)
 
 ## Requirements
 
