@@ -336,9 +336,7 @@ class EvengApi:
         url = "/labs" + f"{self.normalize_path(path)}/configs/{node_id}"
         return self.client.get(url)
 
-    def upload_node_config(
-        self, path: str, node_id: str, config: str, enable=False
-    ) -> Dict:
+    def upload_node_config(self, path: str, node_id: str, config: str) -> Dict:
         """Upload node's startup config.
 
         :param path: path to lab file (include parent folder)
@@ -353,6 +351,17 @@ class EvengApi:
         url = "/labs" + f"{self.normalize_path(path)}/configs/{node_id}"
         payload = {"id": node_id, "data": config}
         return self.client.put(url, data=json.dumps(payload))
+
+    def enable_node_config(self, path: str, node_id: str) -> Dict:
+        """Enable a node's startup config
+
+        :param path: path to lab file (include parent folder)
+        :type path: str
+        :param node_id: node ID to enable config for
+        :type node_id: str
+        """
+        url = "/labs" + f"{self.normalize_path(path)}/nodes/{node_id}"
+        return self.client.put(url, data=json.dumps({"id": node_id, "config": 1}))
 
     def find_node_interface(
         self,
