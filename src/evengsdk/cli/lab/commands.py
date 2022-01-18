@@ -142,9 +142,7 @@ def create_and_configure_nodes(
             config = topology.get_node_config(node["name"])
             if config:
                 node_id = resp["data"]["id"]
-                resp = client.api.upload_node_config(
-                    topology.path, node_id, config
-                )
+                resp = client.api.upload_node_config(topology.path, node_id, config)
                 if resp["status"] == "success":
                     client.api.enable_node_config(topology.path, node_id)
 

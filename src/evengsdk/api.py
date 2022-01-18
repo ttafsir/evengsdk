@@ -336,9 +336,7 @@ class EvengApi:
         url = "/labs" + f"{self.normalize_path(path)}/configs/{node_id}"
         return self.client.get(url)
 
-    def upload_node_config(
-        self, path: str, node_id: str, config: str
-    ) -> Dict:
+    def upload_node_config(self, path: str, node_id: str, config: str) -> Dict:
         """Upload node's startup config.
 
         :param path: path to lab file (include parent folder)
