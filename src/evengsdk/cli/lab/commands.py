@@ -143,8 +143,11 @@ def create_and_configure_nodes(
             if config:
                 node_id = resp["data"]["id"]
                 resp = client.api.upload_node_config(
-                    topology.path, node_id, config, enable=True
+                    topology.path, node_id, config
                 )
+                if resp["status"] == "success":
+                    client.api.enable_node_config(topology.path, node_id)
+
         console.log(f"{tasks.pop(0)} {create_result}")
 
 
