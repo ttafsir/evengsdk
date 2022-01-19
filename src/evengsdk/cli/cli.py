@@ -80,13 +80,8 @@ def common_options(f):
     return f
 
 
-@click.command()
-def version():
-    """display library version"""
-    cli_print(f"evengsdk {__version__}")
-
-
 @click.group()
+@click.version_option(version=__version__)
 @click.option("--host", envvar="EVE_NG_HOST", required=True)
 @click.option(
     "--username",
@@ -129,7 +124,6 @@ def main(ctx, host, port, username, password):
 
 
 main.add_command(folder)
-main.add_command(version)
 main.add_command(lab)
 main.add_command(node)
 main.add_command(user)
