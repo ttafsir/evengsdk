@@ -77,7 +77,7 @@ class TestCli:
         Assert: The output matches the library version.
         """
         runner: CliRunner = CliRunner()
-        result: Result = runner.invoke(cli, ["version"])
+        result: Result = runner.invoke(cli, ["--version"])
         assert (
             __version__ in result.output.strip()
         ), "Version number should match library version."
