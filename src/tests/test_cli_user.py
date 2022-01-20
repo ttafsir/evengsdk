@@ -13,7 +13,7 @@ TEST_USER = {
     "expiration": "-1",
     "role": "admin",
     "name": "John Doe",
-    "email": "john.doe@acme.com"
+    "email": "john.doe@acme.com",
 }
 
 
@@ -31,7 +31,7 @@ def cli_client(client):
 
 
 class TestUserCommands:
-    def _run_commands(self, commands: list):
+    def _run_commands(self, commands: list) -> Result:
         runner: CliRunner = CliRunner()
         return runner.invoke(cli, commands)
 
@@ -54,7 +54,7 @@ class TestUserCommands:
             "--name",
             test_user["name"],
             "--email",
-            test_user["email"]
+            test_user["email"],
         ]
 
         result = self._run_commands(cli_commands)
@@ -75,7 +75,6 @@ class TestUserCommands:
         """
         result = self._run_commands(["user", "read", "-u", test_user["username"]])
         assert result.exit_code == 0, result.output
-
 
     def test_user_edit(self, test_user):
         """
@@ -98,7 +97,7 @@ class TestUserCommands:
             "--expiration",
             edited_user["expiration"],
             "--password",
-            edited_user["password"]
+            edited_user["password"],
         ]
         result = self._run_commands(commands)
         assert result.exit_code == 0, result.output
