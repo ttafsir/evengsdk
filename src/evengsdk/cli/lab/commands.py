@@ -443,8 +443,18 @@ def delete(ctx, path):
         eve-ng lab delete --path /lab1
     """
     client = get_client(ctx)
-    response = client.api.delete_lab(path)
-    cli_print_output("text", response)
+    with console.status("[bold green]wiping nodes...") as status:
+        # wipe nodes
+        resp1 = client.api.wipe_all_nodes(path)
+        console.log(f"{resp1['status']}: {resp1['message']}")
+        # stop all nodes
+        status.update("[bold green]closing lab...")
+        resp2 = client.api.close_lab()
+        console.log(f"{resp2['status']}: {resp2['message']}")
+        # delete the lab
+        status.update("[bold green]deleting lab...")
+        response = client.api.delete_lab(path)
+        cli_print_output("text", response)
 
 
 @click.command()

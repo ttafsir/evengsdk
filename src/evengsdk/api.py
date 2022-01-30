@@ -758,6 +758,11 @@ class EvengApi:
         url = "/labs" + f"{self.normalize_path(path)}"
         return self.client.put(url, data=json.dumps(param))
 
+    def close_lab(self) -> Dict:
+        """Close the current lab."""
+        url = "/labs/close"
+        return self.client.delete(url)
+
     def delete_lab(self, path: str) -> Dict:
         """Delete an existing lab
 
