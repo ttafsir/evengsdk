@@ -17,6 +17,7 @@ class EvengClient:
         log_level: str = "INFO",
         port: int = None,
         disable_insecure_warnings: bool = False,
+        ssl_verify: bool = True,
     ):
         self.host = host
         self.protocol = protocol
@@ -26,6 +27,7 @@ class EvengClient:
         self.html5 = -1
         self.api = None
         self.port = port
+        self.ssl_verify = ssl_verify
 
         # Create Logger and set Set log level
         self.log = logging.getLogger("eveng-client")
@@ -74,6 +76,7 @@ class EvengClient:
         self.log.debug("creating session")
         if not self.session:
             self.session = requests.Session()
+            self.session.verify = self.ssl_verify
 
         # set default session header
         self.session.headers = {
