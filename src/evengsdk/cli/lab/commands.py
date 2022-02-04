@@ -262,6 +262,10 @@ def ls(ctx, output):
     client = get_client(ctx)
     resp = _get_all_labs(client)
     lab_data = [x["data"] for x in resp] if resp else resp
+
+    if not lab_data:
+        cli_print_error("No labs found. Please create or import a lab first.")
+
     table_header = [
         ("Name", dict(justify="right", style="cyan", no_wrap=True)),
         ("Path", {}),
