@@ -80,13 +80,8 @@ def common_options(f):
     return f
 
 
-@click.command()
-def version():
-    """display library version"""
-    cli_print(f"evengsdk {__version__}")
-
-
 @click.group()
+@click.version_option(version=__version__)
 @click.option("--host", envvar="EVE_NG_HOST", required=True)
 @click.option(
     "--username",
@@ -99,13 +94,34 @@ def version():
 @click.option(
     "--password", prompt=True, hide_input=True, envvar="EVE_NG_PASSWORD", required=True
 )
-@click.option("--port", default=80, help="HTTP port to connect to. Default is 80")
+@click.option(
+    "--port",
+    default=80,
+    envvar="EVE_NG_PORT",
+    help="HTTP port to connect to. Default is 80",
+)
+@click.option(
+    "--protocol",
+    default="http",
+    envvar="EVE_NG_PROTOCOL",
+    help="Protocol to use. Default is http",
+)
+@click.option("--insecure", is_flag=False, envvar="EVE_NG_INSECURE", help="Disable SSL")
+@click.option(
+    "--verify", default=True, envvar="EVE_NG_SSL_VERIFY", help="Verify SSL certificate"
+)
 @common_options
 @PASS_CTX
-def main(ctx, host, port, username, password):
+def main(ctx, host, port, username, password, verify, protocol, insecure):
     """CLI application to manage EVE-NG objects"""
 
-    client = EvengClient(host, port=port)
+    client = EvengClient(
+        host,
+        port=port,
+        ssl_verify=verify,
+        protocol=protocol,
+        disable_insecure_warnings=insecure,
+    )
 
     logging_level = (
         LOGGING_LEVELS[ctx.verbosity]
@@ -129,7 +145,6 @@ def main(ctx, host, port, username, password):
 
 
 main.add_command(folder)
-main.add_command(version)
 main.add_command(lab)
 main.add_command(node)
 main.add_command(user)

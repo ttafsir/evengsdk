@@ -275,10 +275,12 @@ You may set the variables and export them to your shell environment. You can als
 export EVE_NG_HOST=192.168.2.100
 export EVE_NG_USERNAME=admin
 export EVE_NG_PASSWORD=eve
-export EVE_NG_LAB_PATH='/datacenter/leaf_spine_lab.unl'
+export EVE_NG_PORT=80
+export EVE_NG_PROTOCOL=http
+export EVE_NG_SSL_VERIFY=False
+export EVE_NG_INSECURE=True
+export EVE_NG_LAB_PATH='/mylab.unl'
 ```
-
-
 
 ## IaC / CICD
 
