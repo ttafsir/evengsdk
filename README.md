@@ -81,7 +81,8 @@ You can interact with the EVE-NG API through the `client.api` interface
 from evengsdk.client import EvengClient
 
 
-client = EvengClient("10.246.32.254", log_file="test.log")
+client = EvengClient("10.246.32.254", log_file="test.log", ssl_verify=False, protocol="https")
+client.disable_insecure_warnings()  # disable warnings for self-signed certificates
 client.login(username="admin", password="eve")
 client.set_log_level("DEBUG")
 

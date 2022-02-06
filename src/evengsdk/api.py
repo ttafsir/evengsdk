@@ -24,6 +24,13 @@ class EvengApi:
         self.log = client.log
         self.version = None
         self.supports_multi_tenants = False
+        self.is_community = True
+
+        status = self.get_server_status()
+        self.version = status["data"]["version"]
+
+        if self.version and "pro" in self.version.lower():
+            self.is_community = False
 
     def __repr__(self):
         return "{}({})".format(self.__class__.__name__, self.client.session)
@@ -145,10 +152,11 @@ class EvengApi:
         """
         return self.client.get(f"/folders/{folder}")
 
-    @staticmethod
-    def normalize_path(path: str) -> str:
+    def normalize_path(self, path: str) -> str:
         if not path.startswith("/"):
-            path = "/" + path
+            path = (
+                "/" + path if self.is_community else f"/{self.client.username}/{path}"
+            )
         path = Path(path).resolve()
 
         # Add extension if needed
@@ -865,7 +873,7 @@ class EvengApi:
         template: str,
         delay: int = 0,
         name: str = "",
-        node_type: str = "",
+        node_type: str = "qemu",
         top: int = randint(30, 70),
         left: int = randint(30, 70),
         console: str = "telnet",
