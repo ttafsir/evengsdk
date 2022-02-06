@@ -51,6 +51,26 @@ def _get_client_session():
     return thread_local.client
 
 
+def _get_nested_labs(folders: List, session: EvengClient, labs: List = None) -> List:
+    """recursively get all nested labs from folders"""
+    if len(folders) == 1 and folders[0]["name"] in ("..", "/"):
+        return []
+
+    if labs is None:
+        labs = []
+
+    for folder in folders:
+        if folder["name"] == "..":
+            continue
+        resp = session.api.get_folder(f'{folder["path"]}')
+        nested_labs = resp.get("data", {}).get("labs")
+        folders = resp.get("data", {}).get("folders")
+        labs.append(nested_labs)
+        if len(folders) >= 1:
+            _get_nested_labs(folders, session, labs)
+    return labs
+
+
 def _get_lab_folder(name: str) -> List[Dict]:
     """Get labs from nested folder structure
 
@@ -59,17 +79,17 @@ def _get_lab_folder(name: str) -> List[Dict]:
     :return: list of labs
     """
     session = _get_client_session()
-    r = session.api.get_folder(name)
+    resp = session.api.get_folder(name)
+
     # get the labs from the folder
-    labs_from_folder = [r.get("data", {}).get("labs")]
+    labs_from_folder = [resp.get("data", {}).get("labs")]
+
     # let's get labs from nested folders too
-    nested_folders = r.get("data", {}).get("folders")
-    while len(nested_folders) > 1:
-        for folder in nested_folders:
-            if folder["name"] == "..":
-                continue
-            r = session.api.get_folder(f'{folder["path"]}')
-            labs_from_folder.append(r.get("data", {}).get("labs"))
+    sub_folders = resp.get("data", {}).get("folders")
+    labs_from_sub_folders = _get_nested_labs(sub_folders, session)
+
+    # flatten the results to single iterable
+    labs_from_folder.extend(labs_from_sub_folders)
     return labs_from_folder
 
 
@@ -89,18 +109,22 @@ def _get_all_labs(client: EvengClient) -> List:
     """
     Get all labs from EVE-NG host by parsing all nested folders
     """
-    resp = client.api.list_folders()
-    root_folders = resp.get("data", {}).get("folders")
-    labs_in_root_folder = resp.get("data", {}).get("labs")
+    with console.status("[bold green]Retrieving labs...") as status:
+        status.update("Retrieving folders...")
+        resp = client.api.list_folders()
+        root_folders = resp.get("data", {}).get("folders")
+        labs_in_root_folder = resp.get("data", {}).get("labs")
 
-    # Get the lab information from all other folders (non-root)
-    labs_in_nested_folders = chain(
-        *thread_executor(_get_lab_folder, (x["name"] for x in root_folders))
-    )
-    # flatten the results to single iterable
-    # (labs from root folder + labs from nested)
-    all_lab_info = chain(labs_in_root_folder, *labs_in_nested_folders)
-    return thread_executor(_get_lab_details, (x["path"] for x in all_lab_info))
+        # Get the lab information from all other folders (non-root)
+        status.update("Retrieving nested folders...")
+        labs_in_nested_folders = chain(
+            *thread_executor(_get_lab_folder, (x["name"] for x in root_folders))
+        )
+        # flatten the results to single iterable
+        # (labs from root folder + labs from nested)
+        all_lab_info = chain(labs_in_root_folder, *labs_in_nested_folders)
+        status.update("Retrieving lab details from all folders...")
+        return thread_executor(_get_lab_details, (x["path"] for x in all_lab_info))
 
 
 def create_network_links(
