@@ -28,6 +28,7 @@ class EvengClient:
         self.api = None
         self.port = port
         self.ssl_verify = ssl_verify
+        self.user = None
 
         # Create Logger and set Set log level
         self.log = logging.getLogger("eveng-client")
@@ -37,9 +38,13 @@ class EvengClient:
         else:
             self.log.addHandler(logging.NullHandler())
 
-        # disable insecure warnings
+        # Disable insecure warnings
         if disable_insecure_warnings:
-            requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+            self.disable_insecure_warnings()
+
+    def disable_insecure_warnings(self):
+        # disable insecure warnings
+        requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
     @property
     def url_prefix(self):
@@ -91,6 +96,7 @@ class EvengClient:
         if r.ok:
             try:
                 "logged in" in r.json()
+                self.username = username
                 self.api = EvengApi(self)  # create API wrapper object
             except json.decoder.JSONDecodeError:
                 self.log.error("Error logging in: {}".format(r.text))
@@ -138,8 +144,14 @@ class EvengClient:
 
         # EVE-NG API returns HTTP error code and message in JSON response
         if hasattr(r, "json"):
-            err_code = r.json().get("code")
-            err_msg = r.json().get("message")
+            try:
+                err_code = r.json().get("code")
+            except json.JSONDecodeError:
+                err_code = r.text
+            try:
+                err_msg = r.json().get("message")
+            except json.JSONDecodeError:
+                err_msg = r.text
             raise EvengHTTPError("Error: {} {}".format(err_code, err_msg))
 
         # Other HTTP errors for which we don't have a JSON response
