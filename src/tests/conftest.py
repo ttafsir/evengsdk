@@ -10,12 +10,17 @@ load_dotenv()
 
 @pytest.fixture(scope="session")
 def client():
-    return EvengClient(
+    client = EvengClient(
         os.environ["EVE_NG_HOST"], log_file="test.log", log_level="DEBUG"
     )
+    if os.environ["EVE_NG_PROTOCOL"] == "https":
+        client.protocol = "https"
+        client.ssl_verify = False
+        client.disable_insecure_warnings = True
+    return client
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="module")
 def authenticated_client(client):
     username = os.environ["EVE_NG_USERNAME"]
     passwd = os.environ["EVE_NG_PASSWORD"]
