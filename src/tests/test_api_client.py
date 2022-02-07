@@ -13,11 +13,6 @@ def local_client_host():
     return "1.1.1.1"
 
 
-@pytest.fixture()
-def local_client(local_client_ip):
-    return EvengClient(local_client_host)
-
-
 class TestEvengClient:
     """Test cases"""
 
@@ -86,7 +81,9 @@ class TestEvengClient:
         """
         Verify GET call from client
         """
-        url = f"http://{authenticated_client.host}/api/status"
+        url = (
+            f"{authenticated_client.protocol}://{authenticated_client.host}/api/status"
+        )
         r = authenticated_client.get(url)
         assert r["data"]
 

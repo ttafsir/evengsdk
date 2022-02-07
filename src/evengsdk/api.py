@@ -24,6 +24,13 @@ class EvengApi:
         self.log = client.log
         self.version = None
         self.supports_multi_tenants = False
+        self.is_community = True
+
+        status = self.get_server_status()
+        self.version = status["data"]["version"]
+
+        if self.version and "pro" in self.version.lower():
+            self.is_community = False
 
     def __repr__(self):
         return "{}({})".format(self.__class__.__name__, self.client.session)
@@ -145,10 +152,11 @@ class EvengApi:
         """
         return self.client.get(f"/folders/{folder}")
 
-    @staticmethod
-    def normalize_path(path: str) -> str:
+    def normalize_path(self, path: str) -> str:
         if not path.startswith("/"):
-            path = "/" + path
+            path = (
+                "/" + path if self.is_community else f"/{self.client.username}/{path}"
+            )
         path = Path(path).resolve()
 
         # Add extension if needed
@@ -315,16 +323,22 @@ class EvengApi:
             return next((v for _, v in node_data.items() if v["name"] == name), None)
         return
 
-    def get_node_configs(self, path: str) -> Dict:
+    def get_node_configs(self, path: str, configset: str = "default") -> Dict:
         """Return information about node configs
 
         :param path: path to lab file (include parent folder)
         :type path: str
+        :param configset: name of the configset to retrieve configs for (pro version)
+        :type configset: str, optional
         """
         url = "/labs" + f"{self.normalize_path(path)}/configs"
+        if not self.is_community:
+            return self.client.post(url, data=json.dumps({"cfsid": configset}))
         return self.client.get(url)
 
-    def get_node_config_by_id(self, path: str, node_id: int) -> Dict:
+    def get_node_config_by_id(
+        self, path: str, node_id: int, configset: str = "default"
+    ) -> Dict:
         """Return configuration information about a specific node given
         the configuration ID
 
@@ -332,11 +346,17 @@ class EvengApi:
         :type path: str
         :param node_id: ID for node to retrieve configuration for
         :type node_id: int
+        :param configset: name of the configset to retrieve configs for (pro version)
+        :type configset: str, optional
         """
         url = "/labs" + f"{self.normalize_path(path)}/configs/{node_id}"
+        if not self.is_community:
+            return self.client.post(url, data=json.dumps({"cfsid": configset}))
         return self.client.get(url)
 
-    def upload_node_config(self, path: str, node_id: str, config: str) -> Dict:
+    def upload_node_config(
+        self, path: str, node_id: str, config: str, configset: str = "default"
+    ) -> Dict:
         """Upload node's startup config.
 
         :param path: path to lab file (include parent folder)
@@ -350,6 +370,8 @@ class EvengApi:
         """
         url = "/labs" + f"{self.normalize_path(path)}/configs/{node_id}"
         payload = {"id": node_id, "data": config}
+        if not self.is_community:
+            payload["cfsid"] = configset
         return self.client.put(url, data=json.dumps(payload))
 
     def enable_node_config(self, path: str, node_id: str) -> Dict:
@@ -542,14 +564,24 @@ class EvengApi:
         r2 = self.connect_p2p_interface(path, d_node_id, dst_int, net_id)
         return r1["status"] == "success" and r2["status"] == "success"
 
+    def _recursively_start_nodes(self, path: str) -> Dict:
+        nodes = self.list_nodes(path)
+        results = []
+        for node_id, _ in nodes["data"].items():
+            r = self.start_node(path, node_id)
+            results.append(r)
+        return self._extract_recursive_statuses(results)
+
     def start_all_nodes(self, path: str) -> Dict:
         """Start one or all nodes configured in a lab
 
         :param path: path to lab file (including parent folder)
         :type path: str
         """
-        url = f"/labs{self.normalize_path(path)}/nodes/start"
-        return self.client.get(url)
+        if self.is_community:
+            url = f"/labs{self.normalize_path(path)}/nodes/start"
+            return self.client.get(url)
+        return self._recursively_start_nodes(path)
 
     def stop_all_nodes(self, path: str) -> Dict:
         """Stop one or all nodes configured in a lab
@@ -580,7 +612,26 @@ class EvengApi:
         :type node_id: str
         """
         url = "/labs" + self.normalize_path(path) + f"/nodes/{node_id}/stop"
+        if not self.is_community:
+            url += "/stopmode=3"
         return self.client.get(url)
+
+    def _recursively_wipe_nodes(self, path: str) -> Dict:
+        nodes = self.list_nodes(path)
+        results = []
+        for node_id, _ in nodes["data"].items():
+            r = self.wipe_node(path, node_id)
+            results.append(r)
+        return self._extract_recursive_statuses(results)
+
+    def _extract_recursive_statuses(self, results):
+        success = all(r["status"] == "success" for r in results)
+        messages = [r["message"] for r in results]
+        return {
+            "status": "success" if success else "error",
+            "data": results,
+            "message": messages,
+        }
 
     def wipe_all_nodes(self, path: str) -> Dict:
         """Wipe one or all nodes configured in a lab. Wiping deletes
@@ -591,8 +642,10 @@ class EvengApi:
         :type path: [type]
         :return: str
         """
-        url = "/labs" + self.normalize_path(path) + "/nodes/wipe"
-        return self.client.get(url)
+        if self.is_community:
+            url = "/labs" + self.normalize_path(path) + "/nodes/wipe"
+            return self.client.get(url)
+        return self._recursively_wipe_nodes(path)
 
     def wipe_node(self, path: str, node_id: int) -> Dict:
         """Wipe single node configured in a lab. Wiping deletes
@@ -865,7 +918,7 @@ class EvengApi:
         template: str,
         delay: int = 0,
         name: str = "",
-        node_type: str = "",
+        node_type: str = "qemu",
         top: int = randint(30, 70),
         left: int = randint(30, 70),
         console: str = "telnet",

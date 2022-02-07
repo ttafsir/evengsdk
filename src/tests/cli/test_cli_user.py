@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-import os
-
 import pytest
 from click.testing import CliRunner, Result
 
@@ -22,14 +20,7 @@ def test_user():
     return TEST_USER.copy()
 
 
-@pytest.fixture()
-def cli_client(client):
-    client.login(
-        username=os.environ["EVE_NG_USERNAME"], password=os.environ["EVE_NG_PASSWORD"]
-    )
-    return client
-
-
+@pytest.mark.usefixtures("setup_cli_lab")
 class TestUserCommands:
     def _run_commands(self, commands: list) -> Result:
         runner: CliRunner = CliRunner()
