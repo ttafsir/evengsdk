@@ -108,15 +108,15 @@ class TestLabCommands:
         result = self._run_commands(["lab", "list"])
         assert result.exit_code == 0, result.output
 
-    @pytest.mark.skip(reason="TODO: fix empty lab raises error")
-    def test_list_lab_topology(self):
+    def test_list_lab_empty_topology(self, cli_lab_path):
         """
         Arrange/Act: Run the `lab` command with the 'topology' subcommand.
         Assert: The output indicates that lab topology is retrieved
             successfully.
         """
-        result = self._run_commands(["lab", "topology"])
-        assert result.exit_code == 0, result.output
+        result = self._run_commands(["lab", "topology"], cli_lab_path)
+        assert result.exit_code > 0
+        assert "no topology" in result.output.lower()
 
 
 @pytest.mark.usefixtures("setup_cli_lab")

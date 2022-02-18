@@ -118,8 +118,15 @@ def _get_all_labs(client: EvengClient) -> List:
 
         # Get the lab information from all other folders (non-root)
         status.update("Retrieving nested folders...")
+
+        # The EVE-NG PRO version shows labs in the root folder and The "Running"
+        # folder if the lab is running. We need to skip the "Running" folder to
+        # avoid duplicates.
         labs_in_nested_folders = chain(
-            *thread_executor(_get_lab_folder, (x["name"] for x in root_folders))
+            *thread_executor(
+                _get_lab_folder,
+                (x["name"] for x in root_folders if x["name"] != "Running"),
+            )
         )
         # flatten the results to single iterable
         # (labs from root folder + labs from nested)
@@ -261,6 +268,10 @@ def topology(ctx, path, output):
     """
     client = get_client(ctx)
     resp = client.api.get_lab_topology(path)
+
+    if not resp.get("data"):
+        cli_print_error("No Topology information available. Is the lab empty?")
+
     table_header = [
         ("type", {}),
         ("source", dict(justify="center", style="cyan", no_wrap=True)),
