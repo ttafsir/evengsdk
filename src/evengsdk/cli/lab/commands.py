@@ -117,8 +117,15 @@ def _get_all_labs(client: EvengClient) -> List:
 
         # Get the lab information from all other folders (non-root)
         status.update("Retrieving nested folders...")
+
+        # The EVE-NG PRO version shows labs in the root folder and The "Running"
+        # folder if the lab is running. We need to skip the "Running" folder to
+        # avoid duplicates.
         labs_in_nested_folders = chain(
-            *thread_executor(_get_lab_folder, (x["name"] for x in root_folders))
+            *thread_executor(
+                _get_lab_folder,
+                (x["name"] for x in root_folders if x["name"] != "Running"),
+            )
         )
         # flatten the results to single iterable
         # (labs from root folder + labs from nested)
