@@ -229,6 +229,10 @@ def topology(ctx, path, output):
     """
     client = get_client(ctx)
     resp = client.api.get_lab_topology(path)
+
+    if not resp.get("data"):
+        cli_print_error("No Topology information available. Is the lab empty?")
+
     table_header = [
         ("type", {}),
         ("source", dict(justify="center", style="cyan", no_wrap=True)),
