@@ -7,9 +7,6 @@ from random import randint
 from typing import Dict, Tuple, Literal, Optional, BinaryIO
 from urllib.parse import quote_plus
 
-NETWORK_TYPES = ["bridge", "ovs"]
-VIRTUAL_CLOUD_COUNT = 9
-
 
 class EvengApi:
     def __init__(self, client):
@@ -836,9 +833,8 @@ class EvengApi:
         return self.client.put(url)
 
     def _get_network_types(self):
-        network_types = set(NETWORK_TYPES)
-        virtual_clouds = (f"pnet{x}" for x in range(VIRTUAL_CLOUD_COUNT))
-        return network_types.union(virtual_clouds)
+        network_types = self.list_networks()
+        return [key for key, _ in network_types["data"].items()]
 
     @property
     def network_types(self):
@@ -892,6 +888,14 @@ class EvengApi:
         if existing_network:
             raise ValueError(f"Network already exists: `{name}` in lab {path}")
 
+        additional_network_types = ("internal", "private", "nat")
+        if self.is_community:
+            if any(
+                network_type.startswith(prefix) for prefix in additional_network_types
+            ):
+                raise ValueError(
+                    f"Community edition does not support network type: `{network_type}`"
+                )
         if network_type not in self.network_types:
             raise ValueError(
                 f"invalid network type: {network_type} \
