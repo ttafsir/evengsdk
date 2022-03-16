@@ -5,3 +5,6 @@ pyyaml
 jinja2
 rich
 jsonschema[format]
+mkdocs-click
+mkdocstrings
+mkdocs-material
