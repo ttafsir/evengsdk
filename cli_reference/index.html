@@ -1,0 +1,1344 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.2.3, mkdocs-material-8.2.5">
+    
+    
+      
+        <title>ClI reference - evengsdk</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.2d9f7617.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.e6a45f82.min.css">
+        
+      
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="purple">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#cli-reference" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="evengsdk" class="md-header__button md-logo" aria-label="evengsdk" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            evengsdk
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ClI reference
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="teal" data-md-color-accent="purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5c-.84 0-1.65.15-2.39.42L12 2M3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29L3.34 7m.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14L3.36 17M20.65 7l-1.77 3.79a7.023 7.023 0 0 0-2.38-4.15l4.15.36m-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29L20.64 17M12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44L12 22z"/></svg>
+            </label>
+          
+        
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="lime"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3 3.19.09m3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95 2.06.05m-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7 0-.24-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91 1.61 0 2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08z"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/ttafsir/evengsdk/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    ttafsir/evengsdk
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../Introduction/" class="md-tabs__link">
+      Home
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../api_reference/" class="md-tabs__link">
+        API reference
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+    
+  
+
+
+  <li class="md-tabs__item">
+    <a href="./" class="md-tabs__link md-tabs__link--active">
+      ClI reference
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../topology_builder/" class="md-tabs__link">
+      Topology Builder
+    </a>
+  </li>
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="evengsdk" class="md-nav__button md-logo" aria-label="evengsdk" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54z"/></svg>
+
+    </a>
+    evengsdk
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/ttafsir/evengsdk/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.0.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    ttafsir/evengsdk
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../Introduction/" class="md-nav__link">
+        Home
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_2" data-md-state="indeterminate" type="checkbox" id="__nav_2" checked>
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2">
+          API reference
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="API reference" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          API reference
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../api_reference/" class="md-nav__link">
+        Evensdk
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          ClI reference
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        ClI reference
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    Configuration
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#commands" class="md-nav__link">
+    Commands
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#eve-ng" class="md-nav__link">
+    eve-ng
+  </a>
+  
+    <nav class="md-nav" aria-label="eve-ng">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-folder" class="md-nav__link">
+    folder
+  </a>
+  
+    <nav class="md-nav" aria-label="folder">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-folder-list" class="md-nav__link">
+    list
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-folder-read" class="md-nav__link">
+    read
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-lab" class="md-nav__link">
+    lab
+  </a>
+  
+    <nav class="md-nav" aria-label="lab">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-lab-create" class="md-nav__link">
+    create
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-lab-create-from-topology" class="md-nav__link">
+    create-from-topology
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-lab-delete" class="md-nav__link">
+    delete
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-lab-edit" class="md-nav__link">
+    edit
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-lab-export" class="md-nav__link">
+    export
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-lab-import" class="md-nav__link">
+    import
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-lab-list" class="md-nav__link">
+    list
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-lab-read" class="md-nav__link">
+    read
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-lab-set-active" class="md-nav__link">
+    set-active
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-lab-show-active" class="md-nav__link">
+    show-active
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-lab-start" class="md-nav__link">
+    start
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-lab-stop" class="md-nav__link">
+    stop
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-lab-topology" class="md-nav__link">
+    topology
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-list-network-types" class="md-nav__link">
+    list-network-types
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-list-node-templates" class="md-nav__link">
+    list-node-templates
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-list-user-roles" class="md-nav__link">
+    list-user-roles
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-node" class="md-nav__link">
+    node
+  </a>
+  
+    <nav class="md-nav" aria-label="node">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-node-config" class="md-nav__link">
+    config
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-node-create" class="md-nav__link">
+    create
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-node-delete" class="md-nav__link">
+    delete
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-node-export" class="md-nav__link">
+    export
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-node-list" class="md-nav__link">
+    list
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-node-read" class="md-nav__link">
+    read
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-node-start" class="md-nav__link">
+    start
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-node-stop" class="md-nav__link">
+    stop
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-node-wipe" class="md-nav__link">
+    wipe
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-show-status" class="md-nav__link">
+    show-status
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-show-template" class="md-nav__link">
+    show-template
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-user" class="md-nav__link">
+    user
+  </a>
+  
+    <nav class="md-nav" aria-label="user">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-user-create" class="md-nav__link">
+    create
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-user-delete" class="md-nav__link">
+    delete
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-user-edit" class="md-nav__link">
+    edit
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-user-list" class="md-nav__link">
+    list
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#eve-ng-user-read" class="md-nav__link">
+    read
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../topology_builder/" class="md-nav__link">
+        Topology Builder
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+<a href="https://github.com/ttafsir/evengsdk/edit/master/docs/cli_reference.md" title="Edit this page" class="md-content__button md-icon">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+</a>
+
+
+
+<h1 id="cli-reference">CLI Reference</h1>
+<p>This page provides documentation for our command line tools.</p>
+<h2 id="configuration"><img alt="⚙" class="twemoji" src="https://twemoji.maxcdn.com/v/latest/svg/2699.svg" title=":gear:" /> Configuration</h2>
+<p>It is simple enough to pass the proper flags to <code>eve-ng</code> specify details for your EVE-NG host. However, you may also pass the connection details as environment variables. You can set the following <code>evengsdk</code> environment variables:</p>
+<ul>
+<li><code>EVE_NG_HOST</code> - EVE-NG host name or IP address</li>
+<li><code>EVE_NG_USERNAME</code> - EVE-NG username</li>
+<li><code>EVE_NG_PASSWORD</code> - EVE-NG API/GUI password</li>
+<li><code>EVE_NG_PORT</code> - EVE-NG API port. Default <code>80</code></li>
+<li><code>EVE_NG_PROTOCOL</code> - EVE-NG API protocol. Default <code>http</code></li>
+<li><code>EVE_NG_SSL_VERIFY</code> - Verify SSL. Default <code>False</code></li>
+<li><code>EVE_NG_INSECURE</code> - Suppress insecure warnings. Default <code>False</code></li>
+<li><code>EVE_NG_LAB_PATH</code> - EVE-NG default lab path. Ex. <code>/myLab.unl</code></li>
+</ul>
+<p>You may set the variables and export them to your shell environment. You can also define your environment variables in a <code>.env</code> folder that will automatically be sourced. The example. below shows the contents of a <code>.env</code>  file that will permit you to both source the file and automatically load the variables as needed.</p>
+<div class="highlight"><pre><span></span><code>export EVE_NG_HOST=192.168.2.100
+export EVE_NG_USERNAME=admin
+export EVE_NG_PASSWORD=eve
+export EVE_NG_PORT=80
+export EVE_NG_PROTOCOL=http
+export EVE_NG_SSL_VERIFY=False
+export EVE_NG_INSECURE=True
+export EVE_NG_LAB_PATH=&#39;/mylab.unl&#39;
+</code></pre></div>
+<h2 id="commands"><img alt="⌨" class="twemoji" src="https://twemoji.maxcdn.com/v/latest/svg/2328.svg" title=":keyboard:" /> Commands</h2>
+<h2 id="eve-ng">eve-ng</h2>
+<p>CLI application to manage EVE-NG objects</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng [OPTIONS] COMMAND [ARGS]...
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --version             Show the version and exit.
+  --host TEXT           [required]
+  --username TEXT       [default: (current user); required]
+  --password TEXT       [required]
+  --port INTEGER        HTTP port to connect to. Default is 80
+  --protocol TEXT       Protocol to use. Default is http
+  --insecure TEXT       Disable SSL
+  --verify BOOLEAN      Verify SSL certificate
+  --debug / --no-debug  Enables or disables debug mode.
+  -v, --verbose         Enables verbosity.
+  --help                Show this message and exit.
+</code></pre></div>
+<h3 id="eve-ng-folder">eve-ng folder</h3>
+<p>folder sub commands</p>
+<p>Manage EVE-NG folders</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng folder [OPTIONS] COMMAND [ARGS]...
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --help  Show this message and exit.
+</code></pre></div>
+<h4 id="eve-ng-folder-list">eve-ng folder list</h4>
+<p>List folders on EVE-NG host</p>
+<p>Examples:
+    eve-ng folder list</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng folder list [OPTIONS]
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --output [json|text|table]
+  --help                      Show this message and exit.
+</code></pre></div>
+<h4 id="eve-ng-folder-read">eve-ng folder read</h4>
+<p>Get folder details EVE-NG host</p>
+<p>Examples:
+    eve-ng folder read /path/to/folder</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng folder read [OPTIONS] FOLDER
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --help  Show this message and exit.
+</code></pre></div>
+<h3 id="eve-ng-lab">eve-ng lab</h3>
+<p>lab sub commands</p>
+<p>Manage EVE-NG labs</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng lab [OPTIONS] COMMAND [ARGS]...
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --help  Show this message and exit.
+</code></pre></div>
+<h4 id="eve-ng-lab-create">eve-ng lab create</h4>
+<p>Create a new lab</p>
+<p>Examples:
+    eve-ng lab create --name lab1 --author "John Doe" --description "My lab"</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng lab create [OPTIONS]
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --path TEXT         folder to create lab in
+  --name TEXT         lab name  [required]
+  --author TEXT       lab author
+  --description TEXT  lab description
+  --version TEXT      lab version
+  --help              Show this message and exit.
+</code></pre></div>
+<h4 id="eve-ng-lab-create-from-topology">eve-ng lab create-from-topology</h4>
+<p>Create a new lab</p>
+<p>Examples:
+    eveng lab create-from-topology --topology examples/test_topology.yml</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng lab create-from-topology [OPTIONS]
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  -t, --topology PATH      Toplogy file to import  [required]
+  -d, --template-dir PATH  Template directory
+  --help                   Show this message and exit.
+</code></pre></div>
+<h4 id="eve-ng-lab-delete">eve-ng lab delete</h4>
+<p>Delete a lab on EVE-NG host</p>
+<p>Examples:
+    eve-ng lab delete --path /lab1</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng lab delete [OPTIONS]
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --path TEXT  folder to create lab in
+  --help       Show this message and exit.
+</code></pre></div>
+<h4 id="eve-ng-lab-edit">eve-ng lab edit</h4>
+<p>Edit a lab on EVE-NG host. EVE-NG API supports updating
+a single field at a time.</p>
+<p>Examples:
+    eve-ng lab edit --author "Tafsir Thiam"
+    eve-ng lab edit --body "Lab to demonstrate VXLAN/BGP-EVPN on vEOS"</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng lab edit [OPTIONS]
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --author TEXT       lab author NOTE: This argument is mutually exclusive
+                      with  arguments: [body, description, version]. The API
+                      supports editing a single field at a time.
+  --description TEXT  lab description. NOTE: This argument is mutually
+                      exclusive with  arguments: [body, version, author]. The
+                      API supports editing a single field at a time.
+  --version TEXT      lab version. NOTE: This argument is mutually exclusive
+                      with  arguments: [body, description, author]. The API
+                      supports editing a single field at a time.
+  --body TEXT         long description for lab. NOTE: This argument is
+                      mutually exclusive with  arguments: [description,
+                      version, author]. The API supports editing a single
+                      field at a time.
+  --path TEXT
+  --help              Show this message and exit.
+</code></pre></div>
+<h4 id="eve-ng-lab-export">eve-ng lab export</h4>
+<p>Export and download lab file as ZIP archive</p>
+<p>Examples:
+    eve-ng lab export</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng lab export [OPTIONS]
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --dest PATH  destination path
+  --path TEXT
+  --help       Show this message and exit.
+</code></pre></div>
+<h4 id="eve-ng-lab-import">eve-ng lab import</h4>
+<p>Import lab into EVE-NG from ZIP archive</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng lab import [OPTIONS]
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --src PATH     source path to ZIP lab file
+  --folder TEXT  folder on EVE-NG to import lab to
+  --help         Show this message and exit.
+</code></pre></div>
+<h4 id="eve-ng-lab-list">eve-ng lab list</h4>
+<p>List the available labs in EVE-NG host</p>
+<p>Examples:
+    eve-ng lab list</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng lab list [OPTIONS]
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --output [json|text|table]
+  --help                      Show this message and exit.
+</code></pre></div>
+<h4 id="eve-ng-lab-read">eve-ng lab read</h4>
+<p>Get EVE-NG lab details</p>
+<p>Examples:
+    eve-ng lab read
+    eve-ng lab read --path /folder/to/lab.unl</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng lab read [OPTIONS]
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --path TEXT
+  --output [json|text]
+  --help                Show this message and exit.
+</code></pre></div>
+<h4 id="eve-ng-lab-set-active">eve-ng lab set-active</h4>
+<p>Set current lab path</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng lab set-active [OPTIONS]
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --path TEXT  path to lab to activate
+  --help       Show this message and exit.
+</code></pre></div>
+<h4 id="eve-ng-lab-show-active">eve-ng lab show-active</h4>
+<p>Show active lab</p>
+<p>Examples:
+    eve-ng lab show-active</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng lab show-active [OPTIONS]
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --help  Show this message and exit.
+</code></pre></div>
+<h4 id="eve-ng-lab-start">eve-ng lab start</h4>
+<p>Start all nodes in lab</p>
+<p>Examples:
+    eve-ng lab start
+    eve-ng lab start --path /lab1</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng lab start [OPTIONS]
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --path TEXT
+  --help       Show this message and exit.
+</code></pre></div>
+<h4 id="eve-ng-lab-stop">eve-ng lab stop</h4>
+<p>Stop all nodes in lab</p>
+<p>Examples:
+    eve-ng lab stop
+    eve-ng lab stop --path /lab1</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng lab stop [OPTIONS]
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --path TEXT
+  --help       Show this message and exit.
+</code></pre></div>
+<h4 id="eve-ng-lab-topology">eve-ng lab topology</h4>
+<p>Retrieve lab topology</p>
+<p>Examples:
+    eve-ng lab topology</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng lab topology [OPTIONS]
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --path TEXT
+  --output [json|text|table]
+  --help                      Show this message and exit.
+</code></pre></div>
+<h3 id="eve-ng-list-network-types">eve-ng list-network-types</h3>
+<p>list EVE-NG network types</p>
+<p>Examples:
+    eveng list-network-types</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng list-network-types [OPTIONS]
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --output [json|text|table]
+  --help                      Show this message and exit.
+</code></pre></div>
+<h3 id="eve-ng-list-node-templates">eve-ng list-node-templates</h3>
+<p>list EVE-NG node templates</p>
+<p>Examples:
+    eveng list-node-templates</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng list-node-templates [OPTIONS]
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --output [json|text|table]
+  --help                      Show this message and exit.
+</code></pre></div>
+<h3 id="eve-ng-list-user-roles">eve-ng list-user-roles</h3>
+<p>list EVE-NG user roles</p>
+<p>Examples:
+    eveng list-user-roles</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng list-user-roles [OPTIONS]
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --output [json|text|table]
+  --help                      Show this message and exit.
+</code></pre></div>
+<h3 id="eve-ng-node">eve-ng node</h3>
+<p>node sub commands</p>
+<p>Manage EVE-NG lab nodes</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng node [OPTIONS] COMMAND [ARGS]...
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --help  Show this message and exit.
+</code></pre></div>
+<h4 id="eve-ng-node-config">eve-ng node config</h4>
+<p>Upload device configuration</p>
+<p>Examples:
+    eveng node config -n 1                             # view startup config
+    eveng node config -n 4 --config "hostname testing" # upload config from string
+    eveng node -config -n 4 -src config.txt            # load config from file</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng node config [OPTIONS]
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --path TEXT
+  -n, --node-id TEXT  [required]
+  -s, --src PATH      config file to upload
+  -c, --config TEXT   config to upload
+  --help              Show this message and exit.
+</code></pre></div>
+<h4 id="eve-ng-node-create">eve-ng node create</h4>
+<p>Create lab node</p>
+<p>Example:
+    eve-ng node create --name leaf05 --template veos --image veos-4.22.0F</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng node create [OPTIONS]
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --name TEXT                     node name
+  --node-type [iol|qemu|dynamips]
+  --template TEXT                 node template to create node from
+                                  [required]
+  --image TEXT                    image to boot node with
+  --ethernet INTEGER              number of ethernet interfaces.
+  --serial INTEGER                number of serial interfaces.
+  --console-type [telnet|vnc]     number of serial interfaces.
+  --ram INTEGER                   RAM for node
+  --cpu INTEGER                   CPU count for node
+  --path TEXT
+  --help                          Show this message and exit.
+</code></pre></div>
+<h4 id="eve-ng-node-delete">eve-ng node delete</h4>
+<p>Delete lab node with specified id</p>
+<p>Example:
+eve-ng node delete -n 4   # delete node with id 4</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng node delete [OPTIONS]
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --path TEXT
+  -n, --node-id TEXT  [required]
+  --help              Show this message and exit.
+</code></pre></div>
+<h4 id="eve-ng-node-export">eve-ng node export</h4>
+<p>Create export node configuration (save)</p>
+<p>Example:
+eve-ng node export -n 4   # export node with id 4
+eve-ng node export        # export all nodes</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng node export [OPTIONS]
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --path TEXT
+  -n, --node-id TEXT
+  --help              Show this message and exit.
+</code></pre></div>
+<h4 id="eve-ng-node-list">eve-ng node list</h4>
+<p>list lab nodes</p>
+<p>Example:
+    eve-ng node list   # list all nodes</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng node list [OPTIONS]
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --output [json|text|table]
+  --path TEXT
+  --help                      Show this message and exit.
+</code></pre></div>
+<h4 id="eve-ng-node-read">eve-ng node read</h4>
+<p>Retrieve lab node details</p>
+<p>Example:
+eve-ng node read -n 4   # read node with id 4</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng node read [OPTIONS]
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --path TEXT
+  -n, --node-id TEXT    [required]
+  --output [json|text]
+  --help                Show this message and exit.
+</code></pre></div>
+<h4 id="eve-ng-node-start">eve-ng node start</h4>
+<p>start node in lab</p>
+<p>Example:
+    eve-ng node start -n 4</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng node start [OPTIONS]
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --path TEXT
+  -n, --node-id TEXT  [required]
+  --help              Show this message and exit.
+</code></pre></div>
+<h4 id="eve-ng-node-stop">eve-ng node stop</h4>
+<p>stop node in lab</p>
+<p>Example:
+    eve-ng node stop -n 1</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng node stop [OPTIONS]
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --path TEXT
+  -n, --node-id TEXT  [required]
+  --help              Show this message and exit.
+</code></pre></div>
+<h4 id="eve-ng-node-wipe">eve-ng node wipe</h4>
+<p>Create lab node</p>
+<p>Example:
+eve-ng node wipe -n 4   # wipe node with id 4
+eve-ng node wipe        # wipe all nodes</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng node wipe [OPTIONS]
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --path TEXT
+  -n, --node-id TEXT
+  --help              Show this message and exit.
+</code></pre></div>
+<h3 id="eve-ng-show-status">eve-ng show-status</h3>
+<p>View EVE-NG server status</p>
+<p>Examples:
+    eveng show-status</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng show-status [OPTIONS]
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --output [json|text|table]
+  --help                      Show this message and exit.
+</code></pre></div>
+<h3 id="eve-ng-show-template">eve-ng show-template</h3>
+<p>get EVE-NG node template details</p>
+<p>Examples:
+    eveng show-template veos</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng show-template [OPTIONS] TEMPLATE_NAME
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --help  Show this message and exit.
+</code></pre></div>
+<h3 id="eve-ng-user">eve-ng user</h3>
+<p>user sub commands</p>
+<p>Manage EVE-NG users</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng user [OPTIONS] COMMAND [ARGS]...
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --help  Show this message and exit.
+</code></pre></div>
+<h4 id="eve-ng-user-create">eve-ng user create</h4>
+<p>Create EVE-NG user</p>
+<p>Examples:
+    eve-ng user create -u user1 -p password1 -e -1 --role user --name "John Doe"</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng user create [OPTIONS]
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  -n, --name TEXT           User&#39;s name
+  -u, --username TEXT       login username  [required]
+  -p, --password TEXT       login password
+  -e, --expiration INTEGER  expiration date for accout (UNIX timestamp). -1
+                            means never expire. default is -1.
+  -r, --role TEXT           user role
+  --email TEXT              user email
+  --help                    Show this message and exit.
+</code></pre></div>
+<h4 id="eve-ng-user-delete">eve-ng user delete</h4>
+<p>Delete EVE-NG user</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng user delete [OPTIONS]
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  -u, --username TEXT  User&#39;s name  [required]
+  --help               Show this message and exit.
+</code></pre></div>
+<h4 id="eve-ng-user-edit">eve-ng user edit</h4>
+<p>Update EVE-NG user
+    eve-ng user edit -u user1 --name "Jane Doe"</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng user edit [OPTIONS]
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  -n, --name TEXT           User&#39;s name
+  -u, --username TEXT       login username  [required]
+  -p, --password TEXT       login password
+  -e, --expiration INTEGER  expiration date for accout (UNIX timestamp). -1
+                            means never expire. default is -1.
+  -r, --role TEXT           user role
+  --email TEXT              user email
+  --help                    Show this message and exit.
+</code></pre></div>
+<h4 id="eve-ng-user-list">eve-ng user list</h4>
+<p>list EVE-NG users</p>
+<p>Examples:
+    eve-ng user list</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng user list [OPTIONS]
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  --output [json|text|table]
+  --help                      Show this message and exit.
+</code></pre></div>
+<h4 id="eve-ng-user-read">eve-ng user read</h4>
+<p>Retrieve EVE-NG user details</p>
+<p><strong>Usage:</strong></p>
+<div class="highlight"><pre><span></span><code>eve-ng user read [OPTIONS]
+</code></pre></div>
+<p><strong>Options:</strong></p>
+<div class="highlight"><pre><span></span><code>  -u, --username TEXT  user ID to get details for  [required]
+  --help               Show this message and exit.
+</code></pre></div>
+
+              
+            </article>
+          </div>
+        </div>
+        
+          <a href="#" class="md-top md-icon" data-md-component="top" data-md-state="hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8v12z"/></svg>
+            Back to top
+          </a>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    <nav class="md-footer__inner md-grid" aria-label="Footer">
+      
+        
+        <a href="../api_reference/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Evensdk" rel="prev">
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+          </div>
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              Evensdk
+            </div>
+          </div>
+        </a>
+      
+      
+        
+        <a href="../topology_builder/" class="md-footer__link md-footer__link--next" aria-label="Next: Topology Builder" rel="next">
+          <div class="md-footer__title">
+            <div class="md-ellipsis">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              Topology Builder
+            </div>
+          </div>
+          <div class="md-footer__button md-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4z"/></svg>
+          </div>
+        </a>
+      
+    </nav>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.expand", "navigation.instant", "navigation.sections", "navigation.tabs", "navigation.tabs.sticky", "navigation.top", "navigation.tracking", "search.highlight", "search.share", "search.suggest", "toc.integrate"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing", "select.version.title": "Select version"}, "search": "../assets/javascripts/workers/search.bd0b6b67.min.js"}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.467223ff.min.js"></script>
+      
+    
+  </body>
+</html>
