@@ -1,0 +1,77 @@
+---
+site_name: evengsdk
+nav:
+    - Home: index.md
+    - API reference:
+        - Evensdk: api_reference.md
+    - ClI reference: cli_reference.md
+    - Topology Builder: topology_builder.md
+
+# Repository
+repo_name: "ttafsir/evengsdk"
+repo_url: "https://github.com/ttafsir/evengsdk"
+
+theme:
+  name: "material"
+  language: en
+  icon:
+    repo: fontawesome/brands/github
+  palette:
+  - media: "(prefers-color-scheme: light)"
+    scheme: default
+    primary: teal
+    accent: purple
+    toggle:
+      icon: material/weather-sunny
+      name: Switch to dark mode
+  - media: "(prefers-color-scheme: dark)"
+    scheme: slate
+    primary: black
+    accent: lime
+    toggle:
+      icon: material/weather-night
+      name: Switch to light mode
+  font:
+    text: Roboto
+    code: Roboto Mono
+  features:
+    - navigation.expand
+    - navigation.instant
+    - navigation.sections
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - search.suggest
+    - toc.integrate
+
+plugins:
+  - search
+  - mkdocstrings
+  - autorefs
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - footnotes
+  - mkdocs-click
+  - meta
+  - pymdownx.tasklist
+  - pymdownx.superfences
+  - pymdownx.keys
+  - pymdownx.tabbed
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.critic
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:materialx.emoji.twemoji
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+  - pymdownx.highlight:
+      linenums_style: pymdownx-inline
+  - pymdownx.inlinehilite
+  - pymdownx.keys
