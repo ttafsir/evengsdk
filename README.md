@@ -1,18 +1,14 @@
 # evengsdk
 
+![license](https://img.shields.io/github/license/ttafsir/evengsdk)
+[![Downloads](https://pepy.tech/badge/eve-ng)](https://pepy.tech/project/eve-ng)
+[![PyPI version](https://badge.fury.io/py/eve-ng.svg)](https://badge.fury.io/py/eve-ng)
+
+Documentation: https://ttafsir.github.io/evengsdk
+
 Open source library and command line utilities to work with the [EVE-NG](https://www.eve-ng.net/)  [REST API](https://www.eve-ng.net/index.php/documentation/howtos/how-to-eve-ng-api/) .
 
 Evegnsdk allows you to quickly build network topologies in EVE-NG for testing and development. The CLI tool also enables you quickly integrate EVE-NG into your CI/CD toolset for automated testing and validation.
-
-* [Requirements](#requirements)
-* [Installation](#rocketinstallation)
-* [Basic Usage](#basic-usage)
-  * [Example: Build a Lab](#example-build-a-lab)
-* [API Wrapper Methods](#api-wrapper-methods)
-* Using the `eve-ng` CLI
-  * [The `eve-ng` CLI application](#the-eve-ng-cli-application)
-  * [Configuration](#gear-configuration)
-  * [IaC/CICD](#iac--cicd)
 
 ## Requirements
 
@@ -48,9 +44,6 @@ You can interact with the EVE-NG API through the `client.api` interface
  'asav': 'Cisco ASAv',
  'bigip': 'F5 BIG-IP LTM VE',
  'cumulus': 'Cumulus VX',
- 'infoblox': 'Infoblox IPAM',
- 'iol': 'Cisco IOL.missing',
- 'ise': 'Cisco ISE.missing',
 
  <OUTPUT OMMITTED FOR BREVITY>
 
@@ -58,9 +51,6 @@ You can interact with the EVE-NG API through the `client.api` interface
  'mikrotik': 'MikroTik RouterOS.missing',
  'nsx': 'VMWare NSX.missing',
  'nxosv9k': 'Cisco NX-OSv 9K',
- 'olive': 'Juniper Olive.missing',
- 'ostinato': 'Ostinato',
- 'osx': 'Apple OSX.missing',
  'paloalto': 'Palo Alto.missing',
  'pfsense': 'pfSense Firewall.missing',
  'vcenter': 'VMWare vCenter.missing',
@@ -69,9 +59,6 @@ You can interact with the EVE-NG API through the `client.api` interface
  'vmx': 'Juniper vMX.missing',
  'vwlc': 'Cisco vWLC.missing',
  'vyos': 'VyOS',
- 'win': 'Windows.missing',
- 'winserver': 'Windows Server.missing',
- 'xrv': 'Cisco XRv.missing',
  'xrv9k': 'Cisco XRv 9000.missing'}
 >>>
 ```
@@ -126,93 +113,9 @@ for link in p2p_links:
 client.logout()
 ```
 
-## API Wrapper Methods
+## :tv: The `eve-ng` CLI Application
 
-<details>
-<summary>System</summary>
-
-*  `get_server_status`
-* `node_template_detail`
-* `list_node_templates`
-* `list_user_roles`
-* `list_networks`
-
-</details>
-
-<details>
-<summary>Users</summary>
-
-* `list_users`
-* `add_user`
-* `get_user`
-* `edit_user`
-* `delete_user`
-
-</details>
-
-<details>
-<summary>Labs</summary>
-
-* `get_lab`
-* `create_lab`
-* `delete_lab `
-* `edit_lab`
-* `lock_lab`
-* `unlock_lab`
-* `export_lab`
-* `import_lab`
-
-</details>
-
-<details>
-<summary>Nodes</summary>
-
-* `list_nodes`
-* `add_node`
-* `get_node`
-* `get_node_by_name`
-* `delete_node`
-* `node_exists`
-* `get_node_config_by_id`
-* `get_node_configs`
-* `get_node_interfaces`
-* `export_node`
-* `export_all_nodes`
-* `start_all_nodes`
-* `start_node`
-* `stop_all_nodes`
-* `stop_node`
-* `upload_node_config`
-* `wipe_all_nodes`
-* `wipe_node`
-* `connect_node_to_cloud`
-* `connect_node_to_node`
-
-</details>
-
-<details>
-<summary>Lab Networks</summary>
-
-* `add_lab_network`
-* `edit_lab_network`
-* `delete_lab_network`
-* `get_lab_network`
-* `get_lab_network_by_name`
-* `get_lab_topology`
-* `list_lab_networks`
-
-</details>
-
-<details>
-<summary>Folders</summary>
-
-* `get_folder`
-* `list_folders`
-
-</details>
-
-
-## Using `eve-ng` CLI application
+The CLI application makes it very simple to quick work with EVE-NG, especially in situation where you would like to automate lab builds and testing using CI/CD.
 
 The CLI application provides an interface to manage EVE-NG objects including:
 
@@ -222,12 +125,6 @@ The CLI application provides an interface to manage EVE-NG objects including:
   * networks
 * `Users` - manage system users
 * `System` - View system status and resources (node templates, network types, user roles, etc..)
-
-
-
-## The `eve-ng` CLI Application
-
-The CLI application makes it very simple to quick work with EVE-NG, especially in situation where you would like to automate lab builds and testing using CI/CD.
 
 ```zsh
 ➜ eveng --help
@@ -283,7 +180,7 @@ export EVE_NG_INSECURE=True
 export EVE_NG_LAB_PATH='/mylab.unl'
 ```
 
-## IaC / CICD
+## 🏗️ Topology Builder
 
 The CLI application allows you to build lab topologies using a declarative model in order to quickly spin a lab and configure nodes using configuration files or jinja templates. Below is a sample topology that is the `examples` directory of this project.
 
