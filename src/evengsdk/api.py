@@ -4,7 +4,7 @@ import copy
 import json
 from pathlib import Path
 from random import randint
-from typing import Dict, Tuple, Literal, Optional, BinaryIO
+from typing import BinaryIO, Dict, Literal, Optional, Tuple
 from urllib.parse import quote_plus
 
 
@@ -541,7 +541,11 @@ class EvengApi:
 
         # find the p2p interfaces on each of the nodes
         src_int = self.find_node_interface(path, s_node_id, src_label, media)
+        if not src_int:
+            raise ValueError(f"{src_label} invalid or missing for " f"{src}")
         dst_int = self.find_node_interface(path, d_node_id, dst_label, media)
+        if not dst_int:
+            raise ValueError(f"{dst_label} invalid or missing for " f"{dst}")
 
         # create the bridge for the p2p interfaces
         self.client.log.debug(
@@ -935,7 +939,7 @@ class EvengApi:
         cpu: int = None,
         nvram: int = None,
         idlepc: str = None,
-        slots: str = "",
+        slot: str = "",
     ) -> Dict:
         """Create node and add to lab
 
@@ -995,33 +999,36 @@ class EvengApi:
                     (i.e. slot1=NM-1FE-TX).
         :type slot: int, optional
         """
-        url = "/labs" + self.normalize_path(path) + "/nodes"
-
-        template = template
+        url = f"/labs{self.normalize_path(path)}/nodes"
         resp = self.node_template_detail(template)
         template_defaults = resp["data"]["options"]
 
-        icon = icon or template_defaults.get("icon")["value"]
-        ethernet = ethernet or template_defaults.get("ethernet")["value"]
-        ram = ram or template_defaults.get("ram")["value"]
-        image = image or template_defaults.get("image")["value"]
-        cpu = cpu or template_defaults.get("cpu")["value"]
-
+        ethernet = ethernet or template_defaults.get("ethernet", {}).get("value")
+        serial = serial or template_defaults.get("serial", {}).get("value")
         data = {
             "type": node_type,
             "template": template,
             "config": config,
             "delay": delay,
-            "icon": icon,
-            "image": image,
+            "icon": icon or template_defaults.get("icon", {}).get("value"),
+            "image": image or template_defaults.get("image", {}).get("value"),
             "name": name,
             "left": left,
             "top": top,
-            "ram": ram,
-            "cpu": cpu,
+            "ram": ram or template_defaults.get("ram", {}).get("value"),
+            "cpu": cpu or template_defaults.get("cpu", {}).get("value"),
             "console": console,
             "ethernet": int(ethernet) if ethernet else "",
+            "serial": int(serial) if serial else "",
+            "nvram": nvram or template_defaults.get("nvram", {}).get("value"),
         }
+
+        if node_type == "dynamips" and idlepc is not None:
+            data["idlepc"] = idlepc
+
+        if slot is not None:
+            data["slot"] = slot
+
         resp = {}
         if not self.node_exists(path, name):
             resp = self.client.post(url, data=json.dumps(data))
