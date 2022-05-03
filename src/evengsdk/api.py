@@ -618,12 +618,14 @@ class EvengApi:
         return self.client.get(url)
 
     def _recursively_wipe_nodes(self, path: str) -> Dict:
-        nodes = self.list_nodes(path)
-        results = []
-        for node_id, _ in nodes["data"].items():
-            r = self.wipe_node(path, node_id)
-            results.append(r)
-        return self._extract_recursive_statuses(results)
+        resp = self.list_nodes(path)
+        if resp["data"]:
+            results = []
+            for node_id, _ in resp["data"].items():
+                res = self.wipe_node(path, node_id)
+                results.append(res)
+            return self._extract_recursive_statuses(results)
+        return resp
 
     def _extract_recursive_statuses(self, results):
         success = all(r["status"] == "success" for r in results)
