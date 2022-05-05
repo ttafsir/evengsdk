@@ -19,7 +19,9 @@ class TestSystemCommands:
         result = self._run_commands(["show-status"], cli_lab_path)
         assert "qemu_version" in result.output
 
-    def test_system_list_network_types_text_output(self, cli_lab_path):
+    def test_system_list_network_types_text_output(
+        self, cli_lab_path, authenticated_client
+    ):
         """
         Arrange/Act: Run the `system` command with the 'list-network-types'
             subcommand.
@@ -27,7 +29,10 @@ class TestSystemCommands:
             returned.
         """
         result = self._run_commands(["list-network-types"], cli_lab_path)
-        assert "pnet0" in result.output
+        if authenticated_client.api.is_community:
+            assert "pnet0" in result.output
+        else:
+            assert "nat0" in result.output
 
     def test_system_list_node_templates_text_output(self, cli_lab_path):
         """

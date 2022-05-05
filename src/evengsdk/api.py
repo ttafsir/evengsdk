@@ -236,7 +236,7 @@ class EvengApi:
         :type path: str
         """
         normalized_path = self.normalize_path(path)
-        url = "/labs" + f"{normalized_path}/networks"
+        url = f"/labs{normalized_path}/networks"
         return self.client.get(url)
 
     def get_lab_network(self, path: str, net_id: int) -> Dict:
@@ -260,9 +260,8 @@ class EvengApi:
         :param name: name of the network
         :type name: str
         """
-        r = self.list_lab_networks(path)
-        networks = r.get("data")
-        if networks:
+        resp = self.list_lab_networks(path)
+        if networks := resp.get("data"):
             return next((v for _, v in networks.items() if v["name"] == name), None)
         return
 
@@ -565,13 +564,18 @@ class EvengApi:
         r2 = self.connect_p2p_interface(path, d_node_id, dst_int, net_id)
         return r1["status"] == "success" and r2["status"] == "success"
 
-    def _recursively_start_nodes(self, path: str) -> Dict:
-        nodes = self.list_nodes(path)
-        results = []
-        for node_id, _ in nodes["data"].items():
-            r = self.start_node(path, node_id)
-            results.append(r)
-        return self._extract_recursive_statuses(results)
+    def _update_nodes(
+        self, path: str, action: Literal["stop", "start", "wipe"]
+    ) -> Dict:
+        resp = self.list_nodes(path)
+        action_method = getattr(self, f"{action}_node")
+        if resp["data"]:
+            results = []
+            for node_id, _ in resp["data"].items():
+                res = action_method(path, node_id)
+                results.append(res)
+            return self._extract_recursive_statuses(results)
+        return resp
 
     def start_all_nodes(self, path: str) -> Dict:
         """Start one or all nodes configured in a lab
@@ -582,7 +586,7 @@ class EvengApi:
         if self.is_community:
             url = f"/labs{self.normalize_path(path)}/nodes/start"
             return self.client.get(url)
-        return self._recursively_start_nodes(path)
+        return self._update_nodes(path, "start")
 
     def stop_all_nodes(self, path: str) -> Dict:
         """Stop one or all nodes configured in a lab
@@ -590,8 +594,10 @@ class EvengApi:
         :param path: [description]
         :type path: str
         """
-        url = "/labs" + f"{self.normalize_path(path)}/nodes/stop"
-        return self.client.get(url)
+        if self.is_community:
+            url = f"/labs{self.normalize_path(path)}/nodes/stop"
+            return self.client.get(url)
+        return self._update_nodes(path, "stop")
 
     def start_node(self, path: str, node_id: str) -> Dict:
         """Start single node in a lab
@@ -617,16 +623,6 @@ class EvengApi:
             url += "/stopmode=3"
         return self.client.get(url)
 
-    def _recursively_wipe_nodes(self, path: str) -> Dict:
-        resp = self.list_nodes(path)
-        if resp["data"]:
-            results = []
-            for node_id, _ in resp["data"].items():
-                res = self.wipe_node(path, node_id)
-                results.append(res)
-            return self._extract_recursive_statuses(results)
-        return resp
-
     def _extract_recursive_statuses(self, results):
         success = all(r["status"] == "success" for r in results)
         messages = [r["message"] for r in results]
@@ -646,9 +642,9 @@ class EvengApi:
         :return: str
         """
         if self.is_community:
-            url = "/labs" + self.normalize_path(path) + "/nodes/wipe"
+            url = f"/labs{self.normalize_path(path)}/nodes/wipe"
             return self.client.get(url)
-        return self._recursively_wipe_nodes(path)
+        return self._update_nodes(path, "wipe")
 
     def wipe_node(self, path: str, node_id: int) -> Dict:
         """Wipe single node configured in a lab. Wiping deletes

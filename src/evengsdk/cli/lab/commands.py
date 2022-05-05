@@ -9,11 +9,12 @@ from typing import Dict, List
 import click
 import yaml
 
-from evengsdk.cli.common import list_sub_command, list_command
+from evengsdk.cli.common import list_command, list_sub_command
 from evengsdk.cli.console import cli_print, cli_print_error, cli_print_output, console
 from evengsdk.cli.lab.topology import Topology
 from evengsdk.cli.utils import get_active_lab, get_client, thread_executor
 from evengsdk.client import EvengClient
+from evengsdk.exceptions import EvengApiError, EvengHTTPError
 
 
 # https://stackoverflow.com/questions/37310718/mutually-exclusive-option-groups-in-python-click
@@ -209,8 +210,11 @@ def read(ctx, path, output):
         eve-ng lab read --path /folder/to/lab.unl
     """
     client = get_client(ctx)
-    resp = client.api.get_lab(path)
-    cli_print_output(output, resp, header=f"Lab: {resp.get('name')}")
+    try:
+        resp = client.api.get_lab(path)
+        cli_print_output(output, resp, header=f"Lab: {resp.get('name')}")
+    except (EvengHTTPError, EvengApiError) as err:
+        console.print_error(err)
 
 
 @click.command()
@@ -482,18 +486,21 @@ def delete(ctx, path):
         eve-ng lab delete --path /lab1
     """
     client = get_client(ctx)
-    with console.status("[bold green]wiping nodes...") as status:
-        # wipe nodes
-        resp1 = client.api.wipe_all_nodes(path)
-        console.log(f"{resp1['status']}: {resp1['message']}")
-        # stop all nodes
-        status.update("[bold green]closing lab...")
-        resp2 = client.api.close_lab()
-        console.log(f"{resp2['status']}: {resp2['message']}")
-        # delete the lab
-        status.update("[bold green]deleting lab...")
-        response = client.api.delete_lab(path)
-        cli_print_output("text", response)
+    try:
+        with console.status("[bold green]wiping nodes...") as status:
+            # wipe nodes
+            resp1 = client.api.wipe_all_nodes(path)
+            console.log(f"{resp1['status']}: {resp1['message']}")
+            # stop all nodes
+            status.update("[bold green]closing lab...")
+            resp2 = client.api.close_lab()
+            console.log(f"{resp2['status']}: {resp2['message']}")
+            # delete the lab
+            status.update("[bold green]deleting lab...")
+            response = client.api.delete_lab(path)
+            cli_print_output("text", response)
+    except (EvengHTTPError, EvengApiError) as err:
+        console.print_error(err)
 
 
 @click.command()

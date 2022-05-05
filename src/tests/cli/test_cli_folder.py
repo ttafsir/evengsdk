@@ -6,6 +6,8 @@ from evengsdk.cli.cli import main as cli
 
 
 class TestLabFolderCommands:
+    """CLI Folder Commands"""
+
     def test_folder_list(self):
         """
         Arrange/Act: Run the `folder` command with the 'list' subcommand.
@@ -25,7 +27,6 @@ class TestLabFolderCommands:
         result: Result = runner.invoke(cli, ["folder", "create"])
         assert result.exit_code == 0, result.output
 
-    @pytest.mark.xfail
     def test_folder_read(self):
         """
         Arrange/Act: Run the `folder` command with the 'read' subcommand.
