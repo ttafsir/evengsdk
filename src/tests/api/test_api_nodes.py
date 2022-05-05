@@ -1,18 +1,5 @@
 import pytest
 
-# @pytest.fixture()
-# def test_node_data():
-#     return {
-#         "node_type": "qemu",
-#         "template": "veos",
-#         "image": "veos-4.27.0F",
-#         "name": "leaf99",
-#         "ethernet": 4,
-#         "cpu": 2,
-#         "serial": 2,
-#         "delay": 0,
-#     }
-
 
 @pytest.mark.usefixtures("setup_lab")
 class TestEvengApiNodes:
