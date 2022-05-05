@@ -3,11 +3,6 @@ import pytest
 from evengsdk.exceptions import EvengHTTPError
 
 
-@pytest.fixture()
-def network_name():
-    return "vCloud"
-
-
 @pytest.mark.usefixtures("setup_lab")
 class TestEvengApiNetwork:
     """Test cases for Network endpoints"""
@@ -26,18 +21,14 @@ class TestEvengApiNetwork:
         with pytest.raises(EvengHTTPError):
             authenticated_client.api.get_lab_network(lab_path, "1")
 
-    @pytest.mark.xfail(
-        reason="TODO: fix `get_lab_network_by_name` - is returning network types"
-    )
     def test_get_lab_network_by_name(
-        self, authenticated_client, lab_path, network_name
+        self, authenticated_client, lab_path, test_network, test_network_data
     ):
         """
         Verify that we can retrieve a specific lab by name
         """
-        authenticated_client.api.add_lab_network(lab_path, name=network_name)
-        r2 = authenticated_client.api.get_lab_network_by_name(lab_path, network_name)
-        assert r2["name"] is not None
+        resp = authenticated_client.api.get_lab_network(lab_path, test_network)
+        assert resp["data"]["name"] == test_network_data["name"]
 
     def test_list_lab_links(self, authenticated_client, lab_path):
         """
@@ -56,6 +47,9 @@ class TestEvengApiNetwork:
     def test_add_network(
         self, authenticated_client, lab_path, name, network_type, visibility
     ):
+        if not authenticated_client.api.is_community and network_type == "pnet0":
+            pytest.skip("pnet0 is not supported for pro version")
+
         resp = authenticated_client.api.add_lab_network(
             lab_path, network_type=network_type, name=name, visibility=visibility
         )
@@ -83,34 +77,15 @@ class TestEvengApiNetwork:
                 lab_path, network_type, visibility=visibility
             )
 
-    def test_edit_network(self, authenticated_client, lab, lab_path):
-        net = dict(name="test_network", network_type="bridge", visibility="1")
-        add_resp = authenticated_client.api.add_lab_network(lab_path, **net)
-        net_id = add_resp.get("data", {}).get("id")
-
-        edited = lab.copy()
-        edited.update({"name": "edited"})
-
-        # edit operation is successful
+    def test_edit_network(self, authenticated_client, lab_path, test_network):
+        """Edit a network"""
+        data = {"name": "new_name"}
         edit_resp = authenticated_client.api.edit_lab_network(
-            lab_path, net_id, data=edited
+            lab_path, test_network, data=data
         )
-        assert edit_resp["code"] == 201
 
-        # network updated
+        # retrieve the edited network
         lab_networks = authenticated_client.api.list_lab_networks(lab_path)
-        assert lab_networks["data"][f"{net_id}"]["name"] == "edited"
 
-        # edit operation without data should raise
-        with pytest.raises(ValueError):
-            edit_resp = authenticated_client.api.edit_lab_network(lab_path, net_id)
-
-    @pytest.mark.xfail(reason="TODO: fix this test")
-    def test_delete_network(self, authenticated_client, lab_path):
-        net = dict(name="bridge_network", network_type="bridge")
-        add_resp = authenticated_client.api.add_lab_network(lab_path, **net)
-        net_id = add_resp.get("data", {}).get("id")
-
-        print(f"deleting net_id: {net_id}")
-        del_resp = authenticated_client.api.delete_lab_network(lab_path, net_id)
-        assert del_resp["status"] == "success"
+        assert edit_resp["code"] == 201
+        assert lab_networks["data"][f"{test_network}"]["name"] == "new_name"

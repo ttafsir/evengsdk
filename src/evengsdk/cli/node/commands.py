@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
-from pathlib import Path
 import os
-from typing import List, Dict
+from pathlib import Path
+from typing import Dict, List
 
 import click
 
 from evengsdk.cli.common import list_sub_command
-from evengsdk.cli.utils import get_client, get_active_lab
-from evengsdk.cli.console import cli_print_output, cli_print_error, cli_print
+from evengsdk.cli.console import cli_print, cli_print_error, cli_print_output
 from evengsdk.cli.node import NODE_STATUS_CODES
-
+from evengsdk.cli.utils import get_active_lab, get_client
 
 client = None
 
@@ -54,7 +53,7 @@ def upload_config(ctx, node_id, path, src, config):
     client = get_client(ctx)
     if any([src, config]):
         _config = config or _get_config(src)
-        resp = client.api.upload_node_config(path, node_id, config=_config, enable=True)
+        resp = client.api.upload_node_config(path, node_id, config=_config)
         cli_print_output("text", resp)
     else:
         resp = client.api.get_node_config_by_id(path, node_id)
