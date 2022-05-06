@@ -5,34 +5,13 @@ from click.testing import CliRunner, Result
 from evengsdk.cli.cli import main as cli
 
 
-@pytest.fixture(scope="module")
-def test_node(test_node_data, cli_lab_path):
-    """Create Test user."""
-    cli_commands = [
-        "node",
-        "create",
-        "--path",
-        cli_lab_path,
-        "--node-type",
-        test_node_data["node_type"],
-        "--name",
-        test_node_data["name"],
-        "--template",
-        test_node_data["template"],
-        "--ethernet",
-        test_node_data["ethernet"],
-    ]
-    yield run_cli_command(cli_commands)
-    run_cli_command(["node", "delete", "-n", "1", "--path", cli_lab_path])
-
-
 def run_cli_command(commands: list) -> Result:
     """Helper function to Run CLI command."""
     runner: CliRunner = CliRunner()
     return runner.invoke(cli, commands)
 
 
-@pytest.mark.usefixtures("test_lab", "test_node")
+@pytest.mark.usefixtures("test_cli_lab", "test_node")
 class TestLabNodeCommands:
     """CLI Node Commands"""
 

@@ -1,0 +1,3 @@
+---
+hostname: leaf01
+management_address: 10.10.10.1
