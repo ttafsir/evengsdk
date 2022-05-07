@@ -2,11 +2,13 @@
 import click
 
 from evengsdk.cli.common import list_sub_command
-from evengsdk.cli.console import cli_print_output, cli_print_error
+from evengsdk.cli.console import cli_print_output, console
 from evengsdk.cli.utils import get_client
+from evengsdk.exceptions import EvengApiError, EvengHTTPError
 
 
 def user_sub_command(subcommand):
+    """common options for user subcommands"""
     for decorator in reversed(
         (
             click.option("--name", "-n", help="User's name"),
@@ -36,27 +38,30 @@ def ls(ctx, output):
     Examples:
         eve-ng user list
     """
-    client = get_client(ctx)
-    resp = client.api.list_users()
-    users = [user_dict for _, user_dict in resp["data"].items()]
-    table_header = [
-        ("Username", dict(justify="right", style="cyan", no_wrap=True)),
-        ("Name", dict(justify="left", style="cyan", no_wrap=True)),
-        ("Email", {}),
-        ("Expiration", {}),
-        ("Role", {}),
-        ("IP", {}),
-        ("Folder", {}),
-        ("Lab", {}),
-        ("Pod", {}),
-    ]
-    cli_print_output(
-        output,
-        {"data": users},
-        header="User",
-        table_header=table_header,
-        table_title="Users",
-    )
+    _client = get_client(ctx)
+    resp = _client.api.list_users()
+    try:
+        users = [user_dict for _, user_dict in resp["data"].items()]
+        table_header = [
+            ("Username", dict(justify="right", style="cyan", no_wrap=True)),
+            ("Name", dict(justify="left", style="cyan", no_wrap=True)),
+            ("Email", {}),
+            ("Expiration", {}),
+            ("Role", {}),
+            ("IP", {}),
+            ("Folder", {}),
+            ("Lab", {}),
+            ("Pod", {}),
+        ]
+        cli_print_output(
+            output,
+            {"data": users},
+            header="User",
+            table_header=table_header,
+            table_title="Users",
+        )
+    except (EvengHTTPError, EvengApiError) as err:
+        console.print_error(err)
 
 
 @click.command()
@@ -70,12 +75,12 @@ def create(ctx, **options):
     Examples:
         eve-ng user create -u user1 -p password1 -e -1 --role user --name "John Doe"
     """
-    client = get_client(ctx)
+    _client = get_client(ctx)
     try:
-        resp = client.api.add_user(**options)
+        resp = _client.api.add_user(**options)
         cli_print_output("text", resp)
-    except Exception as e:
-        cli_print_error(e)
+    except (EvengHTTPError, EvengApiError) as err:
+        console.print_error(err)
 
 
 @click.command()
@@ -85,9 +90,12 @@ def read(ctx, username):
     """
     Retrieve EVE-NG user details
     """
-    client = get_client(ctx)
-    resp = client.api.get_user(username)
-    cli_print_output("json", resp)
+    _client = get_client(ctx)
+    try:
+        resp = _client.api.get_user(username)
+        cli_print_output("json", resp)
+    except (EvengHTTPError, EvengApiError) as err:
+        console.print_error(err)
 
 
 @click.command()
@@ -98,10 +106,13 @@ def edit(ctx, **options):
     Update EVE-NG user
         eve-ng user edit -u user1 --name "Jane Doe"
     """
-    client = get_client(ctx)
-    username = options.pop("username")
-    resp = client.api.edit_user(username, data=options)
-    cli_print_output("text", resp)
+    _client = get_client(ctx)
+    try:
+        username = options.pop("username")
+        resp = _client.api.edit_user(username, data=options)
+        cli_print_output("text", resp)
+    except (EvengHTTPError, EvengApiError) as err:
+        console.print_error(err)
 
 
 @click.command()
@@ -111,9 +122,13 @@ def delete(ctx, username):
     """
     Delete EVE-NG user
     """
-    client = get_client(ctx)
-    resp = client.api.delete_user(username)
-    cli_print_output("text", resp)
+    _client = get_client(ctx)
+    try:
+        _client.api.get_user(username)
+        resp = _client.api.delete_user(username)
+        cli_print_output("text", resp)
+    except (EvengHTTPError, EvengApiError) as err:
+        console.print_error(err)
 
 
 @click.group()

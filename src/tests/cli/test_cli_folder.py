@@ -5,6 +5,7 @@ from click.testing import CliRunner, Result
 from evengsdk.cli.cli import main as cli
 
 
+@pytest.mark.usefixtures("authenticated_client")
 class TestLabFolderCommands:
     """CLI Folder Commands"""
 

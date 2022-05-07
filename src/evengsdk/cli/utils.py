@@ -1,20 +1,24 @@
 # -*- coding: utf-8 -*-
-from concurrent.futures import ThreadPoolExecutor
 import html
 import os
+import sys
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Dict, List
-import sys
 
 import click
+
+from evengsdk.cli.console import console
+from evengsdk.client import EvengLoginError
 
 
 def get_client(ctx):
     client = ctx.obj.client
-    if client:
+    try:
         client.login(ctx.obj.username, ctx.obj.password)
         return client
-    return
+    except (EvengLoginError) as err:
+        console.print_error(err)
 
 
 def to_human_readable(obj: Dict, keys: List[str] = []) -> str:

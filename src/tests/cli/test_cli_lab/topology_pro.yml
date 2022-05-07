@@ -1,0 +1,39 @@
+---
+name: test
+description: Arista VEOS leaf-spine lab
+path: "/"
+nodes:
+  - name: leaf01
+    template: veos
+    image: veos-4.22.0F
+    node_type: qemu
+    left: 50
+    top: 135
+    configuration:
+      template: base.j2
+      vars:
+        hostname: leaf01
+        management_address: 10.10.10.1
+  - name: leaf02
+    template: veos
+    image: veos-4.22.0F
+    node_type: qemu
+    left: 200
+    top: 135
+networks:
+  - name: NAT
+    network_type: nat0
+    visibility: 1
+    top: 300
+    left: 475
+links:
+  network:
+    - { "src": "leaf01", "src_label": "Mgmt1", "dst": "NAT" }
+    - { "src": "leaf02", "src_label": "Mgmt1", "dst": "NAT" }
+  node:
+    - {
+        "src": "leaf01",
+        "src_label": "Eth1",
+        "dst": "leaf02",
+        "dst_label": "Eth1",
+      }
