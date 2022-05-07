@@ -2,7 +2,7 @@
 import click
 
 from evengsdk.cli.common import list_sub_command
-from evengsdk.cli.console import cli_print_error, cli_print_output, console
+from evengsdk.cli.console import cli_print_output, console
 from evengsdk.cli.utils import get_client
 from evengsdk.exceptions import EvengApiError, EvengHTTPError
 
