@@ -1,0 +1,91 @@
+# JSON Schema
+
+## Properties
+
+- **`name`**: Refer to *#/definitions/labName*.
+- **`path`**: Refer to *#/definitions/labPath*.
+- **`author`**: Refer to *#/definitions/labAuthor*.
+- **`description`**: Refer to *#/definitions/labDescription*.
+- **`version`**: Refer to *#/definitions/labVersion*.
+- **`tasks`**: Refer to *#/definitions/labTasks*.
+- **`scripttimeout`**: Refer to *#/definitions/labScriptTimeout*.
+- **`body`**: Refer to *#/definitions/labBody*.
+- **`nodes`** *(array)*
+  - **Items**: Refer to *#/definitions/node*.
+- **`networks`** *(array)*
+  - **Items**: Refer to *#/definitions/network*.
+- **`links`** *(object)*
+  - **`network`** *(array)*
+    - **Items**: Refer to *#/definitions/nodeToNetworkLink*.
+  - **`node`** *(array)*
+    - **Items**: Refer to *#/definitions/nodeToNodeLink*.
+## Definitions
+
+- **`labName`** *(string)*: Name.
+- **`labPath`** *(string)*: Path. Default: `/`.
+- **`labVersion`** *(number)*: Version. Default: `0`.
+- **`labAuthor`** *(string)*
+- **`labScriptTimeout`** *(number)*: Default: `300`.
+- **`labDescription`** *(string)*
+- **`labTasks`** *(string)*
+- **`labBody`** *(string)*
+- **`nodeName`** *(string)*
+- **`nodeConfig`** *(number)*: Startup config configured. Must be one of: `[0, 1]`. Default: `0`.
+- **`nodeDelay`** *(number)*: Seconds to wait before starting the node. Default: `0`.
+- **`nodeLeft`** *(number)*: Margin from left, in percentage (i.e. 35%).
+- **`nodeTop`** *(number)*: Margin from top, in percentage (i.e. 35%).
+- **`nodeIcon`** *(string)*: Node Icon filename.
+- **`nodeImage`** *(string)*: The Application Service Port. Use '0' for ICMP only.
+- **`nodeTemplate`** *(string)*: Template for device image and type. Must be one of: `['a10', 'osx', 'veos', 'clearpass', 'arubacx', 'aruba', 'barracuda', 'brocadevadx', 'cpsg', 'acs', 'ampcloud', 'apicem', 'asa', 'asav', 'c9800cl', 'cda', 'csr1000v', 'csr1000vng', 'cucm', 'dcnm', 'phoebe', 'cexpresw', 'firepower', 'firepower6', 'iol', 'c1710', 'c3725', 'c7200', 'cips', 'ise', 'cms', 'titanium', 'nxosv9k', 'prime', 'stealth', 'uccx', 'cup', 'ucspe', 'cue', 'vios', 'viosl2', 'vnam', 'vwaas', 'vwlc', 'coeus', 'xrv', 'xrv9k', 'nsvpx', 'ctxsdw', 'cumulus', 'cyberoam', 'extremexos', 'bigip', 'fortinet', 'hpvsr', 'huaweiar1k', 'huaweiusg6kv', 'infoblox', 'olive', 'junipervrr', 'vmx', 'vmxvcp', 'vmxvfp', 'vqfxpfe', 'vqfxre', 'vsrx', 'vsrxng', 'jspace', 'kerio', 'linux', 'mikrotik', 'newimage', 'timoscpm', 'timosiom', 'timos', 'ostinato', 'paloalto', 'pfsense', 'scrutinizer', 'pulse', 'alteon', 'riverbed', 'sterra', 'silveredge', 'silverorch', 'sonicwall', 'sophosutm', 'sophosxg', 'trendmivtps', 'veloedge', 'velogw', 'veloorch', 'versaana', 'versadir', 'versafvnf', 'vtbond', 'vtedge', 'vtmgmt', 'vtsmart', 'vpcs', 'esxi', 'nsx', 'vcenter', 'vyos', 'win', 'winserver']`.
+- **`nodeType`** *(string)*: Must be one of: `['qemu', 'dynamips', 'iol']`. Default: `qemu`.
+- **`nodeCpu`** *(number)*: Default: `1`.
+- **`nodeRam`** *(number)*: MB of RAM configured for the node. Default: `1024`.
+- **`nodeEthernet`** *(number)*: Number of Ethernet ports. Default: `2`.
+- **`nodeSerial`** *(number)*
+- **`nodeConsole`** *(string)*: Must be one of: `['telnet', 'vnc']`. Default: `telnet`.
+- **`nodeConfigurationFile`** *(string)*
+- **`nodeConfigurationTemplate`** *(string)*
+- **`nodeConfigurationTemplateVars`** *(object)*
+- **`nodeConfigurationTemplateVarsfile`** *(string)*
+- **`nodeConfigurationFileOption`** *(object)*
+  - **`file`**: Refer to *#/definitions/nodeConfigurationFile*.
+- **`nodeConfigurationTemplateOption`** *(object)*
+  - **`template`**: Refer to *#/definitions/nodeConfigurationTemplate*.
+  - **`vars`**
+- **`node`** *(object)*
+  - **`console`**: Refer to *#/definitions/nodeConsole*.
+  - **`config`**: Refer to *#/definitions/nodeConfig*.
+  - **`delay`**: Refer to *#/definitions/nodeDelay*.
+  - **`left`**: Refer to *#/definitions/nodeLeft*.
+  - **`icon`**: Refer to *#/definitions/nodeIcon*.
+  - **`image`**: Refer to *#/definitions/nodeImage*.
+  - **`name`**: Refer to *#/definitions/nodeName*.
+  - **`template`**: Refer to *#/definitions/nodeTemplate*.
+  - **`node_type`**: Refer to *#/definitions/nodeType*.
+  - **`top`**: Refer to *#/definitions/nodeTop*.
+  - **`cpu`**: Refer to *#/definitions/nodeCpu*.
+  - **`ram`**: Refer to *#/definitions/nodeRam*.
+  - **`ethernet`**: Refer to *#/definitions/nodeEthernet*.
+  - **`serial`**: Refer to *#/definitions/nodeSerial*.
+  - **`configuration`**
+- **`networkName`** *(string)*
+- **`networkVisibility`** *(number)*: Must be one of: `[0, 1]`. Default: `1`.
+- **`networkTop`** *(number)*: Margin from top, in percentage (i.e. 35%).
+- **`networkLeft`** *(number)*: Margin from left, in percentage (i.e. 35%).
+- **`networkType`** *(string)*: Must be one of: `['bridge', 'ovs', 'pnet0', 'pnet1', 'pnet2', 'pnet3', 'pnet4', 'pnet5', 'pnet6', 'pnet7', 'pnet8', 'pnet9']`.
+- **`network`**
+- **`linkSrc`** *(string)*
+- **`linkSrcLabel`** *(string)*
+- **`linkDst`** *(string)*
+- **`linkDstLabel`** *(string)*
+- **`linkMedia`** *(string)*: Must be one of: `['ethernet', 'serial']`. Default: `ethernet`.
+- **`nodeToNetworkLink`** *(object)*
+  - **`src`**: Refer to *#/definitions/linkSrc*.
+  - **`src_label`**: Refer to *#/definitions/linkSrcLabel*.
+  - **`dst`**: Refer to *#/definitions/linkDst*.
+- **`nodeToNodeLink`** *(object)*
+  - **`src`**: Refer to *#/definitions/linkSrc*.
+  - **`src_label`**: Refer to *#/definitions/linkSrcLabel*.
+  - **`dst`**: Refer to *#/definitions/linkDst*.
+  - **`dst_label`**: Refer to *#/definitions/linkDstLabel*.
+  - **`media`**: Refer to *#/definitions/linkMedia*.
