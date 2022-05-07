@@ -1,60 +1,62 @@
 # -*- coding: utf-8 -*-
-import pytest
-from click.testing import CliRunner
+import json
 
-from evengsdk.cli.cli import main as cli
+import pytest
 
 
 @pytest.mark.usefixtures("setup_cli_lab")
 class TestSystemCommands:
-    def _run_commands(self, commands, lab_path):
-        runner: CliRunner = CliRunner(env={"EVE_NG_LAB_PATH": lab_path})
-        return runner.invoke(cli, commands)
+    """CLI System Commands"""
 
-    def test_system_status(self, cli_lab_path):
+    @pytest.mark.parametrize(
+        "command,expected_string",
+        [
+            ("show-status", "qemu_version"),
+            ("list-node-templates", "osx"),
+            ("list-user-roles", "admin"),
+            (["show-template", "asa"], "cpulimit"),
+        ],
+    )
+    def test_system_commands(self, helpers, command, expected_string):
         """
-        Arrange/Act: Run the `system` command with the 'status' subcommand.
+        Arrange/Act: Run the `system` commands.
         Assert: The output indicates that a status is successfully returned.
         """
-        result = self._run_commands(["show-status"], cli_lab_path)
-        assert "qemu_version" in result.output
+        commands = command if isinstance(command, list) else [command]
+        result = helpers.run_cli_command(commands)
+        assert expected_string in result.output
 
-    def test_system_list_network_types_text_output(self, cli_lab_path):
+    @pytest.mark.parametrize(
+        "command,expected_string",
+        [
+            ("show-status", "System"),
+            ("list-node-templates", "Node Template"),
+            ("list-user-roles", "User Roles"),
+        ],
+    )
+    def test_system_commands_json_output(
+        self, helpers, command, expected_string, escape_ansi_regex
+    ):
+        """
+        Arrange/Act: Run the `system` commands with json output.
+        Assert: The output indicates that a status is successfully returned.
+        """
+        output_format = "json"
+        commands = command if isinstance(command, list) else [command]
+        commands.extend(["--output", output_format])
+        result = helpers.run_cli_command(commands)
+        escaped_result = escape_ansi_regex.sub("", result.output)
+        assert expected_string in escaped_result or json.loads(escaped_result)
+
+    def test_system_list_network_types_text_output(self, authenticated_client, helpers):
         """
         Arrange/Act: Run the `system` command with the 'list-network-types'
             subcommand.
         Assert: The output indicates that network types are successfully
             returned.
         """
-        result = self._run_commands(["list-network-types"], cli_lab_path)
-        assert "pnet0" in result.output
-
-    def test_system_list_node_templates_text_output(self, cli_lab_path):
-        """
-        Arrange/Act: Run the `system` command with the 'list-node-templates'
-            subcommand.
-        Assert: The output indicates that node templates are successfully
-            returned.
-        """
-        result = self._run_commands(["list-node-templates"], cli_lab_path)
-        assert "osx" in result.output
-
-    def test_system_list_user_roles_text_output(self, cli_lab_path):
-        """
-        Arrange/Act: Run the `system` command with the 'user-roles'
-            subcommand.
-        Assert: The output indicates that node templates are successfully
-            returned.
-        """
-        result = self._run_commands(["list-user-roles"], cli_lab_path)
-        assert "admin" in result.output
-
-    def test_system_read_template(self, cli_lab_path):
-        """
-        Arrange/Act: Run the `system` command with the 'read-template'
-            subcommand.
-        Assert: The output indicates that node templates are successfully
-            returned.
-        """
-        result = self._run_commands(["show-template", "asa"], cli_lab_path)
-        assert "cpulimit" in result.output
+        result = helpers.run_cli_command(["list-network-types"])
+        if authenticated_client.api.is_community:
+            assert "pnet0" in result.output
+        else:
+            assert "nat0" in result.output

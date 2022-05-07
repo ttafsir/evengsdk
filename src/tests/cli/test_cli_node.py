@@ -1,116 +1,121 @@
 # -*- coding: utf-8 -*-
 import pytest
-from click.testing import CliRunner, Result
-
-from evengsdk.cli.cli import main as cli
 
 
-LAB_TO_CREATE = {"name": "test lab1", "path": "/test lab1.unl"}
-TEST_CONFIG = """
-!
-hostname vEOS4
-!
-"""
-
-
-@pytest.fixture()
-def test_node():
-    return {
-        "node_type": "qemu",
-        "template": "veos",
-        "image": "veos-4.21.1.1F",
-        "name": "leaf01",
-        "ethernet": 4,
-        "cpu": 2,
-        "serial": 2,
-        "delay": 0,
-    }
-
-
-@pytest.mark.usefixtures("setup_cli_lab")
+@pytest.mark.usefixtures("test_cli_lab", "test_node")
 class TestLabNodeCommands:
-    def _run_commands(self, commands, lab_path):
-        runner: CliRunner = CliRunner(env={"EVE_NG_LAB_PATH": lab_path})
-        return runner.invoke(cli, commands)
+    """CLI Node Commands"""
 
-    def _run_node_command(self, cmd: str, *args, **kwargs):
-        return self._run_commands(["node", cmd, "--node-id", "1"], *args, **kwargs)
-
-    def test_lab_node_create(self, cli_lab_path, test_node):
-        """
-        Arrange/Act: Run the `node` command with the 'create' subcommand.
-        Assert: The output indicates that lab imported successfully.
-        """
-        cli_commands = [
-            "node",
-            "create",
-            "--node-type",
-            test_node["node_type"],
-            "--name",
-            test_node["name"],
-            "--template",
-            test_node["template"],
-            "--ethernet",
-            test_node["ethernet"],
-        ]
-
-        result = self._run_commands(cli_commands, cli_lab_path)
-        assert result.exit_code == 0, result.output
-
-    def test_lab_node_list(self, cli_lab_path):
+    def test_lab_node_list(self, cli_lab_path, helpers):
         """
         Arrange/Act: Run the `node` command with the 'list' subcommand.
-        Assert: The output indicates that lab imported successfully.
+        Assert: The output indicates that node imported successfully.
         """
-        result = self._run_commands(["node", "list"], cli_lab_path)
+        result = helpers.run_cli_command(["node", "list", "--path", cli_lab_path])
         assert result.exit_code == 0, result.output
 
-    def test_lab_node_read(self, cli_lab_path):
+    @pytest.mark.parametrize(
+        "command,expected_string",
+        [
+            ("start", "started"),
+            ("stop", "stopped"),
+            ("read", "image"),
+            ("wipe", "wiped"),
+            ("export", "exported"),
+        ],
+    )
+    def test_lab_node_commands(self, cli_lab_path, command, expected_string, helpers):
         """
-        Arrange/Act: Run the `node` command with the 'read' subcommand.
-        Assert: The output indicates that lab retrieved successfully.
+        Arrange/Act: Run the `node` command with the crud subcommands.
+        Assert: The output indicates that node retrieved successfully.
         """
-        result = self._run_node_command("read", cli_lab_path)
+        result = helpers.run_cli_command(
+            ["node", command, "--node-id", "1", "--path", cli_lab_path]
+        )
         assert result.exit_code == 0, result.output
+        assert expected_string in result.output
 
-    def test_lab_node_start_command(self, cli_lab_path):
+    @pytest.mark.parametrize(
+        "command,expected_string",
+        [
+            ("wipe", "wiped"),
+            ("export", "exported"),
+        ],
+    )
+    def test_lab_node_all_commands(
+        self, cli_lab_path, command, expected_string, helpers
+    ):
         """
-        Arrange/Act: Run the `node` command with the 'start' subcommand.
-        Assert: The output indicates that lab started successfully.
+        Arrange/Act: Run the `node` commands with subcommands that support multiple nodes.
+        Assert: The output indicates that command retrieved successfully for all nodes.
         """
-        result = self._run_node_command("start", cli_lab_path)
+        result = helpers.run_cli_command(["node", command, "--path", cli_lab_path])
         assert result.exit_code == 0, result.output
-        assert "started" in result.output
+        assert expected_string in result.output
 
-    def test_lab_node_stop_command(self, cli_lab_path):
+    @pytest.mark.parametrize(
+        "command",
+        ["create", "start", "stop", "read", "delete", "wipe", "export", "config"],
+    )
+    def test_lab_node_commads_with_error(self, command, cli_lab_path, helpers):
         """
-        Arrange/Act: Run the `node` command with the 'stop' subcommand.
-        Assert: The output indicates that lab stopped successfully.
+        Arrange/Act: Run the `node` command with the crud subcommands.
+        Assert: The output indicates that node displays error message instead of traceback.
         """
-        result = result = self._run_node_command("stop", cli_lab_path)
-        assert result.exit_code == 0, result.output
-        assert "stopped" in result.output
+        args = ["node", command, "--node-id", "99", "--path", cli_lab_path]
+        if command == "create":
+            args = [
+                "node",
+                command,
+                "--path",
+                cli_lab_path,
+                "--name",
+                "test",
+                "--template",
+                "invalid",
+            ]
+        result = helpers.run_cli_command(args)
+        assert result.exit_code > 0, result.output
+        if command == "create":
+            assert "Template does not exists or is not available" in result.output
+        else:
+            assert "Cannot find node in the selected lab" in result.output
 
-    @pytest.mark.skip(reason="TODO: fix enable=True argument")
-    def test_lab_node_upload_config_command(self, cli_lab_path):
+    def test_lab_node_upload_config_inline(self, cli_lab_path, helpers):
         """
         Arrange/Act: Run the `node` command with the 'upload-config'
             subcommand.
-        Assert: The output indicates that lab string configuration
+        Assert: The output indicates that node string configuration
             uploaded successfully.
         """
-        runner: CliRunner = CliRunner(env={"EVE_NG_LAB_PATH": cli_lab_path})
-        with runner.isolated_filesystem():
-            with open("config.txt", "w") as f:
-                f.write(TEST_CONFIG)
-            commands = [
-                "node",
-                "config",
-                "-n",
-                "1",
-                "-c",
-                "hostname test",
-            ]
-            result: Result = runner.invoke(cli, commands)
-            assert result.exit_code == 0, result.output
-            assert "Lab has been saved" in result.output
+        result = helpers.run_cli_command(
+            ["node", "config", "--path", cli_lab_path, "-n", "1", "-c", "hostname test"]
+        )
+        assert result.exit_code == 0, result.output
+        assert "Lab has been saved" in result.output
+
+    def test_lab_node_upload_config_file(self, datadir, cli_lab_path, helpers):
+        """
+        Arrange/Act: Run the `node` command with the 'upload-config'
+            subcommand.
+        Assert: The output indicates that node string configuration
+            uploaded successfully.
+        """
+        src = datadir / "test_config.txt"
+        result = helpers.run_cli_command(
+            ["node", "config", "--path", cli_lab_path, "-n", "1", "--src", str(src)]
+        )
+        assert result.exit_code == 0, result.output
+        assert "Lab has been saved" in result.output
+
+    def test_lab_node_upload_config_get(self, cli_lab_path, helpers):
+        """
+        Arrange/Act: Run the `node` command with the 'upload-config'
+            subcommand.
+        Assert: The output indicates that node string configuration
+            uploaded successfully.
+        """
+        result = helpers.run_cli_command(
+            ["node", "config", "--path", cli_lab_path, "-n", "1"]
+        )
+        assert result.exit_code == 0, result.output

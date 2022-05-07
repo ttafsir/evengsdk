@@ -1,0 +1,34 @@
+alias rztp bash echo 'DISABLE=False' > /mnt/flash/zerotouch-config
+{% if hostname is defined and hostname %}
+hostname {{ hostname }}
+{% else %}
+hostname ztp-{{ management_address }}
+{% endif %}
+!
+no aaa root
+!
+username admin privilege 15 secret Arista123!
+username cvpadmin privilege 15 secret Arista123!
+!
+vrf definition management
+   description management vrf
+!
+{% if management_address is defined and management_address %}
+interface Management1
+   description MANAGEMENT
+   vrf forwarding management
+   ip address {{ management_address }} {{subnet_mask}}
+!
+{% endif %}
+ip route vrf management 0.0.0.0/0 {{ gateway }}
+!
+no ip routing
+no ip routing vrf management
+!
+management api http-commands
+   no shutdown
+   !
+   vrf management
+      no shutdown
+!
+end

@@ -10,11 +10,12 @@ from typing import Dict, List, Optional
 import click
 import yaml
 
-from evengsdk.cli.common import list_sub_command, list_command
+from evengsdk.cli.common import list_command, list_sub_command
 from evengsdk.cli.console import cli_print, cli_print_error, cli_print_output, console
 from evengsdk.cli.lab.topology import Topology
 from evengsdk.cli.utils import get_active_lab, get_client, thread_executor
 from evengsdk.client import EvengClient
+from evengsdk.exceptions import EvengApiError, EvengHTTPError
 
 
 # https://stackoverflow.com/questions/37310718/mutually-exclusive-option-groups-in-python-click
@@ -102,7 +103,7 @@ def _get_lab_details(path: str) -> Dict:
     response = session.api.get_lab(path)
     if response:
         path = path.lstrip("/")
-        response["data"].update({"path": "/" + path})
+        response["data"].update({"path": f"/{path}"})
     return response
 
 
@@ -191,7 +192,11 @@ def _create_node_workder(
         node_id = resp["data"]["id"]
         resp = client.api.upload_node_config(path, node_id, config)
         if resp["status"] == "success":
-            client.api.enable_node_config(path, node_id)
+            if config := topology.get_node_config(node["name"]):
+                node_id = resp["data"]["id"]
+                resp = client.api.upload_node_config(topology.path, node_id, config)
+                if resp["status"] == "success":
+                    client.api.enable_node_config(topology.path, node_id)
 
     if tasks:
         console.log(f"{tasks.pop(0)} {create_result}")
@@ -247,9 +252,12 @@ def read(ctx, path, output):
         eve-ng lab read
         eve-ng lab read --path /folder/to/lab.unl
     """
-    client = get_client(ctx)
-    resp = client.api.get_lab(path)
-    cli_print_output(output, resp, header=f"Lab: {resp.get('name')}")
+    _client = get_client(ctx)
+    try:
+        resp = _client.api.get_lab(path)
+        cli_print_output(output, resp, header=f"Lab: {resp.get('name')}")
+    except (EvengHTTPError, EvengApiError) as err:
+        console.print_error(err)
 
 
 @click.command()
@@ -266,24 +274,26 @@ def topology(ctx, path, output):
     Examples:
         eve-ng lab topology
     """
-    client = get_client(ctx)
-    resp = client.api.get_lab_topology(path)
+    _client = get_client(ctx)
+    try:
+        resp = _client.api.get_lab_topology(path)
+        if not resp.get("data"):
+            cli_print_error("No Topology information available. Is the lab empty?")
 
-    if not resp.get("data"):
-        cli_print_error("No Topology information available. Is the lab empty?")
-
-    table_header = [
-        ("type", {}),
-        ("source", dict(justify="center", style="cyan", no_wrap=True)),
-        ("source_type", {}),
-        ("source_label", {}),
-        ("destination", dict(justify="center", style="magenta", no_wrap=True)),
-        ("destination_type", {}),
-        ("destination_label", {}),
-    ]
-    cli_print_output(
-        output, resp, header=f"Lab Topology @ {path}", table_header=table_header
-    )
+        table_header = [
+            ("type", {}),
+            ("source", dict(justify="center", style="cyan", no_wrap=True)),
+            ("source_type", {}),
+            ("source_label", {}),
+            ("destination", dict(justify="center", style="magenta", no_wrap=True)),
+            ("destination_type", {}),
+            ("destination_label", {}),
+        ]
+        cli_print_output(
+            output, resp, header=f"Lab Topology @ {path}", table_header=table_header
+        )
+    except (EvengHTTPError, EvengApiError) as err:
+        console.print_error(err)
 
 
 @click.command(name="export")
@@ -300,12 +310,16 @@ def export_lab(ctx, path, dest):
     Examples:
         eve-ng lab export
     """
-    client = get_client(ctx)
-    with console.status("[bold green]Exporting lab..."):
-        saved, zipname = client.api.export_lab(path)
-        if saved:
-            cli_print(f"Lab exported to {zipname}")
-    sys.exit(0)
+    _client = get_client(ctx)
+    try:
+        with console.status("[bold green]Exporting lab..."):
+            saved, zipname = _client.api.export_lab(path)
+            if saved:
+                cli_print(f"Lab exported to {zipname}")
+    except (EvengHTTPError, EvengApiError) as err:
+        if "Cannot remove UUID from exported" in str(err):
+            err = "Cannot export lab. Does the lab exist?"
+        console.print_error(err)
 
 
 @click.command(name="import")
@@ -317,10 +331,13 @@ def import_lab(ctx, folder, src):
     Import lab into EVE-NG from ZIP archive
     """
 
-    client = get_client(ctx)
-    with console.status("[bold green]Importing lab..."):
-        resp = client.api.import_lab(src, folder)
-        cli_print_output("json", resp)
+    _client = get_client(ctx)
+    try:
+        with console.status("[bold green]Importing lab..."):
+            resp = _client.api.import_lab(src, folder)
+            cli_print_output("json", resp)
+    except (EvengHTTPError, EvengApiError) as err:
+        console.print_error(err)
 
 
 @list_sub_command
@@ -333,28 +350,31 @@ def ls(ctx, output):
     Examples:
         eve-ng lab list
     """
-    client = get_client(ctx)
-    resp = _get_all_labs(client)
-    lab_data = [x["data"] for x in resp] if resp else resp
+    _client = get_client(ctx)
+    try:
+        resp = _get_all_labs(_client)
+        lab_data = [x["data"] for x in resp] if resp else resp
 
-    if not lab_data:
-        cli_print_error("No labs found. Please create or import a lab first.")
+        if not lab_data:
+            cli_print_error("No labs found. Please create or import a lab first.")
 
-    table_header = [
-        ("Name", dict(justify="right", style="cyan", no_wrap=True)),
-        ("Path", {}),
-        ("Description", {}),
-        ("Author", {}),
-        ("Lock", {}),
-    ]
-    cli_print_output(
-        output,
-        {"data": lab_data},
-        header="Labs",
-        table_header=table_header,
-        table_title="Labs",
-        record_header_key="name",
-    )
+        table_header = [
+            ("Name", dict(justify="right", style="cyan", no_wrap=True)),
+            ("Path", {}),
+            ("Description", {}),
+            ("Author", {}),
+            ("Lock", {}),
+        ]
+        cli_print_output(
+            output,
+            {"data": lab_data},
+            header="Labs",
+            table_header=table_header,
+            table_title="Labs",
+            record_header_key="name",
+        )
+    except (EvengHTTPError, EvengApiError) as err:
+        console.print_error(err)
 
 
 @click.command()
@@ -372,15 +392,18 @@ def create(ctx, path: str, author: str, description: str, version: int, name: st
     Examples:
         eve-ng lab create --name lab1 --author "John Doe" --description "My lab"
     """
-    client = get_client(ctx)
-    response = client.api.create_lab(
-        name=name,
-        author=author,
-        path=path,
-        description=description,
-        version=version,
-    )
-    cli_print_output("text", response)
+    _client = get_client(ctx)
+    try:
+        response = _client.api.create_lab(
+            name=name,
+            author=author,
+            path=path,
+            description=description,
+            version=version,
+        )
+        cli_print_output("text", response)
+    except (EvengHTTPError, EvengApiError) as err:
+        console.print_error(err)
 
 
 @click.command()
@@ -407,7 +430,7 @@ def create_from_topology(ctx, topology, template_dir):
     Examples:
         eveng lab create-from-topology --topology examples/test_topology.yml
     """
-    client = get_client(ctx)
+    _client = get_client(ctx)
 
     if not Path(topology).exists():
         raise click.BadParameter(f"Topology file {topology} does not exist")
@@ -415,8 +438,7 @@ def create_from_topology(ctx, topology, template_dir):
     topology_data = yaml.safe_load(Path(topology).read_text())
     topology = Topology(topology_data)
 
-    errors = topology.validate()
-    if errors:
+    if errors := topology.validate():
         cli_print_error(f"Topology validation failed: {errors}")
 
     # create device configs, if needed
@@ -425,7 +447,7 @@ def create_from_topology(ctx, topology, template_dir):
     try:
         # create lab
         with console.status("[bold green]Creating lab..."):
-            resp = client.api.create_lab(**topology.lab)
+            resp = _client.api.create_lab(**topology.lab)
             if resp["status"] == "success":
                 console.log(f"Lab created: {topology.path}")
 
@@ -459,10 +481,11 @@ def create_from_topology(ctx, topology, template_dir):
         with console.status("[bold green]Creating links..."):
             create_p2p_links(topology, tasks=p2p_tasks)
 
-    except Exception as e:
-        if "already exists" not in str(e):
-            client.api.delete_lab(topology.path)
-        cli_print_error(f"Error creating lab: {e}")
+        sys.exit(0)
+    except (EvengHTTPError, EvengApiError) as err:
+        if "already exists" not in str(err):
+            _client.api.delete_lab(topology.path)
+        console.print_error(err)
 
 
 @click.command()
@@ -504,9 +527,12 @@ def edit(ctx, path: str, **kwargs):
         eve-ng lab edit --body "Lab to demonstrate VXLAN/BGP-EVPN on vEOS"
     """
     edit_param = {k: v for k, v in kwargs.items() if v is not None}
-    client = get_client(ctx)
-    response = client.api.edit_lab(path, param=edit_param)
-    cli_print_output("text", response)
+    _client = get_client(ctx)
+    try:
+        response = _client.api.edit_lab(path, param=edit_param)
+        cli_print_output("text", response)
+    except (EvengHTTPError, EvengApiError) as err:
+        console.print_error(err)
 
 
 @click.command()
@@ -520,19 +546,22 @@ def delete(ctx, path):
     Examples:
         eve-ng lab delete --path /lab1
     """
-    client = get_client(ctx)
-    with console.status("[bold green]wiping nodes...") as status:
-        # wipe nodes
-        resp1 = client.api.wipe_all_nodes(path)
-        console.log(f"{resp1['status']}: {resp1['message']}")
-        # stop all nodes
-        status.update("[bold green]closing lab...")
-        resp2 = client.api.close_lab()
-        console.log(f"{resp2['status']}: {resp2['message']}")
-        # delete the lab
-        status.update("[bold green]deleting lab...")
-        response = client.api.delete_lab(path)
-        cli_print_output("text", response)
+    _client = get_client(ctx)
+    try:
+        with console.status("[bold green]wiping nodes...") as status:
+            # wipe nodes
+            resp1 = _client.api.wipe_all_nodes(path)
+            console.log(f"{resp1['status']}: {resp1['message']}")
+            # stop all nodes
+            status.update("[bold green]closing lab...")
+            resp2 = _client.api.close_lab()
+            console.log(f"{resp2['status']}: {resp2['message']}")
+            # delete the lab
+            status.update("[bold green]deleting lab...")
+            response = _client.api.delete_lab(path)
+            cli_print_output("text", response)
+    except (EvengHTTPError, EvengApiError) as err:
+        console.print_error(err)
 
 
 @click.command()
@@ -548,9 +577,12 @@ def start(ctx, path):
         eve-ng lab start
         eve-ng lab start --path /lab1
     """
-    client = get_client(ctx)
-    response = client.api.start_all_nodes(path)
-    cli_print_output("text", response)
+    _client = get_client(ctx)
+    try:
+        response = _client.api.start_all_nodes(path)
+        cli_print_output("text", response)
+    except (EvengHTTPError, EvengApiError) as err:
+        console.print_error(err)
 
 
 @click.command()
@@ -567,13 +599,16 @@ def stop(ctx, path):
         eve-ng lab stop
         eve-ng lab stop --path /lab1
     """
-    client = get_client(ctx)
-    response = client.api.stop_all_nodes(path)
-    if response.get("status") and response["status"] == "success":
-        close_resp = client.delete("/labs/close")
-        cli_print_output("text", close_resp)
-    else:
-        cli_print_output("text", response)
+    _client = get_client(ctx)
+    try:
+        response = _client.api.stop_all_nodes(path)
+        if response.get("status") and response["status"] == "success":
+            close_resp = _client.delete("/labs/close")
+            cli_print_output("text", close_resp)
+        else:
+            cli_print_output("text", response)
+    except (EvengHTTPError, EvengApiError) as err:
+        console.print_error(err)
 
 
 @click.command(name="show-active")
