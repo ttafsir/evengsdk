@@ -27,6 +27,12 @@ def topology_file(datadir, authenticated_client, helpers):
     helpers.run_cli_command(["lab", "delete", "--path", lab_path])
 
 
+@pytest.fixture
+def topology_tempdir(datadir):
+    """Return template directory"""
+    return datadir / "templates"
+
+
 @pytest.mark.usefixtures("test_cli_lab")
 class TestLabCommands:
     """CLI Lab Commands"""
@@ -139,13 +145,20 @@ class TestLabCommands:
         assert result.exit_code > 0
         assert "lab empty?" in result.output.lower()
 
-    def test_lab_topology_builder(self, helpers, topology_file):
+    def test_lab_topology_builder(self, helpers, topology_file, topology_tempdir):
         """
         Arrange/Act: Run the `lab` command with the 'topology' subcommand.
         Assert: The output indicates that lab topology subcommand produces an error and does not crash.
         """
         result = helpers.run_cli_command(
-            ["lab", "create-from-topology", "-t", str(topology_file)]
+            [
+                "lab",
+                "create-from-topology",
+                "-t",
+                str(topology_file),
+                "--template-dir",
+                topology_tempdir,
+            ]
         )
         assert result.exit_code == 0, result.output
 
@@ -159,7 +172,9 @@ class TestLabCommands:
         )
         assert "Path 'non-existent-file' does not exist" in result.output
 
-    def test_lab_topology_builder_already_exists(self, helpers, topology_file, cli_lab):
+    def test_lab_topology_builder_already_exists(
+        self, helpers, topology_file, topology_tempdir, cli_lab
+    ):
         """
         Arrange/Act: Run the `lab` command with the 'topology' subcommand.
         Assert: The output indicates that lab topology subcommand produces an error and does not crash.
@@ -169,7 +184,14 @@ class TestLabCommands:
         topology_file.write_text(yaml.dump(topo_data))
 
         result = helpers.run_cli_command(
-            ["lab", "create-from-topology", "-t", str(topology_file)]
+            [
+                "lab",
+                "create-from-topology",
+                "-t",
+                str(topology_file),
+                "--template-dir",
+                topology_tempdir,
+            ]
         )
         assert "already exists" in result.output
 
