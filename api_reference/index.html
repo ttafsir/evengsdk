@@ -1556,7 +1556,7 @@ EvengApi        </code>
 <span class="sd">        :type path: str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">normalized_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalize_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-        <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;/labs&quot;</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">normalized_path</span><span class="si">}</span><span class="s2">/networks&quot;</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;/labs</span><span class="si">{</span><span class="n">normalized_path</span><span class="si">}</span><span class="s2">/networks&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">get_lab_network</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">net_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
@@ -1580,9 +1580,8 @@ EvengApi        </code>
 <span class="sd">        :param name: name of the network</span>
 <span class="sd">        :type name: str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_lab_networks</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-        <span class="n">networks</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">networks</span><span class="p">:</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_lab_networks</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">networks</span> <span class="o">:=</span> <span class="n">resp</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">):</span>
             <span class="k">return</span> <span class="nb">next</span><span class="p">((</span><span class="n">v</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">networks</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">name</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
         <span class="k">return</span>
 
@@ -1861,7 +1860,11 @@ EvengApi        </code>
 
         <span class="c1"># find the p2p interfaces on each of the nodes</span>
         <span class="n">src_int</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_node_interface</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">s_node_id</span><span class="p">,</span> <span class="n">src_label</span><span class="p">,</span> <span class="n">media</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">src_int</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">src_label</span><span class="si">}</span><span class="s2"> invalid or missing for &quot;</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="n">dst_int</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_node_interface</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">d_node_id</span><span class="p">,</span> <span class="n">dst_label</span><span class="p">,</span> <span class="n">media</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">dst_int</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dst_label</span><span class="si">}</span><span class="s2"> invalid or missing for &quot;</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dst</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
         <span class="c1"># create the bridge for the p2p interfaces</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
@@ -1881,13 +1884,18 @@ EvengApi        </code>
         <span class="n">r2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">connect_p2p_interface</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">d_node_id</span><span class="p">,</span> <span class="n">dst_int</span><span class="p">,</span> <span class="n">net_id</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">r1</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;success&quot;</span> <span class="ow">and</span> <span class="n">r2</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;success&quot;</span>
 
-    <span class="k">def</span> <span class="nf">_recursively_start_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
-        <span class="n">nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_nodes</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-        <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">node_id</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_node</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">node_id</span><span class="p">)</span>
-            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_recursive_statuses</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_update_nodes</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">action</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;stop&quot;</span><span class="p">,</span> <span class="s2">&quot;start&quot;</span><span class="p">,</span> <span class="s2">&quot;wipe&quot;</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_nodes</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">action_method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">action</span><span class="si">}</span><span class="s2">_node&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">resp</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]:</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">node_id</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">resp</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="n">action_method</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">node_id</span><span class="p">)</span>
+                <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_recursive_statuses</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">resp</span>
 
     <span class="k">def</span> <span class="nf">start_all_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Start one or all nodes configured in a lab</span>
@@ -1898,7 +1906,7 @@ EvengApi        </code>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_community</span><span class="p">:</span>
             <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;/labs</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">normalize_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="si">}</span><span class="s2">/nodes/start&quot;</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recursively_start_nodes</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_nodes</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;start&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">stop_all_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Stop one or all nodes configured in a lab</span>
@@ -1906,8 +1914,10 @@ EvengApi        </code>
 <span class="sd">        :param path: [description]</span>
 <span class="sd">        :type path: str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;/labs&quot;</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">normalize_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="si">}</span><span class="s2">/nodes/stop&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_community</span><span class="p">:</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;/labs</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">normalize_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="si">}</span><span class="s2">/nodes/stop&quot;</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_nodes</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;stop&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">start_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">node_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Start single node in a lab</span>
@@ -1933,14 +1943,6 @@ EvengApi        </code>
             <span class="n">url</span> <span class="o">+=</span> <span class="s2">&quot;/stopmode=3&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_recursively_wipe_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
-        <span class="n">nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_nodes</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-        <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">node_id</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wipe_node</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">node_id</span><span class="p">)</span>
-            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_recursive_statuses</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
-
     <span class="k">def</span> <span class="nf">_extract_recursive_statuses</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">results</span><span class="p">):</span>
         <span class="n">success</span> <span class="o">=</span> <span class="nb">all</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;success&quot;</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span><span class="p">)</span>
         <span class="n">messages</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="s2">&quot;message&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">results</span><span class="p">]</span>
@@ -1960,9 +1962,9 @@ EvengApi        </code>
 <span class="sd">        :return: str</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_community</span><span class="p">:</span>
-            <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;/labs&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalize_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;/nodes/wipe&quot;</span>
+            <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;/labs</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">normalize_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="si">}</span><span class="s2">/nodes/wipe&quot;</span>
             <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recursively_wipe_nodes</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_nodes</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;wipe&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">wipe_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">node_id</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Wipe single node configured in a lab. Wiping deletes</span>
@@ -2255,7 +2257,7 @@ EvengApi        </code>
         <span class="n">cpu</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">nvram</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">idlepc</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">slots</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">slot</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Create node and add to lab</span>
 
@@ -2315,33 +2317,36 @@ EvengApi        </code>
 <span class="sd">                    (i.e. slot1=NM-1FE-TX).</span>
 <span class="sd">        :type slot: int, optional</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;/labs&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalize_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;/nodes&quot;</span>
-
-        <span class="n">template</span> <span class="o">=</span> <span class="n">template</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;/labs</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">normalize_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="si">}</span><span class="s2">/nodes&quot;</span>
         <span class="n">resp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_template_detail</span><span class="p">(</span><span class="n">template</span><span class="p">)</span>
         <span class="n">template_defaults</span> <span class="o">=</span> <span class="n">resp</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">][</span><span class="s2">&quot;options&quot;</span><span class="p">]</span>
 
-        <span class="n">icon</span> <span class="o">=</span> <span class="n">icon</span> <span class="ow">or</span> <span class="n">template_defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;icon&quot;</span><span class="p">)[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span>
-        <span class="n">ethernet</span> <span class="o">=</span> <span class="n">ethernet</span> <span class="ow">or</span> <span class="n">template_defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ethernet&quot;</span><span class="p">)[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span>
-        <span class="n">ram</span> <span class="o">=</span> <span class="n">ram</span> <span class="ow">or</span> <span class="n">template_defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ram&quot;</span><span class="p">)[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span>
-        <span class="n">image</span> <span class="o">=</span> <span class="n">image</span> <span class="ow">or</span> <span class="n">template_defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;image&quot;</span><span class="p">)[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span>
-        <span class="n">cpu</span> <span class="o">=</span> <span class="n">cpu</span> <span class="ow">or</span> <span class="n">template_defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span>
-
+        <span class="n">ethernet</span> <span class="o">=</span> <span class="n">ethernet</span> <span class="ow">or</span> <span class="n">template_defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ethernet&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">)</span>
+        <span class="n">serial</span> <span class="o">=</span> <span class="n">serial</span> <span class="ow">or</span> <span class="n">template_defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;serial&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">)</span>
         <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">node_type</span><span class="p">,</span>
             <span class="s2">&quot;template&quot;</span><span class="p">:</span> <span class="n">template</span><span class="p">,</span>
             <span class="s2">&quot;config&quot;</span><span class="p">:</span> <span class="n">config</span><span class="p">,</span>
             <span class="s2">&quot;delay&quot;</span><span class="p">:</span> <span class="n">delay</span><span class="p">,</span>
-            <span class="s2">&quot;icon&quot;</span><span class="p">:</span> <span class="n">icon</span><span class="p">,</span>
-            <span class="s2">&quot;image&quot;</span><span class="p">:</span> <span class="n">image</span><span class="p">,</span>
+            <span class="s2">&quot;icon&quot;</span><span class="p">:</span> <span class="n">icon</span> <span class="ow">or</span> <span class="n">template_defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;icon&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">),</span>
+            <span class="s2">&quot;image&quot;</span><span class="p">:</span> <span class="n">image</span> <span class="ow">or</span> <span class="n">template_defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;image&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">),</span>
             <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
             <span class="s2">&quot;left&quot;</span><span class="p">:</span> <span class="n">left</span><span class="p">,</span>
             <span class="s2">&quot;top&quot;</span><span class="p">:</span> <span class="n">top</span><span class="p">,</span>
-            <span class="s2">&quot;ram&quot;</span><span class="p">:</span> <span class="n">ram</span><span class="p">,</span>
-            <span class="s2">&quot;cpu&quot;</span><span class="p">:</span> <span class="n">cpu</span><span class="p">,</span>
+            <span class="s2">&quot;ram&quot;</span><span class="p">:</span> <span class="n">ram</span> <span class="ow">or</span> <span class="n">template_defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ram&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">),</span>
+            <span class="s2">&quot;cpu&quot;</span><span class="p">:</span> <span class="n">cpu</span> <span class="ow">or</span> <span class="n">template_defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">),</span>
             <span class="s2">&quot;console&quot;</span><span class="p">:</span> <span class="n">console</span><span class="p">,</span>
             <span class="s2">&quot;ethernet&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">ethernet</span><span class="p">)</span> <span class="k">if</span> <span class="n">ethernet</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;serial&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">serial</span><span class="p">)</span> <span class="k">if</span> <span class="n">serial</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;nvram&quot;</span><span class="p">:</span> <span class="n">nvram</span> <span class="ow">or</span> <span class="n">template_defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;nvram&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">),</span>
         <span class="p">}</span>
+
+        <span class="k">if</span> <span class="n">node_type</span> <span class="o">==</span> <span class="s2">&quot;dynamips&quot;</span> <span class="ow">and</span> <span class="n">idlepc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;idlepc&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">idlepc</span>
+
+        <span class="k">if</span> <span class="n">slot</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">data</span><span class="p">[</span><span class="s2">&quot;slot&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">slot</span>
+
         <span class="n">resp</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_exists</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
             <span class="n">resp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
@@ -2439,7 +2444,7 @@ EvengApi        </code>
 
 
 <h3 id="evengsdk.api.EvengApi.add_lab_network" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">add_lab_network</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">network_type</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">visibility</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">left</span><span class="o">=</span><span class="mi">46</span><span class="p">,</span> <span class="n">top</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">add_lab_network</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">network_type</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">visibility</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">left</span><span class="o">=</span><span class="mi">58</span><span class="p">,</span> <span class="n">top</span><span class="o">=</span><span class="mi">57</span><span class="p">)</span></code>
 
 
 </h3>
@@ -2487,13 +2492,13 @@ EvengApi        </code>
         <td><code>left</code></td>
         <td><code>int</code></td>
         <td><p>margin from left, in percentage (i.e. 35%), default is a random value between 30% and 70%, defaults to randint(30, 70)</p></td>
-        <td><code>46</code></td>
+        <td><code>58</code></td>
       </tr>
       <tr>
         <td><code>top</code></td>
         <td><code>int</code></td>
         <td><p>margin from left, in percentage (i.e. 35%), default is a random value between 30% and 70%, defaults to randint(30, 70)</p></td>
-        <td><code>60</code></td>
+        <td><code>57</code></td>
       </tr>
   </tbody>
 </table>
@@ -2568,7 +2573,7 @@ EvengApi        </code>
 
 
 <h3 id="evengsdk.api.EvengApi.add_node" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">add_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">template</span><span class="p">,</span> <span class="n">delay</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">node_type</span><span class="o">=</span><span class="s1">&#39;qemu&#39;</span><span class="p">,</span> <span class="n">top</span><span class="o">=</span><span class="mi">39</span><span class="p">,</span> <span class="n">left</span><span class="o">=</span><span class="mi">36</span><span class="p">,</span> <span class="n">console</span><span class="o">=</span><span class="s1">&#39;telnet&#39;</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="s1">&#39;Unconfigured&#39;</span><span class="p">,</span> <span class="n">ethernet</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">serial</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">image</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ram</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cpu</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nvram</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">idlepc</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">slots</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">add_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">template</span><span class="p">,</span> <span class="n">delay</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">node_type</span><span class="o">=</span><span class="s1">&#39;qemu&#39;</span><span class="p">,</span> <span class="n">top</span><span class="o">=</span><span class="mi">38</span><span class="p">,</span> <span class="n">left</span><span class="o">=</span><span class="mi">43</span><span class="p">,</span> <span class="n">console</span><span class="o">=</span><span class="s1">&#39;telnet&#39;</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="s1">&#39;Unconfigured&#39;</span><span class="p">,</span> <span class="n">ethernet</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">serial</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">image</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">icon</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ram</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cpu</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nvram</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">idlepc</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">slot</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span></code>
 
 
 </h3>
@@ -2622,13 +2627,13 @@ EvengApi        </code>
         <td><code>top</code></td>
         <td><code>int</code></td>
         <td><p>margin from top, in percentage (i.e. 35%), default is a random value between 30% and 70%, defaults to randint(30, 70)</p></td>
-        <td><code>39</code></td>
+        <td><code>38</code></td>
       </tr>
       <tr>
         <td><code>left</code></td>
         <td><code>int</code></td>
         <td><p>margin from left, in percentage (i.e. 35%), default is a random value between 30% and 70%, defaults to randint(30, 70)</p></td>
-        <td><code>36</code></td>
+        <td><code>43</code></td>
       </tr>
       <tr>
         <td><code>console</code></td>
@@ -2692,9 +2697,9 @@ EvengApi        </code>
       </tr>
       <tr>
         <td><code>slot</code></td>
-        <td><code>int, optional</code></td>
+        <td><code>str</code></td>
         <td><p>0-9]+ the module configured in a specific slot (i.e. slot1=NM-1FE-TX).</p></td>
-        <td><em>required</em></td>
+        <td><code>&#39;&#39;</code></td>
       </tr>
   </tbody>
 </table>
@@ -2719,7 +2724,7 @@ EvengApi        </code>
     <span class="n">cpu</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">nvram</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">idlepc</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">slots</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">slot</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Create node and add to lab</span>
 
@@ -2779,33 +2784,36 @@ EvengApi        </code>
 <span class="sd">                (i.e. slot1=NM-1FE-TX).</span>
 <span class="sd">    :type slot: int, optional</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;/labs&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalize_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;/nodes&quot;</span>
-
-    <span class="n">template</span> <span class="o">=</span> <span class="n">template</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;/labs</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">normalize_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="si">}</span><span class="s2">/nodes&quot;</span>
     <span class="n">resp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_template_detail</span><span class="p">(</span><span class="n">template</span><span class="p">)</span>
     <span class="n">template_defaults</span> <span class="o">=</span> <span class="n">resp</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">][</span><span class="s2">&quot;options&quot;</span><span class="p">]</span>
 
-    <span class="n">icon</span> <span class="o">=</span> <span class="n">icon</span> <span class="ow">or</span> <span class="n">template_defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;icon&quot;</span><span class="p">)[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span>
-    <span class="n">ethernet</span> <span class="o">=</span> <span class="n">ethernet</span> <span class="ow">or</span> <span class="n">template_defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ethernet&quot;</span><span class="p">)[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span>
-    <span class="n">ram</span> <span class="o">=</span> <span class="n">ram</span> <span class="ow">or</span> <span class="n">template_defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ram&quot;</span><span class="p">)[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span>
-    <span class="n">image</span> <span class="o">=</span> <span class="n">image</span> <span class="ow">or</span> <span class="n">template_defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;image&quot;</span><span class="p">)[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span>
-    <span class="n">cpu</span> <span class="o">=</span> <span class="n">cpu</span> <span class="ow">or</span> <span class="n">template_defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span>
-
+    <span class="n">ethernet</span> <span class="o">=</span> <span class="n">ethernet</span> <span class="ow">or</span> <span class="n">template_defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ethernet&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">)</span>
+    <span class="n">serial</span> <span class="o">=</span> <span class="n">serial</span> <span class="ow">or</span> <span class="n">template_defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;serial&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">)</span>
     <span class="n">data</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="n">node_type</span><span class="p">,</span>
         <span class="s2">&quot;template&quot;</span><span class="p">:</span> <span class="n">template</span><span class="p">,</span>
         <span class="s2">&quot;config&quot;</span><span class="p">:</span> <span class="n">config</span><span class="p">,</span>
         <span class="s2">&quot;delay&quot;</span><span class="p">:</span> <span class="n">delay</span><span class="p">,</span>
-        <span class="s2">&quot;icon&quot;</span><span class="p">:</span> <span class="n">icon</span><span class="p">,</span>
-        <span class="s2">&quot;image&quot;</span><span class="p">:</span> <span class="n">image</span><span class="p">,</span>
+        <span class="s2">&quot;icon&quot;</span><span class="p">:</span> <span class="n">icon</span> <span class="ow">or</span> <span class="n">template_defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;icon&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">),</span>
+        <span class="s2">&quot;image&quot;</span><span class="p">:</span> <span class="n">image</span> <span class="ow">or</span> <span class="n">template_defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;image&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">),</span>
         <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span>
         <span class="s2">&quot;left&quot;</span><span class="p">:</span> <span class="n">left</span><span class="p">,</span>
         <span class="s2">&quot;top&quot;</span><span class="p">:</span> <span class="n">top</span><span class="p">,</span>
-        <span class="s2">&quot;ram&quot;</span><span class="p">:</span> <span class="n">ram</span><span class="p">,</span>
-        <span class="s2">&quot;cpu&quot;</span><span class="p">:</span> <span class="n">cpu</span><span class="p">,</span>
+        <span class="s2">&quot;ram&quot;</span><span class="p">:</span> <span class="n">ram</span> <span class="ow">or</span> <span class="n">template_defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ram&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">),</span>
+        <span class="s2">&quot;cpu&quot;</span><span class="p">:</span> <span class="n">cpu</span> <span class="ow">or</span> <span class="n">template_defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">),</span>
         <span class="s2">&quot;console&quot;</span><span class="p">:</span> <span class="n">console</span><span class="p">,</span>
         <span class="s2">&quot;ethernet&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">ethernet</span><span class="p">)</span> <span class="k">if</span> <span class="n">ethernet</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;serial&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">serial</span><span class="p">)</span> <span class="k">if</span> <span class="n">serial</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;nvram&quot;</span><span class="p">:</span> <span class="n">nvram</span> <span class="ow">or</span> <span class="n">template_defaults</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;nvram&quot;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">),</span>
     <span class="p">}</span>
+
+    <span class="k">if</span> <span class="n">node_type</span> <span class="o">==</span> <span class="s2">&quot;dynamips&quot;</span> <span class="ow">and</span> <span class="n">idlepc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;idlepc&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">idlepc</span>
+
+    <span class="k">if</span> <span class="n">slot</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;slot&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">slot</span>
+
     <span class="n">resp</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_exists</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="n">resp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
@@ -3256,7 +3264,11 @@ EvengApi        </code>
 
     <span class="c1"># find the p2p interfaces on each of the nodes</span>
     <span class="n">src_int</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_node_interface</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">s_node_id</span><span class="p">,</span> <span class="n">src_label</span><span class="p">,</span> <span class="n">media</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">src_int</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">src_label</span><span class="si">}</span><span class="s2"> invalid or missing for &quot;</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
     <span class="n">dst_int</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_node_interface</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">d_node_id</span><span class="p">,</span> <span class="n">dst_label</span><span class="p">,</span> <span class="n">media</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">dst_int</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dst_label</span><span class="si">}</span><span class="s2"> invalid or missing for &quot;</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">dst</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
     <span class="c1"># create the bridge for the p2p interfaces</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">log</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
@@ -4336,9 +4348,8 @@ lab name</p>
 <span class="sd">    :param name: name of the network</span>
 <span class="sd">    :type name: str</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_lab_networks</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-    <span class="n">networks</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">networks</span><span class="p">:</span>
+    <span class="n">resp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">list_lab_networks</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">networks</span> <span class="o">:=</span> <span class="n">resp</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">next</span><span class="p">((</span><span class="n">v</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">networks</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">name</span><span class="p">),</span> <span class="kc">None</span><span class="p">)</span>
     <span class="k">return</span>
 </code></pre></div>
@@ -5111,7 +5122,7 @@ not exist.</p>
 <span class="sd">    :type path: str</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">normalized_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalize_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-    <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;/labs&quot;</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">normalized_path</span><span class="si">}</span><span class="s2">/networks&quot;</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;/labs</span><span class="si">{</span><span class="n">normalized_path</span><span class="si">}</span><span class="s2">/networks&quot;</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
 </code></pre></div>
         </details>
@@ -5425,7 +5436,7 @@ output.</p>
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_community</span><span class="p">:</span>
         <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;/labs</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">normalize_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="si">}</span><span class="s2">/nodes/start&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
-    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recursively_start_nodes</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_nodes</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;start&quot;</span><span class="p">)</span>
 </code></pre></div>
         </details>
     </div>
@@ -5534,8 +5545,10 @@ output.</p>
 <span class="sd">    :param path: [description]</span>
 <span class="sd">    :type path: str</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;/labs&quot;</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">normalize_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="si">}</span><span class="s2">/nodes/stop&quot;</span>
-    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_community</span><span class="p">:</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;/labs</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">normalize_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="si">}</span><span class="s2">/nodes/stop&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_nodes</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;stop&quot;</span><span class="p">)</span>
 </code></pre></div>
         </details>
     </div>
@@ -5775,9 +5788,9 @@ next start will rebuild node from selected image.</p>
 <span class="sd">    :return: str</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_community</span><span class="p">:</span>
-        <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;/labs&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">normalize_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;/nodes/wipe&quot;</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;/labs</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">normalize_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="si">}</span><span class="s2">/nodes/wipe&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
-    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recursively_wipe_nodes</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_nodes</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;wipe&quot;</span><span class="p">)</span>
 </code></pre></div>
         </details>
     </div>
