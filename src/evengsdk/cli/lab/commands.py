@@ -2,9 +2,10 @@
 import os
 import sys
 import threading
+from concurrent.futures import ThreadPoolExecutor
 from itertools import chain
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import click
 import yaml
@@ -135,41 +136,61 @@ def _get_all_labs(client: EvengClient) -> List:
         return thread_executor(_get_lab_details, (x["path"] for x in all_lab_info))
 
 
-def create_network_links(
-    client: EvengClient, topology: Topology, tasks: List = None
-) -> None:
+def _create_network_link_worker(link: Dict, path: str, tasks: List) -> None:
+    """
+    Worker for Thread Executor to create network links
+    """
+    client = _get_client_session()
+    r = client.api.connect_node_to_cloud(path, **link)
+    status = "completed" if r["status"] == "success" else "failed"
+    console.log(f"{tasks.pop(0)} {status}")
+
+
+def create_network_links(topology: Topology, tasks: List = None) -> None:
     """
     Create network links
     """
-    for link in topology.cloud_links:
-        r = client.api.connect_node_to_cloud(topology.path, **link)
-        status = "completed" if r["status"] == "success" else "failed"
-        console.log(f"{tasks.pop(0)} {status}")
+    path = topology.path
+    thread_executor(
+        lambda link: _create_network_link_worker(link, path, tasks),
+        topology.cloud_links,
+    )
 
 
-def create_p2p_links(
-    client: EvengClient, topology: Topology, tasks: List = None
-) -> None:
+def _create_p2p_link_worker(link: Dict, path: str, tasks: List) -> None:
+    """
+    Worker for Thread Executor to create p2p links
+    """
+    client = _get_client_session()
+    created = client.api.connect_node_to_node(path, **link)
+    console.log(f"{tasks.pop(0)} {'completed' if created else 'failed'}")
+
+
+def create_p2p_links(topology: Topology, tasks: List = None) -> None:
     """
     Create p2p links
     """
-    for link in topology.p2p_links:
-        created = client.api.connect_node_to_node(topology.path, **link)
-        console.log(f"{tasks.pop(0)} {'completed' if created else 'failed'}")
+    path = topology.path
+    thread_executor(
+        lambda link: _create_p2p_link_worker(link, path, tasks),
+        topology.p2p_links,
+    )
 
 
-def create_and_configure_nodes(
-    client: EvengClient, topology: Topology, tasks: List = None
+def _create_node_workder(
+    node: Dict, path: str, config: Optional[str], tasks: List = None
 ) -> None:
     """
-    Create and configure nodes
+    Worker for Thread Executor to create nodes
     """
-    for node in topology.nodes:
-        # create node
-        resp = client.api.add_node(topology.path, **node)
-        create_result = "completed" if resp["status"] == "success" else "failed"
+    client = _get_client_session()
+    resp = client.api.add_node(path, **node)
+    create_result = "completed" if resp["status"] == "success" else "failed"
 
-        # configure node
+    # configure node
+    if resp["status"] == "success" and config:
+        node_id = resp["data"]["id"]
+        resp = client.api.upload_node_config(path, node_id, config)
         if resp["status"] == "success":
             if config := topology.get_node_config(node["name"]):
                 node_id = resp["data"]["id"]
@@ -177,20 +198,43 @@ def create_and_configure_nodes(
                 if resp["status"] == "success":
                     client.api.enable_node_config(topology.path, node_id)
 
+    if tasks:
         console.log(f"{tasks.pop(0)} {create_result}")
 
 
-def create_networks(
-    client: EvengClient, topology: Topology, tasks: List = None
-) -> None:
+def create_and_configure_nodes(topology: Topology, tasks: List = None) -> None:
+    """
+    Create and configure nodes
+    """
+    path = topology.path
+    params_set = [
+        (node, path, topology.get_node_config(node["name"]), tasks)
+        for node in topology.nodes
+    ]
+    with ThreadPoolExecutor(max_workers=5) as exec:
+        exec.map(lambda p: _create_node_workder(*p), params_set)
+
+
+def _create_network_worker(network: Dict, path: str, tasks: List) -> None:
+    """
+    Worker for Thread Executor to create p2p links
+    """
+    client = _get_client_session()
+    resp = client.api.add_lab_network(path, **network)
+    success = resp["status"] == "success"
+    status = "completed" if success else "failed"
+    console.log(f"{tasks.pop(0)} {status}. ID: {resp.get('data', {}).get('id')}")
+
+
+def create_networks(topology: Topology, tasks: List = None) -> None:
     """
     Create networks
     """
-    for network in topology.networks:
-        resp = client.api.add_lab_network(topology.path, **network)
-        success = resp["status"] == "success"
-        status = "completed" if success else "failed"
-        console.log(f"{tasks.pop(0)} {status}. ID: {resp.get('data', {}).get('id')}")
+    path = topology.path
+    thread_executor(
+        lambda net: _create_network_worker(net, path, tasks),
+        topology.networks,
+    )
 
 
 @click.command()
@@ -412,12 +456,12 @@ def create_from_topology(ctx, topology, template_dir):
             f"node [bold green]{n['name']}[/bold green]" for n in topology.nodes
         ]
         with console.status("[bold green]Creating nodes..."):
-            create_and_configure_nodes(client, topology, tasks=node_tasks)
+            create_and_configure_nodes(topology, tasks=node_tasks)
 
         # create networks
         network_tasks = [f"network {n['name']}" for n in topology.networks]
         with console.status("[bold green]Creating networks..."):
-            create_networks(client, topology, tasks=network_tasks)
+            create_networks(topology, tasks=network_tasks)
 
         # create network links
         link_tasks = [
@@ -426,7 +470,7 @@ def create_from_topology(ctx, topology, template_dir):
             for link in topology.cloud_links
         ]
         with console.status("[bold green]Creating links..."):
-            create_network_links(client, topology, tasks=link_tasks)
+            create_network_links(topology, tasks=link_tasks)
 
         # create p2p links
         p2p_tasks = [
@@ -435,7 +479,7 @@ def create_from_topology(ctx, topology, template_dir):
             for link in topology.p2p_links
         ]
         with console.status("[bold green]Creating links..."):
-            create_p2p_links(client, topology, tasks=p2p_tasks)
+            create_p2p_links(topology, tasks=p2p_tasks)
 
         sys.exit(0)
     except (EvengHTTPError, EvengApiError) as err:
