@@ -8,7 +8,7 @@ arrow==1.2.1
     # via isoduration
 attrs==21.4.0
     # via jsonschema
-certifi==2021.10.8
+certifi==2022.12.7
     # via requests
 charset-normalizer==2.0.9
     # via requests
@@ -30,9 +30,7 @@ idna==3.3
     #   jsonschema
     #   requests
 importlib-metadata==4.11.3
-    # via
-    #   markdown
-    #   mkdocs
+    # via mkdocs
 isoduration==20.11.0
     # via jsonschema
 jinja2==3.0.3
