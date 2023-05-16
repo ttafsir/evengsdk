@@ -85,7 +85,7 @@ pygments==2.11.2
     # via
     #   mkdocs-material
     #   rich
-pymdown-extensions==9.2
+pymdown-extensions==10.0
     # via
     #   mkdocs-material
     #   mkdocstrings
