@@ -195,7 +195,7 @@ pyyaml-env-tag==0.1
     # via
     #   -r requirements.txt
     #   mkdocs
-requests==2.26.0
+requests==2.31.0
     # via -r requirements.txt
 rfc3339-validator==0.1.4
     # via
