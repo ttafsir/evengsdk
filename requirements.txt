@@ -81,7 +81,7 @@ mkdocstrings-python-legacy==0.2.2
     # via mkdocstrings
 packaging==21.3
     # via mkdocs
-pygments==2.11.2
+pygments==2.15.0
     # via
     #   mkdocs-material
     #   rich
