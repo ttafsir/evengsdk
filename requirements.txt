@@ -8,7 +8,7 @@ arrow==1.2.1
     # via isoduration
 attrs==21.4.0
     # via jsonschema
-certifi==2021.10.8
+certifi==2023.7.22
     # via requests
 charset-normalizer==2.0.9
     # via requests
