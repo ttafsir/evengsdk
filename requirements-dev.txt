@@ -225,7 +225,7 @@ uri-template==1.1.0
     # via
     #   -r requirements.txt
     #   jsonschema
-urllib3==1.26.7
+urllib3==1.26.18
     # via
     #   -r requirements.txt
     #   requests
