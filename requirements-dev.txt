@@ -71,7 +71,7 @@ isoduration==20.11.0
     # via
     #   -r requirements.txt
     #   jsonschema
-jinja2==3.0.3
+jinja2==3.1.3
     # via
     #   -r requirements.txt
     #   mkdocs
