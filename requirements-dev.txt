@@ -13,7 +13,7 @@ attrs==21.4.0
     #   -r requirements.txt
     #   jsonschema
     #   pytest
-black==22.3.0
+black==24.3.0
     # via -r requirements-dev.in
 certifi==2021.10.8
     # via
