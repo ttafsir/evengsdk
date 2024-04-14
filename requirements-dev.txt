@@ -55,7 +55,7 @@ ghp-import==2.0.2
     #   mkdocs
 identify==2.4.12
     # via pre-commit
-idna==3.3
+idna==3.7
     # via
     #   -r requirements.txt
     #   jsonschema
