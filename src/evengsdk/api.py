@@ -390,14 +390,25 @@ class EvengApi:
     ) -> Dict:
         r = self.get_node_interfaces(path, node_id)
         interface_list = r["data"].get(media, [])
-        return next(
-            (
-                (idx, interface)
-                for idx, interface in enumerate(interface_list)
-                if interface["name"] == interface_name
-            ),
-            None,
-        )
+        if type(interface_list) == dict:
+            intf = next(
+                (
+                    (intf_id, interface)
+                    for intf_id, interface in interface_list.items()
+                    if interface["name"] == interface_name
+                ),
+                None,
+            )
+        else:
+            intf = next(
+                (
+                    (idx, interface)
+                    for idx, interface in enumerate(interface_list)
+                    if interface["name"] == interface_name
+                ),
+                None,
+            )
+        return intf
 
     def connect_node(
         self,
