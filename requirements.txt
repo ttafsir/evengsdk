@@ -130,3 +130,4 @@ webcolors==1.11.1
     # via jsonschema
 zipp==3.7.0
     # via importlib-metadata
+wheel>=0.38.0 # not directly required, pinned by Snyk to avoid a vulnerability
