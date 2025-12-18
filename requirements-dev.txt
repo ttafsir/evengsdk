@@ -41,7 +41,7 @@ commonmark==0.9.1
     #   rich
 distlib==0.3.4
     # via virtualenv
-filelock==3.6.0
+filelock==3.20.1
     # via virtualenv
 flake8==4.0.1
     # via -r requirements-dev.in
@@ -159,7 +159,7 @@ pygments==2.11.2
     #   -r requirements.txt
     #   mkdocs-material
     #   rich
-pymdown-extensions==9.2
+pymdown-extensions==10.16.1
     # via
     #   -r requirements.txt
     #   mkdocs-material
